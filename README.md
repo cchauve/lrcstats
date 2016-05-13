@@ -1,1 +1,1 @@
-# hybrid_correction_stats
+# Hybrid Correction Statistics (HCStats)
