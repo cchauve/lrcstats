@@ -2,14 +2,16 @@
 #include <string>
 #include <algorithm>
 #include <limits>
+#include <cmath>
 #include <assert.h>
 
 class OptimalAlignment
 {
 	public:
-		OptimalAlignment(std::string uLR, std::string cLR);
+		OptimalAlignment(std::string uncorrectedLongRead, std::string correctedLongRead);
 		~OptimalAlignment();
-		std::string getAlignment();
+		std::string get_uAlignment();
+		std::string get_cAlignment();
 		int getDistance();
 		void printMatrix();
 	private:
@@ -17,64 +19,80 @@ class OptimalAlignment
 		std::string cLR;
 		int rows;
 		int columns;
-		int**  memo;
-		std::string alignment;
+		int** matrix;
+		int del;
+		int ins;
+		int sub;
 		int distance;
+		std::string uAlignment;
+		std::string cAlignment;
 		int findDistance(int cIndex, int uIndex);
+		void findAlignments();
 };
 
-OptimalAlignment::OptimalAlignment(std::string uLR, std::string cLR)
+OptimalAlignment::OptimalAlignment(std::string uncorrectedLongRead, std::string correctedLongRead)
 {
-	uLR = uLR;
-	cLR = cLR;
+	del = 1;
+	ins = 1;
+	sub = 1;
+
+	uLR = uncorrectedLongRead;
+	cLR = correctedLongRead;
 
 	rows = cLR.length() + 1;
 	columns = uLR.length() + 1;
 
-	memo = new int*[rows];
+	matrix = new int*[rows];
 
-	assert(memo);
+	assert(matrix);
 	
-	for (int cIndex = 0; cIndex < rows; cIndex++)
+	for (int rowIndex = 0; rowIndex < rows; rowIndex++)
 	{
-			memo[cIndex] = new int[columns];
-			assert(memo[cIndex]);
+			matrix[rowIndex] = new int[columns];
+			assert(matrix[rowIndex]);
 	}
 
-	for (int cIndex = 0; cIndex < rows; cIndex++)
+	for (int rowIndex = 0; rowIndex < rows; rowIndex++)
 	{
-		memo[cIndex][0] = cIndex;	
+		matrix[rowIndex][0] = rowIndex;	
 	}
 
-	for (int uIndex = 0; uIndex < columns; uIndex++)
+	for (int columnIndex = 0; columnIndex < columns; columnIndex++)
 	{
-		memo[0][uIndex] = 0;
+		matrix[0][columnIndex] = 0;
 	}
 
-	for (int cIndex = 1; cIndex < rows; cIndex++)
+	for (int cIndex = 0; cIndex < cLR.length(); cIndex++)
 	{
-		for (int uIndex = 1; uIndex < columns; uIndex++)
+		for (int uIndex = 0; uIndex < uLR.length(); uIndex++)
 		{
-			memo[cIndex][uIndex] = findDistance(cIndex, uIndex);
+			int rowIndex = cIndex + 1;
+			int columnIndex = uIndex + 1;
+			matrix[rowIndex][columnIndex] = findDistance(cIndex, uIndex);
 		}		
 	}
 
-	distance = memo[rows-1][columns-1];
+	distance = matrix[rows-1][columns-1];
+	findAlignments();
 }
 
 OptimalAlignment::~OptimalAlignment(void)
 {
-	for (int cIndex = 0; cIndex < cLR.length() + 1; cIndex++)
+	for (int rowIndex = 0; rowIndex < rows; rowIndex++)
 	{
-		delete memo[cIndex];
+		delete matrix[rowIndex];
 	}
-	delete memo;
+	delete matrix;
 }
 
-std::string OptimalAlignment::getAlignment()
+std::string OptimalAlignment::get_uAlignment()
 {
-	alignment = "atcg";
-	return alignment;
+	return uAlignment;
+}
+
+std::string OptimalAlignment::get_cAlignment()
+{
+	return cAlignment;
 }
 
 int OptimalAlignment::getDistance()
@@ -88,7 +106,7 @@ void OptimalAlignment::printMatrix()
 	{
 		for (int columnIndex = 0; columnIndex < columns; columnIndex++)
 		{
-			std::cout << memo[rowIndex][columnIndex] << " ";
+			std::cout << matrix[rowIndex][columnIndex] << " ";
 		}
 		std::cout << "\n";
 	}	
@@ -96,10 +114,16 @@ void OptimalAlignment::printMatrix()
 
 int OptimalAlignment::findDistance(int cIndex, int uIndex)
 {
-	int del = 1;
-	int ins = 1;
-	int sub = 1;
 	bool isEndingLC;
+	int rowIndex = cIndex + 1;
+	int columnIndex = uIndex + 1;
+
+	int keep;
+	int substitution;
+	int insertion;
+	int deletion;
+
+	int infinity = std::numeric_limits<int>::max();
 
 	if ( cIndex < cLR.length() - 1 && islower(cLR[cIndex]) && isupper(cLR[cIndex+1]) )
 	{
@@ -114,35 +138,157 @@ int OptimalAlignment::findDistance(int cIndex, int uIndex)
 	{
 		if ( cLR[cIndex] == uLR[uIndex] )
 		{
-			return std::min( memo[cIndex-1][uIndex-1], memo[cIndex][uIndex-1] + del );
+			keep = std::abs( matrix[rowIndex-1][columnIndex-1] );
+			deletion = std::abs( matrix[rowIndex][columnIndex-1] + del );
+
+			return std::min( keep, deletion ); 
 		}
 		else
 		{
-			return memo[cIndex][uIndex-1] + del;
+			return matrix[rowIndex][columnIndex-1] + del;
 		}
 	}
 	else if (islower(cLR[cIndex]))
 	{
 		if ( cLR[cIndex] != uLR[uIndex] )
 		{
-			int infinity = std::numeric_limits<int>::max();
 			return infinity;
 		}		
 		else
 		{
-			return memo[cIndex-1][uIndex-1];
+			return matrix[rowIndex-1][columnIndex-1];
 		}
 	}
 	else
 	{
 		if ( cLR[cIndex] == uLR[uIndex] )
 		{
-			return memo[cIndex-1][uIndex-1];
+			return matrix[rowIndex-1][columnIndex-1];
 		}
 		else
 		{
-			return std::min( memo[cIndex-1][uIndex] + del, 
-				    std::min( memo[cIndex][uIndex-1] + ins, memo[cIndex-1][uIndex-1] + sub) );
+			deletion = std::abs( matrix[rowIndex-1][columnIndex] + del );
+			insertion = std::abs( matrix[rowIndex][columnIndex-1] + ins );
+			substitution = std::abs( matrix[rowIndex-1][columnIndex-1] + sub );
+
+			return std::min( deletion, std::min(insertion, substitution) ); 
 		}
 	}
 }
+
+void OptimalAlignment::findAlignments()
+{
+	cAlignment = "";
+	uAlignment = "";
+
+	int rowIndex = rows - 1;
+	int columnIndex = columns - 1;
+
+	int cIndex;
+	int uIndex;
+
+	int insertion;
+	int deletion;
+	int substitution;
+
+	int infinity = std::numeric_limits<int>::max();
+
+	int minimum;
+
+	bool lastWasInserted = false;
+	bool lastWasDeleted = false;
+	bool lastWasSubbed = false;
+
+	while (rowIndex > 0 || columnIndex > 0)
+	{
+		uIndex = columnIndex - 1;
+		cIndex = rowIndex - 1;
+
+		if (rowIndex > 0 && columnIndex > 0)
+		{
+			insertion = matrix[rowIndex][columnIndex-1];
+			deletion = matrix[rowIndex-1][columnIndex];
+			substitution = matrix[rowIndex-1][columnIndex-1];	
+		}
+		else if (rowIndex <= 0 && columnIndex > 0)
+		{
+			insertion = matrix[rowIndex][columnIndex-1];
+			deletion = infinity;
+			substitution = infinity;
+		}
+		else if (rowIndex > 0 && columnIndex <= 0)
+		{
+			insertion = infinity;
+			deletion = matrix[rowIndex-1][columnIndex];
+			substitution = infinity;
+		} 
+
+		minimum = std::min( insertion, std::min(deletion, substitution) );
+
+		if (insertion == minimum)
+		{
+			uAlignment = "-" + uAlignment;
+
+			if (!lastWasInserted || lastWasSubbed)
+			{
+				cAlignment = cLR[cIndex] + cAlignment;
+				lastWasInserted = true;
+			}
+
+			lastWasDeleted = false;
+			lastWasSubbed = false;
+
+			columnIndex--;
+		}		 
+		else if (deletion == minimum)
+		{
+			if (!lastWasDeleted || lastWasSubbed)
+			{
+				uAlignment = uLR[uIndex] + uAlignment;
+				lastWasDeleted = true;
+			}
+
+			lastWasInserted = false;
+			lastWasSubbed = false;
+
+			cAlignment = "-" + cAlignment;
+			rowIndex--;
+		}
+		else if (substitution == minimum)
+		{
+			if (!lastWasDeleted || lastWasSubbed)
+			{
+				uAlignment = uLR[uIndex] + uAlignment;
+			}
+			
+			if (!lastWasInserted || lastWasSubbed)
+			{
+				cAlignment = cLR[cIndex] + cAlignment;
+			}
+
+			lastWasInserted = false;
+			lastWasDeleted = false;
+			lastWasSubbed = true;
+
+			rowIndex--;
+			columnIndex--;
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

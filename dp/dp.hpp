@@ -1,9 +1,10 @@
 class OptimalAlignment
 {
 	public:
-                OptimalAlignment(std::string uLR, std::string cLR);
+                OptimalAlignment(std::string uncorrectedLongRead, std::string correctedLongRead);
                 ~OptimalAlignment();
-                std::string getAlignment();
+                std::string get_uAlignment();
+		std::string get_cAlignment();
                 int getDistance();
 		void printMatrix();
         private:
@@ -11,8 +12,13 @@ class OptimalAlignment
                 std::string cLR;
 		int rows;
 		int columns;
-                int**  memo;
-                std::string alignment;
+                int** matrix;
+		int del;
+		int ins;
+		int sub;
                 int distance;
+                std::string uAlignment;
+		std::string cAlignment;
                 int findDistance(int cIndex, int uIndex);
+		void findAlignments();
 };
