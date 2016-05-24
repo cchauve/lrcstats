@@ -19,6 +19,7 @@ class OptimalAlignment
                 int distance;
                 std::string uAlignment;
 		std::string cAlignment;
+		int costSub(int uIndex, int cIndex);
                 int findDistance(int cIndex, int uIndex);
 		void findAlignments();
 };
