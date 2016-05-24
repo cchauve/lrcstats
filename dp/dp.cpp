@@ -48,14 +48,25 @@ OptimalAlignment::OptimalAlignment(std::string uncorrectedLongRead, std::string 
 	rows = cLR.length() + 1;
 	columns = uLR.length() + 1;
 
-	matrix = new int*[rows];
-
-	assert(matrix);
+	try
+	{
+		matrix = new int*[rows];
+	}
+	catch( std::bad_alloc& ba )
+	{
+		std::cerr << "Memory allocation failed; unable to create DP matrix.\n";
+	}
 	
 	for (int rowIndex = 0; rowIndex < rows; rowIndex++)
 	{
+		try
+		{
 			matrix[rowIndex] = new int[columns];
-			assert(matrix[rowIndex]);
+		}	
+		catch( std::bad_alloc& ba )
+		{
+			std::cerr << "Memory allocation failed; unable to create DP matrix.\n";
+		}
 	}
 
 	for (int rowIndex = 0; rowIndex < rows; rowIndex++)
@@ -63,7 +74,7 @@ OptimalAlignment::OptimalAlignment(std::string uncorrectedLongRead, std::string 
 		matrix[rowIndex][0] = rowIndex;	
 	}
 
-	for (int columnIndex = 0; columnIndex < columns; columnIndex++)
+	for (int columnIndex = 1; columnIndex < columns; columnIndex++)
 	{
 		matrix[0][columnIndex] = 0;
 	}

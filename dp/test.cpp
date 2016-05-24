@@ -4,8 +4,8 @@
 
 int main()
 {
-	std::string uLR = "atcgagggg"; // uncorrected long read
-	std::string cLR = "atTTTcgaTTTTgggg"; // corrected long read
+	std::string uLR = "atcgagggg";
+	std::string cLR = "atTTTcgaTTTTgggg";
 
 	OptimalAlignment alignments(uLR, cLR);
 
