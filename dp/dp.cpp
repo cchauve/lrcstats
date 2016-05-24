@@ -17,15 +17,21 @@ class OptimalAlignment
 	private:
 		std::string uLR;
 		std::string cLR;
+
 		int rows;
 		int columns;
+
 		int** matrix;
+
 		int del;
 		int ins;
 		int sub;
 		int distance;
+
 		std::string uAlignment;
 		std::string cAlignment;
+
+		int costSub(int uIndex, int cIndex);
 		int findDistance(int cIndex, int uIndex);
 		void findAlignments();
 };
@@ -112,6 +118,18 @@ void OptimalAlignment::printMatrix()
 	}	
 }
 
+int OptimalAlignment::costSub(int uIndex, int cIndex)
+{
+	if (uLR[uIndex] == cLR[cIndex]) 
+	{
+		return 0;
+	}
+	else
+	{
+		return sub;
+	}
+}
+
 int OptimalAlignment::findDistance(int cIndex, int uIndex)
 {
 	bool isEndingLC;
@@ -169,7 +187,7 @@ int OptimalAlignment::findDistance(int cIndex, int uIndex)
 		{
 			deletion = std::abs( matrix[rowIndex-1][columnIndex] + del );
 			insertion = std::abs( matrix[rowIndex][columnIndex-1] + ins );
-			substitution = std::abs( matrix[rowIndex-1][columnIndex-1] + sub );
+			substitution = std::abs( matrix[rowIndex-1][columnIndex-1] + costSub(uIndex, cIndex) );
 
 			return std::min( deletion, std::min(insertion, substitution) ); 
 		}
@@ -190,29 +208,34 @@ void OptimalAlignment::findAlignments()
 	int insertion;
 	int deletion;
 	int substitution;
+	int currentCost;
 
 	int infinity = std::numeric_limits<int>::max();
 
-	int minimum;
-
 	bool lastWasInserted = false;
 	bool lastWasDeleted = false;
-	bool lastWasSubbed = false;
 
 	while (rowIndex > 0 || columnIndex > 0)
 	{
 		uIndex = columnIndex - 1;
 		cIndex = rowIndex - 1;
+		currentCost = matrix[rowIndex][columnIndex];
+
+		std::cout << "uLR == " << uLR << "\n";
+		std::cout << "cLR == " << cLR << "\n";
+
+		std::cout << "uIndex == " << uIndex << "\n";
+		std::cout << "cIndex == " << cIndex << "\n";
 
 		if (rowIndex > 0 && columnIndex > 0)
 		{
-			insertion = matrix[rowIndex][columnIndex-1];
-			deletion = matrix[rowIndex-1][columnIndex];
-			substitution = matrix[rowIndex-1][columnIndex-1];	
+			insertion = matrix[rowIndex][columnIndex-1] + ins;
+			deletion = matrix[rowIndex-1][columnIndex] + del;
+			substitution = matrix[rowIndex-1][columnIndex-1] + costSub(uIndex, cIndex);	
 		}
 		else if (rowIndex <= 0 && columnIndex > 0)
 		{
-			insertion = matrix[rowIndex][columnIndex-1];
+			insertion = matrix[rowIndex][columnIndex-1] + ins;
 			deletion = infinity;
 			substitution = infinity;
 		}
@@ -223,56 +246,61 @@ void OptimalAlignment::findAlignments()
 			substitution = infinity;
 		} 
 
-		minimum = std::min( insertion, std::min(deletion, substitution) );
-
-		if (insertion == minimum)
+		if (insertion == currentCost)
 		{
-			uAlignment = "-" + uAlignment;
+			std::cout << "Insertion\n";
 
-			if (!lastWasInserted || lastWasSubbed)
+			if (!lastWasInserted)
 			{
 				cAlignment = cLR[cIndex] + cAlignment;
-				lastWasInserted = true;
 			}
 
+			uAlignment = "-" + uAlignment;
+
+			lastWasInserted = true; 
 			lastWasDeleted = false;
-			lastWasSubbed = false;
 
 			columnIndex--;
 		}		 
-		else if (deletion == minimum)
+		else if (deletion == currentCost)
 		{
-			if (!lastWasDeleted || lastWasSubbed)
+			std::cout << "Deletion\n";
+
+			if (!lastWasDeleted)
 			{
 				uAlignment = uLR[uIndex] + uAlignment;
-				lastWasDeleted = true;
 			}
-
-			lastWasInserted = false;
-			lastWasSubbed = false;
 
 			cAlignment = "-" + cAlignment;
+
+			lastWasInserted = false;
+			lastWasDeleted = true;
+
 			rowIndex--;
 		}
-		else if (substitution == minimum)
+		else if (substitution == currentCost)
 		{
-			if (!lastWasDeleted || lastWasSubbed)
+			std::cout << "Substitution\n";
+
+			if (!lastWasDeleted)
 			{
 				uAlignment = uLR[uIndex] + uAlignment;
 			}
-			
-			if (!lastWasInserted || lastWasSubbed)
+
+			if (!lastWasInserted)
 			{
 				cAlignment = cLR[cIndex] + cAlignment;
 			}
 
 			lastWasInserted = false;
 			lastWasDeleted = false;
-			lastWasSubbed = true;
 
 			rowIndex--;
 			columnIndex--;
 		}
+
+		std::cout << "uAlignment == " << uAlignment << "\n";
+		std::cout << "cAlignment == " << cAlignment << "\n\n";
 	}
 }
 
