@@ -284,19 +284,25 @@ void OptimalAlignment::findAlignments()
 			}
 			else
 			{
-				std::cout << "Deletion\n";
-				uAlignment = uLR[uIndex] + uAlignment;
-				cAlignment = "-" + cAlignment;
-				columnIndex--;
+				if (deletion == currentCost)
+				{
+					std::cout << "Deletion\n";
+					uAlignment = uLR[uIndex] + uAlignment;
+					cAlignment = "-" + cAlignment;
+					columnIndex--;
+				}	
 			}
 		}
 		else if (islower(cLR[cIndex]))
 		{
-			std::cout << "Substitution\n";
-			uAlignment = uLR[uIndex] + uAlignment;
-			cAlignment = cLR[cIndex] + cAlignment;
-			rowIndex--;
-			columnIndex--;
+			if (substitution == currentCost)
+			{
+				std::cout << "Substitution\n";
+				uAlignment = uLR[uIndex] + uAlignment;
+				cAlignment = cLR[cIndex] + cAlignment;
+				rowIndex--;
+				columnIndex--;
+			}
 		}
 		else
 		{
@@ -321,6 +327,11 @@ void OptimalAlignment::findAlignments()
 				cAlignment = cLR[cIndex] + cAlignment;
 				rowIndex--;
 				columnIndex--;
+			}
+			else
+			{
+				std::cout << "ERROR: No paths found. Terminating backtracking.\n";
+				break;
 			}
 		}
 
