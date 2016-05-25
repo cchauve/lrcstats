@@ -173,7 +173,7 @@ int OptimalAlignment::findDistance(int cIndex, int uIndex)
 			keep = std::abs( matrix[rowIndex-1][columnIndex-1] );
 			deletion = std::abs( matrix[rowIndex][columnIndex-1] + del );
 
-			return std::min( keep, deletion ); 
+			return std::min(keep, deletion); 
 		}
 		else
 		{
@@ -184,7 +184,8 @@ int OptimalAlignment::findDistance(int cIndex, int uIndex)
 	{
 		if ( cLR[cIndex] != uLR[uIndex] )
 		{
-			return infinity;
+			deletion = matrix[rowIndex][columnIndex-1] + del;
+			return deletion;
 		}		
 		else
 		{
@@ -307,20 +308,40 @@ void OptimalAlignment::findAlignments()
 		}
 		else if (islower(cLR[cIndex]))
 		{
-			if (substitution == currentCost)
+			if ( cLR[cIndex] != uLR[uIndex] )
 			{
-				std::cout << "Substitution\n";
-				uAlignment = uLR[uIndex] + uAlignment;
-				cAlignment = cLR[cIndex] + cAlignment;
-				rowIndex--;
-				columnIndex--;
-			}
+				if (deletion == currentCost)
+				{
+					std::cout << "Deletion\n";
+					uAlignment = uLR[uIndex] + uAlignment;
+					cAlignment = "-" + cAlignment;
+					columnIndex--;
+				}		 
+				else
+				{
+					std::cerr << "ERROR CODE 3: No paths found. Terminating backtracking.\n";
+					rowIndex = 0;
+					columnIndex = 0;	
+				}
+			}		
 			else
 			{
-				std::cerr << "ERROR CODE 3: No paths found. Terminating backtracking.\n";
-				rowIndex = 0;
-				columnIndex = 0;
+				if (substitution == currentCost)
+				{
+					std::cout << "Substitution\n";
+					uAlignment = uLR[uIndex] + uAlignment;
+					cAlignment = cLR[cIndex] + cAlignment;
+					rowIndex--;
+					columnIndex--;
+				}
+				else
+				{
+					std::cerr << "ERROR CODE 4: No paths found. Terminating backtracking.\n";
+					rowIndex = 0;
+					columnIndex = 0;
+				}
 			}
+
 		}
 		else
 		{
@@ -348,7 +369,7 @@ void OptimalAlignment::findAlignments()
 			}
 			else
 			{
-				std::cerr << "ERROR CODE 4: No paths found. Terminating backtracking.\n";
+				std::cerr << "ERROR CODE 5: No paths found. Terminating backtracking.\n";
 				rowIndex = 0;
 				columnIndex = 0;
 			}
