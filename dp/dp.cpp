@@ -261,30 +261,67 @@ void OptimalAlignment::findAlignments()
 			isEndingLC = false;
 		}
 
-		if (deletion == currentCost)
+		if (isEndingLC)
 		{
-			std::cout << "Deletion\n";
-			uAlignment = uLR[uIndex] + uAlignment;
-			cAlignment = "-" + cAlignment;
-
-			columnIndex--;
-		}		 
-		else if (insertion == currentCost)
-		{
-			std::cout << "Insertion\n";
-			uAlignment = "-" + uAlignment;
-			cAlignment = cLR[cIndex] + cAlignment;
-
-			rowIndex--;
+			if ( cLR[cIndex] == uLR[uIndex] )
+			{
+						
+				if (deletion == currentCost)
+				{
+					std::cout << "Deletion\n";
+					uAlignment = uLR[uIndex] + uAlignment;
+					cAlignment = "-" + cAlignment;
+					columnIndex--;
+				}		 
+				else if (substitution == currentCost)
+				{
+					std::cout << "Substitution\n";
+					uAlignment = uLR[uIndex] + uAlignment;
+					cAlignment = cLR[cIndex] + cAlignment;
+					rowIndex--;
+					columnIndex--;
+				}
+			}
+			else
+			{
+				std::cout << "Deletion\n";
+				uAlignment = uLR[uIndex] + uAlignment;
+				cAlignment = "-" + cAlignment;
+				columnIndex--;
+			}
 		}
-		else if (substitution == currentCost)
+		else if (islower(cLR[cIndex]))
 		{
 			std::cout << "Substitution\n";
 			uAlignment = uLR[uIndex] + uAlignment;
 			cAlignment = cLR[cIndex] + cAlignment;
-
 			rowIndex--;
 			columnIndex--;
+		}
+		else
+		{
+			if (deletion == currentCost)
+			{
+				std::cout << "Deletion\n";
+				uAlignment = uLR[uIndex] + uAlignment;
+				cAlignment = "-" + cAlignment;
+				columnIndex--;
+			}		 
+			else if (insertion == currentCost)
+			{
+				std::cout << "Insertion\n";
+				uAlignment = "-" + uAlignment;
+				cAlignment = cLR[cIndex] + cAlignment;
+				rowIndex--;
+			}
+			else if (substitution == currentCost)
+			{
+				std::cout << "Substitution\n";
+				uAlignment = uLR[uIndex] + uAlignment;
+				cAlignment = cLR[cIndex] + cAlignment;
+				rowIndex--;
+				columnIndex--;
+			}
 		}
 
 		std::cout << "uAlignment == " << uAlignment << "\n";
