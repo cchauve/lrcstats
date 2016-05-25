@@ -48,6 +48,9 @@ OptimalAlignment::OptimalAlignment(std::string uncorrectedLongRead, std::string 
 	rows = cLR.length() + 1;
 	columns = uLR.length() + 1;
 
+	int cIndex;
+	int uIndex;
+
 	try
 	{
 		matrix = new int*[rows];
@@ -76,15 +79,15 @@ OptimalAlignment::OptimalAlignment(std::string uncorrectedLongRead, std::string 
 
 	for (int columnIndex = 1; columnIndex < columns; columnIndex++)
 	{
-		matrix[0][columnIndex] = 0;
+		matrix[0][columnIndex] = columnIndex;
 	}
 
-	for (int cIndex = 0; cIndex < cLR.length(); cIndex++)
+	for (int rowIndex = 1; rowIndex < rows; rowIndex++)
 	{
-		for (int uIndex = 0; uIndex < uLR.length(); uIndex++)
+		for (int columnIndex = 1; columnIndex < columns; columnIndex++)
 		{
-			int rowIndex = cIndex + 1;
-			int columnIndex = uIndex + 1;
+			cIndex = rowIndex - 1;
+			uIndex = columnIndex -  1;
 			matrix[rowIndex][columnIndex] = findDistance(cIndex, uIndex);
 		}		
 	}
@@ -232,20 +235,20 @@ void OptimalAlignment::findAlignments()
 
 		if (rowIndex > 0 && columnIndex > 0)
 		{
-			deletion = matrix[rowIndex][columnIndex-1] + ins;
-			insertion = matrix[rowIndex-1][columnIndex] + del;
+			deletion = matrix[rowIndex][columnIndex-1] + del;
+			insertion = matrix[rowIndex-1][columnIndex] + ins;
 			substitution = matrix[rowIndex-1][columnIndex-1] + costSub(uIndex, cIndex);	
 		}
 		else if (rowIndex <= 0 && columnIndex > 0)
 		{
-			deletion = matrix[rowIndex][columnIndex-1] + ins;
+			deletion = matrix[rowIndex][columnIndex-1] + del;
 			insertion = infinity;
 			substitution = infinity;
 		}
 		else if (rowIndex > 0 && columnIndex <= 0)
 		{
 			deletion = infinity;
-			insertion = matrix[rowIndex-1][columnIndex];
+			insertion = matrix[rowIndex-1][columnIndex] + ins;
 			substitution = infinity;
 		} 
 
