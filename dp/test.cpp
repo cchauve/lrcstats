@@ -5,7 +5,7 @@
 int main()
 {
 	std::string uLR = "atcgagggg";
-	std::string cLR = "atTTTcgaTTTTgggg";
+	std::string cLR = "atcgggg";
 
 	OptimalAlignment alignments(uLR, cLR);
 

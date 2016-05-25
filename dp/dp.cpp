@@ -284,7 +284,8 @@ void OptimalAlignment::findAlignments()
 				else
 				{
 					std::cerr << "ERROR CODE 1: No paths found. Terminating backtracking.\n";	
-					break;
+					rowIndex = 0;
+					columnIndex = 0;
 				}
 			}
 			else
@@ -299,7 +300,8 @@ void OptimalAlignment::findAlignments()
 				else
 				{
 					std::cerr << "ERROR CODE 2: No paths found. Terminating backtracking.\n";
-					break;
+					rowIndex = 0;
+					columnIndex = 0;
 				}
 			}
 		}
@@ -316,6 +318,8 @@ void OptimalAlignment::findAlignments()
 			else
 			{
 				std::cerr << "ERROR CODE 3: No paths found. Terminating backtracking.\n";
+				rowIndex = 0;
+				columnIndex = 0;
 			}
 		}
 		else
@@ -345,7 +349,8 @@ void OptimalAlignment::findAlignments()
 			else
 			{
 				std::cerr << "ERROR CODE 4: No paths found. Terminating backtracking.\n";
-				break;
+				rowIndex = 0;
+				columnIndex = 0;
 			}
 		}
 
