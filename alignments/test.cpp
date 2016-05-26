@@ -26,6 +26,5 @@ int main()
 	std::cout << "uAlignment == " << alignments2.get_uAlignment() << "\n";
 	std::cout << "cAlignment == " << alignments2.get_cAlignment() << "\n\n";
 
-	alignments2.printMatrix();
 	return 0;	
 }
