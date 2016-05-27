@@ -7,9 +7,11 @@ class CorrectedSegments
 {
         public:
                 CorrectedSegments(std::string clr, std::string ulr, std::string ulrMaf, std::string refMaf);
-                std::vector<cSeg> getSegments();
+                std::vector< std::string > getRefSegments();
+		std::vector< std::string > getcSegments();
         private:
-                std::vector<cSeg> segments;         
+		std::vector< std::string > refSegs;
+		std::vector< std::string > cSegs;
 };
 
 CorrectedSegments::CorrectedSegments(std::string clr, std::string ulr, std::string ulrMaf, std::string refMaf)
@@ -23,7 +25,6 @@ CorrectedSegments::CorrectedSegments(std::string clr, std::string ulr, std::stri
 	int numIns = 0;
 	std::vector<int> beginIndices;
 	std::vector<int> endingIndices;
-	std::vector< std::string > cSegs;
 	std::string cseg = "";	
 
 	for (int index = 0; index < alignLength; index++) {
@@ -51,7 +52,6 @@ CorrectedSegments::CorrectedSegments(std::string clr, std::string ulr, std::stri
 		cSegs.push_back(cseg);
 	}
 
-	std::vector< std::string > refSegs;
 	std::string refseg = "";
 	bool refSegZone = false;
 	int mafLength = refMaf.length();
@@ -85,4 +85,14 @@ CorrectedSegments::CorrectedSegments(std::string clr, std::string ulr, std::stri
 			baseIndex++;
 		}
 	}
+}
+
+std::vector< std::string > CorrectedSegments::getRefSegments()
+{
+	return refSegs;
+}
+
+std::vector< std::string > CorrectedSegments::getcSegments()
+{
+	return cSegs;
 }
