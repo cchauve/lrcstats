@@ -4,6 +4,8 @@
 
 int editScore(std::string ref, std::string uLR)
 {
+/* Since maf files give the true alignment, we can find the true "edit distance"
+ * (or edit score, as we call it) without trying to find an approximation. */
 	int score = 0;
 	int del = 1;
 	int ins = 1;
@@ -31,6 +33,7 @@ int editScore(std::string ref, std::string uLR)
 
 int editDistance(std::string ref, std::string cLR)
 {
+/* Usual Levenshtein edit distance function */
 	int delCost = 1;
 	int insCost = 1;
 	int subCost = 1;

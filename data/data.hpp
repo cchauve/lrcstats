@@ -13,6 +13,5 @@ class LongReadData
                 std::string ulr;
                 std::string ulrMaf;
                 std::string clr;        
-                std::string findRef(std::string refMaf);
-                std::string findUlr(std::string ulrMaf);
+                std::string stripMaf(std::string seq);
 };
