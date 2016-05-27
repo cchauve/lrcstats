@@ -3,17 +3,19 @@
 #include <algorithm>
 #include <limits>
 #include <cmath>
+#include <
 
 class OptimalAlignment
 {
 	public:
-		OptimalAlignment(std::string uncorrectedLongRead, std::string correctedLongRead);
+		OptimalAlignment(std::string refMaf, std::string ulrMaf, std::string cLR);
 		~OptimalAlignment();
 		std::string get_uAlignment();
 		std::string get_cAlignment();
 	private:
-		std::string uLR;
-		std::string cLR;
+		std::string ulr;
+		std::string clr;
+		std::string ref;
 		int rows;
 		int columns;
 		int** matrix;
@@ -22,19 +24,19 @@ class OptimalAlignment
 		int sub;
 		std::string uAlignment;
 		std::string cAlignment;
-		int costSub(int uIndex, int cIndex);
+		int cost(int uIndex, int cIndex);
 		void findAlignments();
 };
 
-OptimalAlignment::OptimalAlignment(std::string uncorrectedLongRead, std::string correctedLongRead)
+OptimalAlignment::OptimalAlignment(std::string refMaf, std::string ulrMaf, std::string cLR)
 {
 	del = 1;
 	ins = 1;
 	sub = 1;
-	uLR = uncorrectedLongRead;
-	cLR = correctedLongRead;
-	rows = cLR.length() + 1;
-	columns = uLR.length() + 1;
+	ulr = ulrMaf;
+	clr = cLR;
+	rows = clr.length() + 1;
+	columns = ulr.length() + 1;
 	int cIndex;
 	int uIndex;
 	bool isEndingLC;
@@ -66,16 +68,16 @@ OptimalAlignment::OptimalAlignment(std::string uncorrectedLongRead, std::string 
 		matrix[0][columnIndex] = columnIndex;
 	}
 
-	// Find the optimal edit distance such that all uncorrected segments of cLR are aligned with uncorrected
- 	// portions of uLR. 
+	// Find the optimal edit distance such that all uncorrected segments of clr are aligned with uncorrected
+ 	// portions of ulr. 
 	for (int rowIndex = 1; rowIndex < rows; rowIndex++) {
 		for (int columnIndex = 1; columnIndex < columns; columnIndex++) {
 			cIndex = rowIndex - 1;
 			uIndex = columnIndex -  1;
 
-			// Determine if the current letter in cLR is lowercase and is followed by an upper case letter
-			// i.e. if the current letter in cLR is an ending lowercase letter
-			if ( cIndex < cLR.length() - 1 && islower(cLR[cIndex]) && isupper(cLR[cIndex+1]) ) {
+			// Determine if the current letter in clr is lowercase and is followed by an upper case letter
+			// i.e. if the current letter in clr is an ending lowercase letter
+			if ( cIndex < clr.length() - 1 && islower(clr[cIndex]) && isupper(clr[cIndex+1]) ) {
 				isEndingLC = true;	
 			} else {
 				isEndingLC = false;
@@ -83,29 +85,28 @@ OptimalAlignment::OptimalAlignment(std::string uncorrectedLongRead, std::string 
 
 			if (isEndingLC) {
 				// If both letters are the same, we can either keep both letters or delete the one from
-				// cLR. If they are different, we can't keep both so we can only consider deleting the
-				// one from cLR.
-				if ( toupper(uLR[uIndex]) == toupper(cLR[cIndex]) ) {
+				// clr. If they are different, keeping both violates the schema so we can only consider deleting the
+				// one from clr.
+				if ( toupper(ulr[uIndex]) == toupper(clr[cIndex]) ) {
 					keep = matrix[rowIndex-1][columnIndex-1];
 					deletion = std::abs( matrix[rowIndex][columnIndex-1] + del );
 					matrix[rowIndex][columnIndex] = std::min(keep, deletion); 
 				} else {
 					matrix[rowIndex][columnIndex] = std::abs( matrix[rowIndex][columnIndex-1] + del );
 				}
-			} else if (islower(cLR[cIndex])) {
+			} else if (islower(clr[cIndex])) {
 				// Setting the position in the matrix to infinity ensures that we can never
 				// find an alignment where the uncorrected segments are not perfectly aligned.
-				if ( toupper( uLR[uIndex] ) != toupper( cLR[cIndex] ) ) {
-					matrix[rowIndex][columnIndex] = infinity;
-				} else {
+				if ( toupper( ulr[uIndex] ) == toupper( clr[cIndex] ) ) {
 					matrix[rowIndex][columnIndex] = matrix[rowIndex-1][columnIndex-1];
+				} else if ( ulr[uIndex] == '-' ) {
+					matrix[rowIndex][columnIndex] = matrix[rowIndex][columnIndex-1]; //Constant deletion
+				} else {
+					matrix[rowIndex][columnIndex] = infinity;
 				}
 			} else {
 				// Usual Levenshtein distance equations.
-				deletion = std::abs( matrix[rowIndex][columnIndex-1] + del );
-				insertion = std::abs( matrix[rowIndex-1][columnIndex] + ins );
-				substitution = std::abs( matrix[rowIndex-1][columnIndex-1] + costSub(uIndex, cIndex) );
-				matrix[rowIndex][columnIndex] = std::min( deletion, std::min(insertion, substitution) ); 
+				matrix[rowIndex][columnIndex] = cost(uIndex, cIndex);
 			}
 		}		
 	}
@@ -130,12 +131,15 @@ std::string OptimalAlignment::get_cAlignment()
 	return cAlignment;
 }
 
-int OptimalAlignment::costSub(int uIndex, int cIndex)
+int OptimalAlignment::cost(int uIndex, int cIndex)
 {
-	if ( toupper( uLR[uIndex] ) == toupper( cLR[cIndex] ) ) {
-		return 0;
+	if (islower(clr[cIndex])) {
+		return 0
+	}
+	else if (toupper(ref[uIndex]) == clr[cIndex]) {
+		return 2;
 	} else {
-		return sub;
+		return 0;
 	}
 }
 
@@ -155,7 +159,7 @@ void OptimalAlignment::findAlignments()
 	int infinity = std::numeric_limits<int>::max();
 
 	// Follow the best path from the bottom right to the top left of the matrix.
-	// This is equivalent to the optimal alignment between uLR and cLR.
+	// This is equivalent to the optimal alignment between ulr and clr.
 	// The path we follow is restricted to the conditions set when computing the matrix,
 	// i.e. we can never follow a path that the edit distance equations do not allow.
 	while (rowIndex > 0 || columnIndex > 0) {
@@ -167,7 +171,7 @@ void OptimalAlignment::findAlignments()
 		if (rowIndex > 0 && columnIndex > 0) {
 			deletion = matrix[rowIndex][columnIndex-1] + del;
 			insertion = matrix[rowIndex-1][columnIndex] + ins;
-			substitution = matrix[rowIndex-1][columnIndex-1] + costSub(uIndex, cIndex);	
+			substitution = matrix[rowIndex-1][columnIndex-1] + cost(uIndex, cIndex);	
 		} else if (rowIndex <= 0 && columnIndex > 0) {
 			deletion = matrix[rowIndex][columnIndex-1] + del;
 			insertion = infinity;
@@ -179,21 +183,21 @@ void OptimalAlignment::findAlignments()
 		} 
 
 		// Make sure we follow the same path as dictated by the edit distance equations. 
-		if ( cIndex < cLR.length() - 1 && islower(cLR[cIndex]) && isupper(cLR[cIndex+1]) ) {
+		if ( cIndex < clr.length() - 1 && islower(clr[cIndex]) && isupper(clr[cIndex+1]) ) {
 			isEndingLC = true;	
 		} else {
 			isEndingLC = false;
 		}
 
 		if (isEndingLC) {
-			if ( toupper( uLR[uIndex] ) == toupper( cLR[cIndex] ) ) {
+			if ( toupper( ulr[uIndex] ) == toupper( clr[cIndex] ) ) {
 				if (deletion == currentCost) {
-					uAlignment = uLR[uIndex] + uAlignment;
+					uAlignment = ulr[uIndex] + uAlignment;
 					cAlignment = "-" + cAlignment;
 					columnIndex--;
 				} else if (substitution == currentCost) {
-					uAlignment = uLR[uIndex] + uAlignment;
-					cAlignment = cLR[cIndex] + cAlignment;
+					uAlignment = ulr[uIndex] + uAlignment;
+					cAlignment = clr[cIndex] + cAlignment;
 					rowIndex--;
 					columnIndex--;
 				} else {
@@ -203,7 +207,7 @@ void OptimalAlignment::findAlignments()
 				}
 			} else {
 				if (deletion == currentCost) {
-					uAlignment = uLR[uIndex] + uAlignment;
+					uAlignment = ulr[uIndex] + uAlignment;
 					cAlignment = "-" + cAlignment;
 					columnIndex--;
 				} else {
@@ -212,10 +216,10 @@ void OptimalAlignment::findAlignments()
 					columnIndex = 0;
 				}
 			}
-		} else if (islower(cLR[cIndex])) {
+		} else if (islower(clr[cIndex])) {
 			if (substitution == currentCost) {
-				uAlignment = uLR[uIndex] + uAlignment;
-				cAlignment = cLR[cIndex] + cAlignment;
+				uAlignment = ulr[uIndex] + uAlignment;
+				cAlignment = clr[cIndex] + cAlignment;
 				rowIndex--;
 				columnIndex--;
 			} else {
@@ -225,16 +229,16 @@ void OptimalAlignment::findAlignments()
 			}
 		} else {
 			if (deletion == currentCost) {
-				uAlignment = uLR[uIndex] + uAlignment;
+				uAlignment = ulr[uIndex] + uAlignment;
 				cAlignment = "-" + cAlignment;
 				columnIndex--;
 			} else if (insertion == currentCost) {
 				uAlignment = "-" + uAlignment;
-				cAlignment = cLR[cIndex] + cAlignment;
+				cAlignment = clr[cIndex] + cAlignment;
 				rowIndex--;
 			} else if (substitution == currentCost) {
-				uAlignment = uLR[uIndex] + uAlignment;
-				cAlignment = cLR[cIndex] + cAlignment;
+				uAlignment = ulr[uIndex] + uAlignment;
+				cAlignment = clr[cIndex] + cAlignment;
 				rowIndex--;
 				columnIndex--;
 			} else {
