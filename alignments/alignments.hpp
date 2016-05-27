@@ -1,22 +1,18 @@
 class OptimalAlignment
 {
-	public:
+        public:
                 OptimalAlignment(std::string refMaf, std::string ulrMaf, std::string cLR);
                 ~OptimalAlignment();
-                std::string get_uAlignment();
-		std::string get_cAlignment();
+                std::string get_cAlignment();
         private:
+                std::string ref;
                 std::string ulr;
                 std::string clr;
-		std::string ref;
-		int rows;
-		int columns;
+                int rows;
+                int columns;
                 int** matrix;
-		int del;
-		int ins;
-		int sub;
-                std::string uAlignment;
-		std::string cAlignment;
-		int cost(int uIndex, int cIndex);
-		void findAlignments();
+                std::string cAlignment;
+                int cost(int urIndex, int cIndex);
+                void findAlignments();
 };
+
