@@ -4,27 +4,16 @@
 
 int main()
 {
-	std::string uLR = "agatcgggg";
-	std::string cLR = "agaTTTtcAGGg";
+	
+	std::string cLR = "gTCctctGgc";
+	std::string clrMaf = "gT-C-ct--ctGgc";
+	std::string ulrMaf = "G----CTCCCT-GC";
+	std::string refMaf = "GTAAAAT--CTGGC";
+	
+	int score = 6; 
 
-	OptimalAlignment alignments(uLR, cLR);
+	OptimalAlignment alignments(refMaf, ulrMaf, cLR);
 
-	std::cout << "uLR = " << uLR << "\n";
-	std::cout << "cLR = " << cLR << "\n";
+	return 0;
 
-	std::cout << "uAlignment == " << alignments.get_uAlignment() << "\n";
-	std::cout << "cAlignment == " << alignments.get_cAlignment() << "\n\n";
-
-	uLR = "atgctatgc";
-	cLR = "aGGGGTtaGC";
-
-	OptimalAlignment alignments2(uLR, cLR);
-
-	std::cout << "uLR = " << uLR << "\n";
-	std::cout << "cLR = " << cLR << "\n";
-
-	std::cout << "uAlignment == " << alignments2.get_uAlignment() << "\n";
-	std::cout << "cAlignment == " << alignments2.get_cAlignment() << "\n\n";
-
-	return 0;	
 }
