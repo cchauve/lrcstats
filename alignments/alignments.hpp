@@ -4,6 +4,7 @@ class OptimalAlignment
                 OptimalAlignment(std::string refMaf, std::string ulrMaf, std::string cLR);
                 ~OptimalAlignment();
                 std::string get_cAlignment();
+		std::string getRefAlignment();
 		int getDistance();
         private:
                 std::string ref;
@@ -13,6 +14,7 @@ class OptimalAlignment
                 int columns;
                 int** matrix;
                 std::string cAlignment;
+		std::string refAlignment;
 		int distance;
 		void printMatrix();
 		int cost(char refBase, char cBase);
