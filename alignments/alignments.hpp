@@ -19,5 +19,6 @@ class OptimalAlignment
 		void printMatrix();
 		int cost(char refBase, char cBase);
                 void findAlignments();
+		void processAlignments();
 };
 

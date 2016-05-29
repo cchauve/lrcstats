@@ -13,7 +13,11 @@ int main()
 	int score = 6; 
 
 	OptimalAlignment alignments(refMaf, ulrMaf, cLR);
-	std::cout << clrMaf << "\n";
+	std::string refAlignment = alignments.getRefAlignment();
+	std::string cAlignment = alignments.get_cAlignment();
+
+	std::cout << cAlignment << "\n";
+	std::cout << refAlignment << "\n";
 	return 0;
 
 }
