@@ -15,3 +15,5 @@ class LongReadData
                 std::string clr;        
                 std::string stripMaf(std::string seq);
 };
+
+
