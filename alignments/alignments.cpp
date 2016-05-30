@@ -7,20 +7,26 @@
 class OptimalAlignment
 {
 	public:
-		OptimalAlignment(std::string refMaf, std::string ulrMaf, std::string cLR);
+		OptimalAlignment(std::string reference, std::string uLongRead, std::string cLongRead);
 		~OptimalAlignment();
+		std::string getClrMaf();
+		std::string getUlrMaf();
+		std::string getRefMaf();
 		std::string get_cAlignment();
 		std::string getRefAlignment();
 		int getDistance();
 	private:
-		std::string ref;
-		std::string ulr;
 		std::string clr;
+		std::string ulr;
+		std::string ref;
+		std::string clrMaf;
+		std::string ulrMaf;
+		std::string refMaf;
+		std::string cAlignment;
+		std::string refAlignment;
 		int rows;
 		int columns;
 		int** matrix;
-		std::string cAlignment;
-		std::string refAlignment;
 		int distance;
 		void printMatrix();
 		int cost(char refBase, char cBase);
@@ -28,11 +34,11 @@ class OptimalAlignment
 		void processAlignments();
 };
 
-OptimalAlignment::OptimalAlignment(std::string refMaf, std::string ulrMaf, std::string cLR)
+OptimalAlignment::OptimalAlignment(std::string reference, std::string uLongRead, std::string cLongRead)
 {
-	ref = refMaf;
-	ulr = ulrMaf;
-	clr = cLR;
+	ref = reference;
+	ulr = uLongRead;
+	clr = cLongRead;
 	rows = clr.length() + 1;
 	columns = ulr.length() + 1;
 	int cIndex;
@@ -125,6 +131,22 @@ OptimalAlignment::~OptimalAlignment(void)
 	delete matrix;
 }
 
+std::string OptimalAlignment::getClrMaf()
+{
+	return clrMaf;
+}
+
+
+std::string OptimalAlignment::getUlrMaf()
+{
+	return ulrMaf;
+}
+
+std::string OptimalAlignment::getRefMaf()
+{
+	return refMaf;
+}
+
 std::string OptimalAlignment::get_cAlignment()
 {
 	return cAlignment;
@@ -174,7 +196,9 @@ int OptimalAlignment::cost(char refBase, char cBase)
 
 void OptimalAlignment::findAlignments()
 {
-	cAlignment = "";
+	clrMaf = "";
+	ulrMaf = "";
+	refMaf = "";
 	int rowIndex = rows - 1;
 	int columnIndex = columns - 1;
 	int cIndex;
@@ -191,10 +215,17 @@ void OptimalAlignment::findAlignments()
 	// The path we follow is restricted to the conditions set when computing the matrix,
 	// i.e. we can never follow a path that the edit distance equations do not allow.
 	while (rowIndex > 0 || columnIndex > 0) {
+		std::cout << "rowIndex == " << rowIndex << "\n";
+		std::cout << "columnIndex == " << columnIndex << "\n";
+		std::cout << "Before\n";
+		std::cout << "clrMaf == " << clrMaf << "\n";
+		std::cout << "ulrMaf == " << ulrMaf << "\n";
+		std::cout << "refMaf == " << refMaf << "\n";
+
 		urIndex = columnIndex - 1;
 		cIndex = rowIndex - 1;
-
 		currentCost = matrix[rowIndex][columnIndex];
+
 		// Set the costs of the different operations, 
 		// ensuring we don't go out of bounds of the matrix.
 		if (rowIndex > 0 && columnIndex > 0) {
@@ -217,16 +248,37 @@ void OptimalAlignment::findAlignments()
 		} else {
 			isEndingLC = false;
 		}
+		if (rowIndex == 0 || columnIndex == 0) {
+				std::cout << "Path 6\n";
+				if (rowIndex == 0) {
+					std::cout << "Deletion\n";
+					clrMaf = '-' + clrMaf;
+					ulrMaf = ulr[urIndex] + ulrMaf;
+					refMaf = ref[urIndex] + refMaf;
+					columnIndex--;
+				} else {
+					std::cout << "Insertion\n";
+					clrMaf = clr[cIndex] + clrMaf;
+					ulrMaf = '-' + ulrMaf;
+					refMaf = '-' + refMaf;
+					rowIndex--;
+				}
+		}
 
-		if (isEndingLC && rowIndex > 0 && columnIndex > 0) {
+		if (isEndingLC) {
 			if ( toupper( ulr[urIndex] ) == toupper( clr[cIndex] ) ) {
+				std::cout << "Path 1\n";
 				if (deletion == currentCost) {
-					cAlignment = '-' + cAlignment;
-					refAlignment = ref[urIndex] + refAlignment;
+					std::cout << "Deletion\n";
+					clrMaf = '-' + clrMaf;
+					ulrMaf = ulr[urIndex] + ulrMaf;
+					refMaf = ref[urIndex] + refMaf;
 					columnIndex--;
 				} else if (substitute == currentCost) {
-					cAlignment = clr[cIndex] + cAlignment;
-					refAlignment = ref[urIndex] + refAlignment;
+					std::cout << "Substitution\n";
+					clrMaf = clr[cIndex] + clrMaf;
+					ulrMaf = ulr[urIndex] + ulrMaf;
+					refMaf = ref[urIndex] + refMaf;
 					rowIndex--;
 					columnIndex--;
 				} else {
@@ -235,9 +287,12 @@ void OptimalAlignment::findAlignments()
 					columnIndex = 0;
 				}
 			} else {
+				std::cout << "Path 2\n";
 				if (deletion == currentCost) {
-					cAlignment = '-' + cAlignment;
-					refAlignment = ref[urIndex] + refAlignment;
+					std::cout << "Deletion\n";
+					clrMaf = '-' + clrMaf;
+					ulrMaf = ulr[urIndex] + ulrMaf;
+					refMaf = ref[urIndex] + refMaf;
 					columnIndex--;
 				} else {
 					std::cerr << "ERROR CODE 2: No paths found. Terminating backtracking.\n";
@@ -247,9 +302,12 @@ void OptimalAlignment::findAlignments()
 			}
 		} else if (islower(clr[cIndex]) && rowIndex > 0 && columnIndex > 0) {
 			if ( toupper( ulr[urIndex] ) == toupper( clr[cIndex] ) ) {
+				std::cout << "Path 3\n";
 				if (substitute == currentCost) {
-					cAlignment = clr[cIndex] + cAlignment;	
-					refAlignment = ref[urIndex] + refAlignment;
+					std::cout << "Substitution\n";
+					clrMaf = clr[cIndex] + clrMaf;	
+					ulrMaf = ulr[urIndex] + ulrMaf;
+					refMaf = ref[urIndex] + refMaf;
 					rowIndex--;
 					columnIndex--;
 				} else {
@@ -258,10 +316,13 @@ void OptimalAlignment::findAlignments()
 					columnIndex = 0;
 				}
 			} else if (ulr[urIndex] == '-') {
+				std::cout << "Path 4\n";
 				deletion = matrix[rowIndex][columnIndex-1];
 				if (deletion == currentCost) {
-					cAlignment = '-' + cAlignment;
-					refAlignment = ref[urIndex] + refAlignment;
+					std::cout << "Deletion\n";
+					clrMaf = '-' + clrMaf;
+					ulrMaf = ulr[urIndex] + ulrMaf;
+					refMaf = ref[urIndex] + refMaf;
 					columnIndex--;
 				} else {
 					std::cerr << "ERROR CODE 4: No paths found. Terminating backtracking.\n";
@@ -273,18 +334,25 @@ void OptimalAlignment::findAlignments()
 				rowIndex = 0;
 				columnIndex = 0;
 			}
-		} else if (rowIndex > 0 && columnIndex > 0) {
+		} else {
+			std::cout << "Path 5\n";
 			if (deletion == currentCost) {
-				cAlignment = '-' + cAlignment;
-				refAlignment = ref[urIndex] + refAlignment;
+				std::cout << "Deletion\n";
+				clrMaf = '-' + clrMaf;
+				ulrMaf = ulr[urIndex] + ulrMaf;
+				refMaf = ref[urIndex] + refMaf;
 				columnIndex--;
 			} else if (insert == currentCost) {
-				cAlignment = clr[cIndex] + cAlignment;
-				refAlignment = '-' + refAlignment;
+				std::cout << "Insertion\n";
+				clrMaf = clr[cIndex] + clrMaf;
+				ulrMaf = '-' + ulrMaf;
+				refMaf = '-' + refMaf;
 				rowIndex--;
 			} else if (substitute == currentCost) {
-				cAlignment = clr[cIndex] + cAlignment;
-				refAlignment = ref[urIndex] + refAlignment;
+				std::cout << "Substitution\n";
+				clrMaf = clr[cIndex] + clrMaf;
+				ulrMaf = ulr[urIndex] + ulrMaf;
+				refMaf = ref[urIndex] + refMaf;
 				rowIndex--;
 				columnIndex--;
 			} else {
@@ -292,33 +360,24 @@ void OptimalAlignment::findAlignments()
 				rowIndex = 0;
 				columnIndex = 0;
 			}
-		} else {
-			if (rowIndex == 0) {
-				cAlignment = '-' + cAlignment;
-				refAlignment = ref[urIndex] + refAlignment;
-				columnIndex--;
-			} else {
-				cAlignment = clr[cIndex] + cAlignment;
-				refAlignment = '-' + refAlignment;
-				rowIndex--;
-			}
-		}
+		} 		std::cout << "After\n";
+		std::cout << "clrMaf == " << clrMaf << "\n";
+		std::cout << "ulrMaf == " << ulrMaf << "\n";
+		std::cout << "refMaf == " << refMaf << "\n\n";
 	}
 }
 
 void OptimalAlignment::processAlignments()
 {
 	// Remove all pairs of the form (-,-)
-	std::string clrTemp = "";
-	std::string refTemp = "";	
-	int length = cAlignment.length();
+	cAlignment = "";
+	refAlignment = "";	
+	int length = clrMaf.length();
 
 	for (int i = 0; i < length; i++) {
-		if (cAlignment[i] != '-' || refAlignment[i] != '-') {
-			clrTemp = clrTemp + cAlignment[i];
-			refTemp = refTemp + refAlignment[i];
+		if (clrMaf[i] != '-' || refMaf[i] != '-') {
+			cAlignment = cAlignment + clrMaf[i];
+			refAlignment = refAlignment + refMaf[i];
 		}
 	}
-	cAlignment = clrTemp;
-	refAlignment = refTemp;
 }
