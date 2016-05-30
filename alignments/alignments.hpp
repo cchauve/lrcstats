@@ -1,11 +1,11 @@
-class OptimalAlignment
+class Alignments
 {
         public:
-                OptimalAlignment(std::string reference, std::string uLongRead, std::string cLongRead);
-                ~OptimalAlignment();
-                std::string getClrMaf();
-                std::string getUlrMaf();
-                std::string getRefMaf();
+                Alignments(std::string reference, std::string uLongRead, std::string cLongRead);
+                ~Alignments();
+                std::string getClr();
+                std::string getUlr();
+                std::string getRef();
                 std::string get_cAlignment();
                 std::string getRefAlignment();
                 int getDistance();

@@ -4,14 +4,14 @@
 #include <limits>
 #include <cmath>
 
-class OptimalAlignment
+class Alignments
 {
 	public:
-		OptimalAlignment(std::string reference, std::string uLongRead, std::string cLongRead);
-		~OptimalAlignment();
-		std::string getClrMaf();
-		std::string getUlrMaf();
-		std::string getRefMaf();
+		Alignments(std::string reference, std::string uLongRead, std::string cLongRead);
+		~Alignments();
+		std::string getClr();
+		std::string getUlr();
+		std::string getRef();
 		std::string get_cAlignment();
 		std::string getRefAlignment();
 		int getDistance();
@@ -34,7 +34,7 @@ class OptimalAlignment
 		void processAlignments();
 };
 
-OptimalAlignment::OptimalAlignment(std::string reference, std::string uLongRead, std::string cLongRead)
+Alignments::Alignments(std::string reference, std::string uLongRead, std::string cLongRead)
 {
 	ref = reference;
 	ulr = uLongRead;
@@ -123,7 +123,7 @@ OptimalAlignment::OptimalAlignment(std::string reference, std::string uLongRead,
 	processAlignments();
 }
 
-OptimalAlignment::~OptimalAlignment(void)
+Alignments::~Alignments(void)
 {
 	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
 		delete matrix[rowIndex];
@@ -131,38 +131,38 @@ OptimalAlignment::~OptimalAlignment(void)
 	delete matrix;
 }
 
-std::string OptimalAlignment::getClrMaf()
+std::string Alignments::getClr()
 {
 	return clrMaf;
 }
 
 
-std::string OptimalAlignment::getUlrMaf()
+std::string Alignments::getUlr()
 {
 	return ulrMaf;
 }
 
-std::string OptimalAlignment::getRefMaf()
+std::string Alignments::getRef()
 {
 	return refMaf;
 }
 
-std::string OptimalAlignment::get_cAlignment()
+std::string Alignments::get_cAlignment()
 {
 	return cAlignment;
 }
 
-std::string OptimalAlignment::getRefAlignment()
+std::string Alignments::getRefAlignment()
 {
 	return refAlignment;
 }
 
-int OptimalAlignment::getDistance()
+int Alignments::getDistance()
 {
 	return distance;
 }
 
-void OptimalAlignment::printMatrix()
+void Alignments::printMatrix()
 {
 	int columnIndex;
 	int infinity = std::numeric_limits<int>::max();
@@ -181,7 +181,7 @@ void OptimalAlignment::printMatrix()
 	}
 }
 
-int OptimalAlignment::cost(char refBase, char cBase)
+int Alignments::cost(char refBase, char cBase)
 {
 	if ( islower(cBase) ) {
 		return 0;
@@ -194,7 +194,7 @@ int OptimalAlignment::cost(char refBase, char cBase)
 	}
 }
 
-void OptimalAlignment::findAlignments()
+void Alignments::findAlignments()
 {
 	clrMaf = "";
 	ulrMaf = "";
@@ -263,9 +263,7 @@ void OptimalAlignment::findAlignments()
 					refMaf = '-' + refMaf;
 					rowIndex--;
 				}
-		}
-
-		if (isEndingLC) {
+		} else if (isEndingLC) {
 			if ( toupper( ulr[urIndex] ) == toupper( clr[cIndex] ) ) {
 				std::cout << "Path 1\n";
 				if (deletion == currentCost) {
@@ -367,7 +365,7 @@ void OptimalAlignment::findAlignments()
 	}
 }
 
-void OptimalAlignment::processAlignments()
+void Alignments::processAlignments()
 {
 	// Remove all pairs of the form (-,-)
 	cAlignment = "";
