@@ -3,7 +3,97 @@
 #include <string>
 #include <vector>
 
-int main()
+#include "data/data.hpp"
+#include "alignments/alignments.hpp"
+#include "measures/measures.hpp"
+
+int main(int argc, char* argv[])
 {
+	std::string mafInputName = "test_input.maf";
+	std::string clrName = "test_clr.fasta";
+	std::string mafOutputName = "test_out.maf";
+
+	std::ifstream mafInput (mafInputName, std::ios::in); //Add ios::ate to skip directly to first group of reads?
+	std::ifstream clrInput (clrName, std::ios::in);
+	MafFile mafOutput (mafOutputName);
+
+	if (!mafInput.is_open() || !clrInput.is_open()) {
+		std::cerr << "Unable to open either maf input or corrected long reads file\n";
+		return 1;
+	}	
+
+	std::string mafLine;
+	std::string clrLine;
+
+	std::vector<std::string> mafTokens;
+	std::vector<std::string> clrTokens;
+
+	std::string ref = "";
+	std::string ulr = "";
+	std::string clr = "";
+
+	std::string readName = "";
+	std::string refOrient = "";
+	std::string readOrient = "";
+	std::string start = "";
+	std::string srcSize = "";
+
+	bool refNonEmpty;
+	bool ulrNonEmpty;
+
+	Alignments alignments(ref, ulr, clr);
+	ReadInfo readInfo(readName, refOrient, readOrient, start, srcSize);	
+
+	while (!mafInput.eof()) {
+		// Read from maf file first
+		
+		// //Skip line
+		std::getline(mafInput, mafLine); 
+		// Read ref line
+		std::getline(mafInput, mafLine);
+
+		if (mafLine != "") {
+			mafTokens = split(mafLine);	
+			ref = mafTokens.at(6);			
+			refOrient = mafTokens.at(4);
+			start = mafTokens.at(2);
+			srcSize = mafTokens.at(5);
+			
+			refNonEmpty = true;
+		} else {
+			refNonEmpty = false;
+		}
+
+		// Read ulr line
+		std::getline(mafInput, mafLine);
+
+		if (mafLine != "") {
+			mafTokens = split(mafLine);	
+			ulr = mafTokens.at(6);
+			readName = mafTokens.at(1);
+			readOrient = mafTokens.at(4);
+			ulrNonEmpty = true;
+		} else {
+			ulrNonEmpty = false;
+		}
+
+		//Skip line again
+		std::getline(mafInput, mafLine); 
+
+		if (refNonEmpty && ulrNonEmpty) {
+			readInfo.reset(readName, refOrient, readOrient, start, srcSize);
+			// Next, read from clr file
+			clr = "ACGTACGT"; 
+			alignments.reset(ref, ulr, clr);
+
+			// Write info into maf file
+			mafOutput.addReads(alignments, readInfo);
+			
+			// Do statistics
+		}
+	}
+
+	mafInput.close();
+	clrInput.close();
 	return 0;
 }
