@@ -63,6 +63,7 @@ Alignments::~Alignments(void)
 
 void Alignments::reset(std::string reference, std::string uLongRead, std::string cLongRead)
 {
+	// Resets in case of need to reassign values of object
 	deleteMatrix();
 	ref = reference;
 	ulr = uLongRead;

@@ -7,6 +7,7 @@ class Alignments
                 Alignments(std::string reference, std::string uLongRead, std::string cLongRead);
 		Alignments (const Alignments &alignments);
                 ~Alignments();
+		// In case of need to reassign values to object, reset
 		void reset(std::string reference, std::string uLongRead, std::string cLongRead);
                 std::string getClr();
                 std::string getUlr();
