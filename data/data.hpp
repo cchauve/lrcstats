@@ -3,9 +3,7 @@
 
 #include "../alignments/alignments.hpp"
 
-std::vector<std::string> &split(const std::string &str, char delim, std::vector<std::string> &elems);
-
-std::vector<std::string> split(const std::string &str, char delim);
+std::vector<std::string> split(const std::string &str);
 
 int gaplessLength(std::string read);
 

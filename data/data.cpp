@@ -6,27 +6,22 @@
 #include <algorithm>
 #include "data.hpp"
 
-std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems)
+std::vector<std::string> split(const std::string &s)
 {
 	/* Tokenizes (i.e. isolates words in sentences and adds to vector) similar to
  	 * .split() function in python
  	 */ 
-
+	
+	std::vector<std::string> elems;
 	std::stringstream ss(s);
 	std::string item;
-	while (std::getline(ss, item, delim)) {
+
+	while (std::getline(ss, item, ' ')) {
 		if (!item.empty()) {
             		elems.push_back(item);
         	}
     	}
-	return elems;
-}
 
-std::vector<std::string> split(const std::string &s, char delim)
-{
-	// Similar to &split, but returns a vector
-	std::vector<std::string> elems;
-	split(s, delim, elems);
 	return elems;
 }
 
