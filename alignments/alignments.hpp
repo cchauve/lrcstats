@@ -12,6 +12,8 @@ class Alignments
                 std::string getRef();
                 std::string get_cAlignment();
                 std::string getRefAlignment();
+		int getDistance();
+                void printMatrix();
         private:
 		// long reads and ref before processing
                 std::string clr;
@@ -29,8 +31,8 @@ class Alignments
                 int columns;
 		// Holds matrix
                 int** matrix;
+		int distance;
 		// Member functions
-                void printMatrix();
                 int cost(char refBase, char cBase);
                 void findAlignments();
                 void processAlignments();

@@ -90,8 +90,50 @@ Alignments::Alignments(std::string reference, std::string uLongRead, std::string
 			}
 		}		
 	}
+	distance = matrix[rows-1][columns-1];
 	findAlignments();
 	processAlignments();
+}
+
+Alignments::Alignments(const Alignments &alignments)
+{
+	// First, copy all member fields
+	clr = alignments.clr;
+	ulr = alignments.ulr;
+	ref = alignments.ref;
+	clrMaf = alignments.refMaf;
+	ulrMaf = alignments.ulrMaf;
+	refMaf = alignments.refMaf;
+	cAlignment = alignments.cAlignment;
+	refAlignment = alignments.refAlignment;
+	rows = alignments.rows;
+	columns = alignments.columns;
+	distance = alignments.distance;
+	
+	// Next, copy the matrix
+	// Allocate memory for the matrix
+	
+	try {
+		matrix = new int*[rows];
+	} catch (std::bad_alloc& b) {
+		std::cerr << "Memory allocation failed; unable to copy DP matrix.\n";
+	}
+
+	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
+		try {
+			matrix[rowIndex] = new int[columns];
+		} catch (std::bad_alloc& ba) {
+			std::cerr << "Memory allocation failed; unable to copy DP matrix.\n";
+		}
+	}
+
+	int columnIndex;
+	
+	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
+		for (columnIndex = 0; columnIndex < columns; columnIndex++) {
+			matrix[rowIndex][columnIndex] = alignments.matrix[rowIndex][columnIndex];
+		}
+	}
 }
 
 Alignments::~Alignments(void)
