@@ -30,7 +30,8 @@ int gaplessLength(std::string read) {
 	return read.length(); 
 }
 
-ReadInfo::ReadInfo(std::string readName, std::string refOrientation, std::string readOrientation, int refStart, int refSrcSize)
+ReadInfo::ReadInfo(std::string readName, std::string refOrientation, std::string readOrientation, 
+			std::string refStart, std::string refSrcSize)
 {
 	name = readName;
 	refOrient = refOrientation;
@@ -54,12 +55,12 @@ std::string ReadInfo::getReadOrient()
 	return readOrient;
 }
 
-int ReadInfo::getStart()
+std::string ReadInfo::getStart()
 {
 	return start;
 }
 
-int ReadInfo::getSrcSize()
+std::string ReadInfo::getSrcSize()
 {
 	return srcSize;
 }
@@ -95,7 +96,7 @@ void MafFile::addReads(Alignments alignments, ReadInfo readInfo)
 	std::string uName = readInfo.getName() + ".uncorrected";
 	std::string cName = readInfo.getName() + ".corrected";
 
-	int refStart = readInfo.getStart();
+	std::string refStart = readInfo.getStart();
 	int uStart = 0;
 	int cStart = 0;
  
@@ -103,7 +104,7 @@ void MafFile::addReads(Alignments alignments, ReadInfo readInfo)
 	int uSize = gaplessLength(ulr);
 	int cSize = gaplessLength(clr);
 
-	int refSrcSize = readInfo.getSrcSize();
+	std::string refSrcSize = readInfo.getSrcSize();
 	int uSrcSize = uSize;
 	int cSrcSize = cSize;
 

@@ -10,18 +10,19 @@ int gaplessLength(std::string read);
 class ReadInfo
 {
         public:
-                ReadInfo(std::string readName, std::string refOrientation, std::string readOrientation, int refStart, int refSrcSize);
+                ReadInfo(std::string readName, std::string refOrientation, std::string readOrientation, 
+				std::string refStart, std::string refSrcSize);
                 std::string getName();
                 std::string getRefOrient();
                 std::string getReadOrient();
-                int getStart();
-                int getSrcSize();
+                std::string getStart();
+                std::string getSrcSize();
         private:
                 std::string name;
                 std::string refOrient;
                 std::string readOrient;
-                int start;
-                int srcSize;
+                std::string start;
+                std::string srcSize;
 };
 
 class MafFile
