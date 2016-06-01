@@ -12,6 +12,8 @@ class ReadInfo
         public:
                 ReadInfo(std::string readName, std::string refOrientation, std::string readOrientation, 
 				std::string refStart, std::string refSrcSize);
+		void reset(std::string readName, std::string refOrientation, std::string readOrientation,
+				std::string refStart, std::string refSrcSize);
                 std::string getName();
                 std::string getRefOrient();
                 std::string getReadOrient();

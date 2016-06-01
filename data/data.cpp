@@ -40,6 +40,16 @@ ReadInfo::ReadInfo(std::string readName, std::string refOrientation, std::string
 	srcSize = refSrcSize;
 }
 
+void ReadInfo::reset(std::string readName, std::string refOrientation, std::string readOrientation,
+			std::string refStart, std::string refSrcSize)
+{
+	name = readName;
+	refOrient = refOrientation;
+	readOrient = readOrientation;
+	start = refStart;
+	srcSize = refSrcSize;
+}
+
 std::string ReadInfo::getName()
 {
 	return name;
