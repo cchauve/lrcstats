@@ -44,13 +44,16 @@ int main(int argc, char* argv[])
 	Alignments alignments(ref, ulr, clr);
 	ReadInfo readInfo(readName, refOrient, readOrient, start, srcSize);	
 
-	while (!mafInput.eof()) {
+	while (!mafInput.eof() && !clrInput.eof()) {
 		// Read from maf file first
 		
 		// //Skip line
 		std::getline(mafInput, mafLine); 
+		//std::cout << mafLine << "\n";
+
 		// Read ref line
 		std::getline(mafInput, mafLine);
+		//std::cout << mafLine << "\n";
 
 		if (mafLine != "") {
 			mafTokens = split(mafLine);	
@@ -66,6 +69,7 @@ int main(int argc, char* argv[])
 
 		// Read ulr line
 		std::getline(mafInput, mafLine);
+		//std::cout << mafLine << "\n";
 
 		if (mafLine != "") {
 			mafTokens = split(mafLine);	
@@ -79,18 +83,46 @@ int main(int argc, char* argv[])
 
 		//Skip line again
 		std::getline(mafInput, mafLine); 
+		//std::cout << mafLine << "\n\n";
 
 		if (refNonEmpty && ulrNonEmpty) {
 			readInfo.reset(readName, refOrient, readOrient, start, srcSize);
 			// Next, read from clr file
-			clr = "ACGTACGT"; 
-			alignments.reset(ref, ulr, clr);
-
-			// Write info into maf file
-			mafOutput.addReads(alignments, readInfo);
 			
-			// Do statistics
+			// Skip first line
+			getline(clrInput, clrLine);
+			
+			if (clrLine[0] != '>') {
+				clr = clr + clrLine;
+				//std::cout << clrLine << "\n";
+			}
+
+			// Start reading the first line of clr
+
+			while ( getline(clrInput, clrLine) && clrLine[0] != '>') {
+				clr = clr + clrLine;
+				//std::cout << clrLine << "\n";
+			}
+
+			/*	
+			std::cout << ref << "\n";
+			std::cout << ulr << "\n";	
+			std::cout << clr << "\n";
+			*/
+
+			
+			if (clr != "") {
+				alignments.reset(ref, ulr, clr);
+
+				// Write info into maf file
+				mafOutput.addReads(alignments, readInfo);
+			
+				// Do statistics
+			}	
+
 		}
+
+		clr = "";
 	}
 
 	mafInput.close();

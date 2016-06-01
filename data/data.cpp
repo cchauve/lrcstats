@@ -132,6 +132,14 @@ void MafFile::addReads(Alignments alignments, ReadInfo readInfo)
 		file << "s " << uName << " " << uStart << " " << uSize << " " << readOrient << " " << uSrcSize << " " << ulr << "\n";
 		file << "s " << cName << " " << cStart << " " << cSize << " " << readOrient << " " << cSrcSize << " " << clr << "\n";
 		file << "\n";
+		/*
+		std::cout << "a\n";
+		std::cout << "s " << refName << " " << refStart << " " << refSize << " " << refOrient << " " 
+			<< refSrcSize << " " << ref << "\n";
+		std::cout << "s " << uName << " " << uStart << " " << uSize << " " << readOrient << " " << uSrcSize << " " << ulr << "\n";
+		std::cout << "s " << cName << " " << cStart << " " << cSize << " " << readOrient << " " << cSrcSize << " " << clr << "\n";
+		std::cout << "\n";
+		*/
 		file.close();
 	} else {
 		std::cerr << "Unable to add reads to MAF file\n";
