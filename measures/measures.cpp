@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include "measures.hpp"
 
 int editScore(std::string ref, std::string lr)
 {

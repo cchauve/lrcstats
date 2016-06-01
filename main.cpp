@@ -109,7 +109,6 @@ int main(int argc, char* argv[])
 			std::cout << ulr << "\n";	
 			std::cout << clr << "\n";
 			*/
-
 			
 			if (clr != "") {
 				alignments.reset(ref, ulr, clr);
@@ -118,6 +117,8 @@ int main(int argc, char* argv[])
 				mafOutput.addReads(alignments, readInfo);
 			
 				// Do statistics
+				std::cout << "Edit score for ulr == " << editScore(alignments.getRef(), alignments.getUlr()) << "\n";
+				std::cout << "Edit score for clr == " << editScore(alignments.getRef(), alignments.getClr()) << "\n";
 			}	
 
 		}
