@@ -3,7 +3,7 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
-#include "../alignments/alignments.hpp"
+#include "data.hpp"
 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems)
 {
@@ -24,24 +24,7 @@ std::vector<std::string> split(const std::string &s, char delim)
 	return elems;
 }
 
-class ReadInfo
-{
-	public:
-		ReadInfo(std::string readName, bool refOrientation, bool readOrientation, int refStart, int refSrcSize);
-		std::string getName();
-		std::string getRefOrient();
-		std::string getReadOrient();
-		int getStart();
-		int getSrcSize();
-	private:
-		std::string name;
-		std::string refOrient;
-		std::string readOrient;
-		int start;
-		int srcSize;
-};
-
-ReadInfo::ReadInfo(std::string readName, std::string refOrientation, int readOrientation, int refStart, int refSrcSize)
+ReadInfo::ReadInfo(std::string readName, std::string refOrientation, std::string readOrientation, int refStart, int refSrcSize)
 {
 	name = readName;
 	refOrient = refOrientation;
@@ -75,19 +58,10 @@ int ReadInfo::getSrcSize()
 	return srcSize;
 }
 
-class MafFile
-{
-	public:
-		MafFile(std::string fileName);	
-		void addReads(Alignments alignments, ReadInfo readInfo);
-	private:
-		std::string filename;
-};
-
 MafFile::MafFile(std::string fileName)
 {
 	filename = fileName;
-	ofstream file (filename, ios::out | ios::trunc);
+	std::ofstream file (filename, std::ios::out | std::ios::trunc);
 	
 	if (file.is_open()) {
 		file << "track name=" << filename << "\n";	
@@ -121,15 +95,16 @@ void MafFile::addReads(Alignments alignments, ReadInfo readInfo)
 	std::string refOrient = readInfo.getRefOrient();
 	std::string readOrient = readInfo.getReadOrient();
 
-	ifstream file (filename, ios::out | ios::app);
+	std::ofstream file (filename, std::ios::out | std::ios::app);
+
 
 	if (file.is_open())
 	{
 		file << "a\n";
-		file << "s " << refName << " " << refStart << " " << refSize << " " << refOrient << " " 
+		file << "s " << refName << " " << refStart << " " << size << " " << refOrient << " " 
 			<< refSrcSize << " " << ref << "\n";
-		file << "s " << uName << " " << uStart << " " << uSize << " " << readOrient << " " << uSrcSize << " " << ulr << "\n";
-		file << "s " << cName << " " << cStart << " " << cSize << " " << readOrient << " " << cSrcSize << " " << clr << "\n";
+		file << "s " << uName << " " << uStart << " " << size << " " << readOrient << " " << uSrcSize << " " << ulr << "\n";
+		file << "s " << cName << " " << cStart << " " << size << " " << readOrient << " " << cSrcSize << " " << clr << "\n";
 		file << "\n";
 		file.close();
 	} else {

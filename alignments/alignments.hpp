@@ -3,6 +3,7 @@ class Alignments
         public:
                 Alignments(std::string reference, std::string uLongRead, std::string cLongRead);
                 ~Alignments();
+		Alignments(const Alignments& alignments);
                 std::string getClr();
                 std::string getUlr();
                 std::string getRef();
