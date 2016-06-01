@@ -7,6 +7,7 @@ class Alignments
                 Alignments(std::string reference, std::string uLongRead, std::string cLongRead);
 		Alignments (const Alignments &alignments);
                 ~Alignments();
+		void reset(std::string reference, std::string uLongRead, std::string cLongRead);
                 std::string getClr();
                 std::string getUlr();
                 std::string getRef();
@@ -33,6 +34,9 @@ class Alignments
                 int** matrix;
 		int distance;
 		// Member functions
+
+		void initialize();
+		void deleteMatrix();
                 int cost(char refBase, char cBase);
                 void findAlignments();
                 void processAlignments();
