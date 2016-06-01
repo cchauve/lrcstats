@@ -1,3 +1,6 @@
+#ifndef DATA_H
+#define DATA_H
+
 #include "../alignments/alignments.hpp"
 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
@@ -29,3 +32,5 @@ class MafFile
 	private:
 		std::string filename;
 };
+
+#endif /* DATA_H */

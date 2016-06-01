@@ -7,11 +7,15 @@
 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems)
 {
+	/* Tokenizes (i.e. isolates words in sentences and adds to vector) similar to
+ 	 * .split() function in python
+ 	 */ 
+
 	std::stringstream ss(s);
 	std::string item;
 	while (std::getline(ss, item, delim)) {
 		if (!item.empty()) {
-            	elems.push_back(item);
+            		elems.push_back(item);
         	}
     	}
 	return elems;
@@ -19,6 +23,7 @@ std::vector<std::string> &split(const std::string &s, char delim, std::vector<st
 
 std::vector<std::string> split(const std::string &s, char delim)
 {
+	// Similar to &split, but returns a vector
 	std::vector<std::string> elems;
 	split(s, delim, elems);
 	return elems;
@@ -63,6 +68,7 @@ MafFile::MafFile(std::string fileName)
 	filename = fileName;
 	std::ofstream file (filename, std::ios::out | std::ios::trunc);
 	
+	// Write the header in the file upon first opening
 	if (file.is_open()) {
 		file << "track name=" << filename << "\n";	
 		file << "maf version=1\n";
@@ -74,6 +80,10 @@ MafFile::MafFile(std::string fileName)
 
 void MafFile::addReads(Alignments alignments, ReadInfo readInfo)
 {
+	/* Reads data from alignment and readInfo objects and writes to file
+ 	 * in MAF format as described in https://genome.ucsc.edu/FAQ/FAQformat.html
+ 	 */ 
+
 	std::string ref = alignments.getRef();
 	std::string ulr = alignments.getUlr();
 	std::string clr = alignments.getClr();
