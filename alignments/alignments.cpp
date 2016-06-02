@@ -280,7 +280,8 @@ void Alignments::findAlignments()
 		} 
 
 		// Make sure we follow the same path as dictated by the edit distance equations. 
-		if ( cIndex < clr.length() - 1 && islower(clr[cIndex]) && isupper(clr[cIndex+1]) ) {
+		if ( (cIndex < clr.length() - 1 && islower(clr[cIndex]) && isupper(clr[cIndex+1])) || 
+			(cIndex == clr.length() - 1 && islower(clr[cIndex])) ) {
 			isEndingLC = true;	
 		} else {
 			isEndingLC = false;
