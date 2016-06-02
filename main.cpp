@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 	// Command line argument handling
 	int opt;
 
-	while ((opt = getopt(argc, argv, "m:c:o:")) != -1) {
+	while ((opt = getopt(argc, argv, "m:c:o:h")) != -1) {
 		switch (opt) {
 			case 'm':
 				// Source maf file name
@@ -32,6 +32,11 @@ int main(int argc, char *argv[])
 				// maf output file name
 				mafOutputName = optarg;
 				break;
+			case 'h':
+				// Displays usage
+				std::cout << "Usage: " << argv[0] << " [-m MAF input path] [-c cLR input path] "
+					<< "[-o MAF output path]\n";
+				return 0;
 			default:
 				std::cerr << "Usage: " << argv[0] << " [-m MAF input path] [-c cLR input path] "
 					<< "[-o MAF output path]\n";
