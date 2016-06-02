@@ -161,7 +161,7 @@ void Alignments::initialize()
 void Alignments::deleteMatrix()
 {
 	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
-		delete matrix[rowIndex]; // In the future, add check to see if not null
+		delete matrix[rowIndex];
 	}
 	delete matrix;
 }

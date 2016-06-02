@@ -33,7 +33,6 @@ class MafFile
 {
 	public:
 		MafFile(std::string fileName);
-		// Writes 3-way alignment to MAF file
 		void addReads(Alignments alignments, ReadInfo readInfo);
 	private:
 		std::string filename;

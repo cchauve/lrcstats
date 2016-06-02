@@ -55,8 +55,8 @@ int main(int argc, char *argv[])
 		std::cerr << "ERROR: MAF output path required\n";
 		optionsPresent = false;
 	}
-
 	if (!optionsPresent) {
+		std::cerr << "Exiting program.\n";
 		return 1;
 	}
 	

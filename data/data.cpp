@@ -7,10 +7,9 @@
 #include "data.hpp"
 
 std::vector<std::string> split(const std::string &s)
+/* Tokenizes (i.e. isolates words in sentences and adds to vector) similar 
+ * to .split() function in python */ 
 {
-	/* Tokenizes (i.e. isolates words in sentences and adds to vector) similar to
- 	 * .split() function in python
- 	 */ 
 	
 	std::vector<std::string> elems;
 	std::stringstream ss(s);
@@ -25,7 +24,9 @@ std::vector<std::string> split(const std::string &s)
 	return elems;
 }
 
-int gaplessLength(std::string read) {
+int gaplessLength(std::string read) 
+/* Returns the gapless length of MAF formatted reads */
+{
 	read.erase(std::remove(read.begin(), read.end(), '-'), read.end());
 	return read.length(); 
 }
@@ -42,6 +43,7 @@ ReadInfo::ReadInfo(std::string readName, std::string refOrientation, std::string
 
 void ReadInfo::reset(std::string readName, std::string refOrientation, std::string readOrientation,
 			std::string refStart, std::string refSrcSize)
+/* Reinitialize values of ReadInfo object */
 {
 	name = readName;
 	refOrient = refOrientation;
@@ -93,11 +95,9 @@ MafFile::MafFile(std::string fileName)
 }
 
 void MafFile::addReads(Alignments alignments, ReadInfo readInfo)
+/* Reads data from alignment and readInfo objects and writes to file in MAF format 
+ * as described in https://genome.ucsc.edu/FAQ/FAQformat.html */
 {
-	/* Reads data from alignment and readInfo objects and writes to file
- 	 * in MAF format as described in https://genome.ucsc.edu/FAQ/FAQformat.html
- 	 */ 
-
 	std::string ref = alignments.getRef();
 	std::string ulr = alignments.getUlr();
 	std::string clr = alignments.getClr();
@@ -106,14 +106,20 @@ void MafFile::addReads(Alignments alignments, ReadInfo readInfo)
 	std::string uName = readInfo.getName() + ".uncorrected";
 	std::string cName = readInfo.getName() + ".corrected";
 
+	// The position in the original genome from which the read originates.
+	// The start position in PacBio reads are 0 since the the read is considered
+	// to be the "original" genome.
 	std::string refStart = readInfo.getStart();
 	int uStart = 0;
 	int cStart = 0;
  
+	// Read size, sans gaps
 	int refSize = gaplessLength(ref);
 	int uSize = gaplessLength(ulr);
 	int cSize = gaplessLength(clr);
 
+	// The original size of the source genome. Since PacBio reads are the
+	// "original" genome, the source size is simply the size of the read.
 	std::string refSrcSize = readInfo.getSrcSize();
 	int uSrcSize = uSize;
 	int cSrcSize = cSize;
@@ -123,23 +129,13 @@ void MafFile::addReads(Alignments alignments, ReadInfo readInfo)
 
 	std::ofstream file (filename, std::ios::out | std::ios::app);
 
-
-	if (file.is_open())
-	{
+	if (file.is_open()) {
 		file << "a\n";
 		file << "s " << refName << " " << refStart << " " << refSize << " " << refOrient << " " 
 			<< refSrcSize << " " << ref << "\n";
 		file << "s " << uName << " " << uStart << " " << uSize << " " << readOrient << " " << uSrcSize << " " << ulr << "\n";
 		file << "s " << cName << " " << cStart << " " << cSize << " " << readOrient << " " << cSrcSize << " " << clr << "\n";
 		file << "\n";
-		/*
-		std::cout << "a\n";
-		std::cout << "s " << refName << " " << refStart << " " << refSize << " " << refOrient << " " 
-			<< refSrcSize << " " << ref << "\n";
-		std::cout << "s " << uName << " " << uStart << " " << uSize << " " << readOrient << " " << uSrcSize << " " << ulr << "\n";
-		std::cout << "s " << cName << " " << cStart << " " << cSize << " " << readOrient << " " << cSrcSize << " " << clr << "\n";
-		std::cout << "\n";
-		*/
 		file.close();
 	} else {
 		std::cerr << "Unable to add reads to MAF file\n";

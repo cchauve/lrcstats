@@ -9,9 +9,11 @@ class Alignments
                 ~Alignments();
 		// In case of need to reassign values to object, reset
 		void reset(std::string reference, std::string uLongRead, std::string cLongRead);
+		// More explicity, get reads in MAF-ready format
                 std::string getClr();
                 std::string getUlr();
                 std::string getRef();
+		// Get cLR/ref without (-,-)
                 std::string get_cAlignment();
                 std::string getRefAlignment();
 		int getDistance();
@@ -35,7 +37,6 @@ class Alignments
                 int** matrix;
 		int distance;
 		// Member functions
-
 		void initialize();
 		void deleteMatrix();
                 int cost(char refBase, char cBase);
