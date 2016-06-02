@@ -2,18 +2,65 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <unistd.h>
+#include <getopt.h>
 
 #include "data/data.hpp"
 #include "alignments/alignments.hpp"
 #include "measures/measures.hpp"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-	std::string mafInputName = "test_input.maf";
-	std::string clrName = "test_clr.fasta";
-	std::string mafOutputName = "test_out.maf";
+	std::string mafInputName = "";
+	std::string clrName = "";
+	std::string mafOutputName = "";
 
-	std::ifstream mafInput (mafInputName, std::ios::in); //Add ios::ate to skip directly to first group of reads?
+	// Command line argument handling
+	int opt;
+
+	while ((opt = getopt(argc, argv, "m:c:o:")) != -1) {
+		switch (opt) {
+			case 'm':
+				// Source maf file name
+				mafInputName = optarg;
+				break;
+			case 'c':
+				// cLR file name
+				clrName = optarg;
+				break;
+			case 'o':
+				// maf output file name
+				mafOutputName = optarg;
+				break;
+			default:
+				std::cerr << "Usage: " << argv[0] << " [-m MAF input path] [-c cLR input path] "
+					<< "[-o MAF output path]\n";
+				return 1;
+		}
+	}
+
+	bool optionsPresent = true;
+
+	// Pass an error if any option is not set
+
+	if (mafInputName == "") {
+		std::cerr << "ERROR: MAF input path required\n";
+		optionsPresent = false;
+	}
+	if (clrName == "") {
+		std::cerr << "ERROR: cLR input path required\n";
+		optionsPresent = false;
+	}
+	if (mafOutputName == "") {
+		std::cerr << "ERROR: MAF output path required\n";
+		optionsPresent = false;
+	}
+
+	if (!optionsPresent) {
+		return 1;
+	}
+	
+	std::ifstream mafInput (mafInputName, std::ios::in);
 	std::ifstream clrInput (clrName, std::ios::in);
 	MafFile mafOutput (mafOutputName);
 

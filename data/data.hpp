@@ -8,6 +8,7 @@ std::vector<std::string> split(const std::string &str);
 int gaplessLength(std::string read);
 
 class ReadInfo
+/* Carries information about uLR and reference parsed from source MAF file */
 {
         public:
                 ReadInfo(std::string readName, std::string refOrientation, std::string readOrientation, 
@@ -28,9 +29,11 @@ class ReadInfo
 };
 
 class MafFile
+/* Creates a MAF containing 3-way alignments between a reference, uLR and cLR */
 {
 	public:
 		MafFile(std::string fileName);
+		// Writes 3-way alignment to MAF file
 		void addReads(Alignments alignments, ReadInfo readInfo);
 	private:
 		std::string filename;
