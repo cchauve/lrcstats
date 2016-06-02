@@ -1,0 +1,8 @@
+a
+s        reference 0 8 + 100 ACGT-ACGT
+s test.uncorrected 0 9 -   9 ACGTTACGT
+
+a
+s        reference 0 8 + 100 ACGT-ACGT
+s test.uncorrected 0 9 -   9 ACGTTACGT
+
