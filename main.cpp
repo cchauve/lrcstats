@@ -3,75 +3,20 @@
 #include <string>
 #include <vector>
 #include <unistd.h>
-#include <getopt.h>
 
 #include "data/data.hpp"
 #include "alignments/alignments.hpp"
 #include "measures/measures.hpp"
 
-int main(int argc, char *argv[])
+void generateMaf(std::string mafInputName, std::string clrName, std::string mafOutputName)
 {
-	std::string mafInputName = "";
-	std::string clrName = "";
-	std::string mafOutputName = "";
-
-	// Command line argument handling
-	int opt;
-
-	while ((opt = getopt(argc, argv, "m:c:o:h")) != -1) {
-		switch (opt) {
-			case 'm':
-				// Source maf file name
-				mafInputName = optarg;
-				break;
-			case 'c':
-				// cLR file name
-				clrName = optarg;
-				break;
-			case 'o':
-				// maf output file name
-				mafOutputName = optarg;
-				break;
-			case 'h':
-				// Displays usage
-				std::cout << "Usage: " << argv[0] << " [-m MAF input path] [-c cLR input path] "
-					<< "[-o MAF output path]\n";
-				return 0;
-			default:
-				std::cerr << "Usage: " << argv[0] << " [-m MAF input path] [-c cLR input path] "
-					<< "[-o MAF output path]\n";
-				return 1;
-		}
-	}
-
-	bool optionsPresent = true;
-
-	// Pass an error if any option is not set
-
-	if (mafInputName == "") {
-		std::cerr << "ERROR: MAF input path required\n";
-		optionsPresent = false;
-	}
-	if (clrName == "") {
-		std::cerr << "ERROR: cLR input path required\n";
-		optionsPresent = false;
-	}
-	if (mafOutputName == "") {
-		std::cerr << "ERROR: MAF output path required\n";
-		optionsPresent = false;
-	}
-	if (!optionsPresent) {
-		std::cerr << "Exiting program.\n";
-		return 1;
-	}
-	
 	std::ifstream mafInput (mafInputName, std::ios::in);
 	std::ifstream clrInput (clrName, std::ios::in);
 	MafFile mafOutput (mafOutputName);
 
 	if (!mafInput.is_open() || !clrInput.is_open()) {
 		std::cerr << "Unable to open either maf input or corrected long reads file\n";
-		return 1;
+		return; 
 	}	
 
 	std::string mafLine;
@@ -167,18 +112,140 @@ int main(int argc, char *argv[])
 
 				// Write info into maf file
 				mafOutput.addReads(alignments, readInfo);
-			
-				// Do statistics
-				std::cout << "Edit score for ulr == " << editScore(alignments.getRef(), alignments.getUlr()) << "\n";
-				std::cout << "Edit score for clr == " << editScore(alignments.getRef(), alignments.getClr()) << "\n";
 			}	
-
 		}
-
 		clr = "";
 	}
-
 	mafInput.close();
 	clrInput.close();
+}
+
+void performStatistics(std::string mafName)
+{
+	std::ifstream mafFile (mafName, std::ios::in);
+	std::string line = "";
+
+	std::string ref;
+	std::string ulr;
+	std::string clr;
+
+	// Skip first four lines
+	
+	for (int i = 0; i < 4; i++) {
+		std::getline(mafFile, line); 
+	} 
+
+
+	while (!mafFile.eof()) {
+		// Skip first line
+		std::getline(mafFile, line);
+		
+		// Read ref line
+		std::getline(mafFile, line);
+
+		if (line != "") {
+			ref = split(line).at(6);	
+		}
+
+		// Read ulr line
+		std::getline(mafFile, line);
+
+		if (line != "") {
+			ulr = split(line).at(6);
+		}
+
+		// Read clr line
+		std::getline(mafFile, line);
+
+		if (line != "") {
+			clr = split(line).at(6);	
+		}
+
+		// Skip last line
+		std::getline(mafFile, line);
+
+		// Do statistics
+		// ...
+	}
+}
+
+int main(int argc, char *argv[])
+{
+	std::string mafInputName = "";
+	std::string clrName = "";
+	std::string mafOutputName = "output.maf";
+
+	int opt;
+
+
+	std::string mode = "";
+
+	if (argc > 1) {
+		mode = argv[1];
+		optind = 2;
+	} 
+
+	// Command line argument handling
+
+	while ((opt = getopt(argc, argv, "m:c:o:h")) != -1) {
+		switch (opt) {
+			case 'm':
+				// Source maf file name
+				mafInputName = optarg;
+				break;
+			case 'c':
+				// cLR file name
+				clrName = optarg;
+				break;
+			case 'o':
+				// maf output file name
+				mafOutputName = optarg;
+				break;
+			case 'h':
+				// Displays usage
+				std::cout << "Usage: " << argv[0] << " [mode] [-m MAF input path] [-c cLR input path] "
+					<< "[-o MAF output path]\n";
+				std::cout << argv[0] << " maf to create 3-way MAF file\n";
+				std::cout << argv[0] << " maf to perform statistics on MAF file\n";
+				return 0;
+			default:
+				std::cerr << "Usage: " << argv[0] << " [mode] [-m MAF input path] [-c cLR input path] "
+					<< "[-o MAF output path]\n";
+				return 1;
+		}
+	}
+
+	bool optionsPresent = true;
+
+	// Pass an error if essential option is not set
+	
+	if (mode != "maf" && mode != "stats") {
+		std::cerr << "Please select a mode\n";
+		std::cerr << "Usage: " << argv[0] << " [mode] [-m MAF input path] [-c cLR input path] "
+		      	  << "[-o MAF output path]\n";
+		std::cerr << argv[0] << " maf to create 3-way MAF file\n";
+		std::cerr << argv[0] << " maf to perform statistics on MAF file\n";
+		return 1;
+	}
+	if (mafInputName == "") {
+		std::cerr << "ERROR: MAF input path required\n";
+		optionsPresent = false;
+	}
+	if (mode == "maf" && clrName == "") {
+		std::cerr << "ERROR: cLR input path required\n";
+		optionsPresent = false;
+	}
+	if (!optionsPresent) {
+		std::cerr << "Usage: " << argv[0] << " [mode] [-m MAF input path] [-c cLR input path] "
+		      	  << "[-o MAF output path]\n";
+		return 1;
+	}
+
+	if (mode == "maf") {
+		generateMaf(mafInputName, clrName, mafOutputName);
+	} else {
+		performStatistics(mafInputName);				
+	}
+	
 	return 0;
 }
