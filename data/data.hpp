@@ -4,8 +4,10 @@
 #include "../alignments/alignments.hpp"
 
 std::vector<std::string> split(const std::string &str);
+/* Splits a string into its constituent tokens similar to the .split() function in python. */
 
 int gaplessLength(std::string read);
+/* Returns the length of a sequence without gaps. */
 
 class ReadInfo
 /* Carries information about uLR and reference parsed from source MAF file */

@@ -2,6 +2,8 @@
 #define ALIGNMENTS_H
 
 class Alignments
+/* Class that returns the optimal alignments between cLR and reference sequences.
+ * Performs a dynamic programming algorithm to find such alignments. */
 {
         public:
                 Alignments(std::string reference, std::string uLongRead, std::string cLongRead);

@@ -33,6 +33,7 @@ int gaplessLength(std::string read)
 
 ReadInfo::ReadInfo(std::string readName, std::string refOrientation, std::string readOrientation, 
 			std::string refStart, std::string refSrcSize)
+/* Constructor - just holds the read alignment information */
 {
 	name = readName;
 	refOrient = refOrientation;
@@ -78,6 +79,7 @@ std::string ReadInfo::getSrcSize()
 }
 
 MafFile::MafFile(std::string fileName)
+/* Constructor - holds the MAF file name */
 {
 	filename = fileName;
 	std::ofstream file (filename, std::ios::out | std::ios::trunc);

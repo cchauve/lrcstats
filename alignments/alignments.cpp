@@ -6,6 +6,7 @@
 #include "alignments.hpp"
 
 Alignments::Alignments(std::string reference, std::string uLongRead, std::string cLongRead)
+/* Constructor */
 {
 	ref = reference;
 	ulr = uLongRead;
@@ -16,6 +17,8 @@ Alignments::Alignments(std::string reference, std::string uLongRead, std::string
 }
 
 Alignments::Alignments(const Alignments &alignments)
+/* Copy Constructor; Since matrix is a pointer that points to a region in the heap, it must be deep copied
+ * to ensure no double deletions of matrix when calling the destructor */
 {
 	// First, copy all member fields
 	clr = alignments.clr;
@@ -57,11 +60,13 @@ Alignments::Alignments(const Alignments &alignments)
 }
 
 Alignments::~Alignments(void)
+/* Destructor - deletes matrix 2D array allocated in the heap */
 {
 	deleteMatrix();
 }
 
 void Alignments::reset(std::string reference, std::string uLongRead, std::string cLongRead)
+/* Resets variables to new values and deletes and recreates matrix given new information */
 {
 	// Resets in case of need to reassign values of object
 	deleteMatrix();
@@ -74,6 +79,8 @@ void Alignments::reset(std::string reference, std::string uLongRead, std::string
 }
 
 void Alignments::initialize()
+/* Given cLR, uLR and ref sequences, construct the DP matrix for the optimal alignments. 
+ * Requires these member variables to be set before use. */
 {
 	int cIndex;
 	int urIndex;
@@ -159,6 +166,7 @@ void Alignments::initialize()
 }
 
 void Alignments::deleteMatrix()
+/* Delete the matrix allocated in the heap */
 {
 	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
 		delete matrix[rowIndex];
@@ -167,37 +175,46 @@ void Alignments::deleteMatrix()
 }
 
 std::string Alignments::getClr()
+/* Returns optimal cLR alignment ready to be written in 3-way MAF file */
 {
 	return clrMaf;
 }
 
 
 std::string Alignments::getUlr()
+/* Returns optimal uLR alignment ready to be written in 3-way MAF file */
 {
 	return ulrMaf;
 }
 
 std::string Alignments::getRef()
+/* Returns optimal ref alignment ready to be written in 3-way MAF file */
 {
 	return refMaf;
 }
 
 std::string Alignments::get_cAlignment()
+/* Returns a cLR alignment such that it shares no gap with ref alignment 
+ * (i.e. no pairs of the form (-,-) exist in the alignments) */
 {
 	return cAlignment;
 }
 
 std::string Alignments::getRefAlignment()
+/* Returns a ref alignment such that it shares no gap with cLR alignment 
+ * (i.e. no pairs of the form (-,-) exist in the alignments) */
 {
 	return refAlignment;
 }
 
 int Alignments::getDistance()
+/* Return the minimal edit distance between the ref sequence and cLR sequence */
 {
 	return distance;
 }
 
 void Alignments::printMatrix()
+/* Print the DP matrix for debugging purposed. */
 {
 	int columnIndex;
 	int infinity = std::numeric_limits<int>::max();
@@ -217,6 +234,7 @@ void Alignments::printMatrix()
 }
 
 int Alignments::cost(char refBase, char cBase)
+/* Cost function for dynamic programming algorithm */
 {
 	if ( islower(cBase) ) {
 		return 0;
@@ -230,6 +248,8 @@ int Alignments::cost(char refBase, char cBase)
 }
 
 void Alignments::findAlignments()
+/* Backtracks through the DP matrix to find the optimal alignments. 
+ * Follows same schema as the DP algorithm. */
 {
 	clrMaf = "";
 	ulrMaf = "";
@@ -407,8 +427,8 @@ void Alignments::findAlignments()
 }
 
 void Alignments::processAlignments()
+/* Remove all pairs of the form (-,-) in cLR alignment and ref alignment */
 {
-	// Remove all pairs of the form (-,-)
 	cAlignment = "";
 	refAlignment = "";	
 	int length = clrMaf.length();
