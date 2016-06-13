@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <string.h>
 #include <unistd.h>
 
 #include "data/data.hpp"
@@ -9,6 +10,7 @@
 #include "measures/measures.hpp"
 
 void generateMaf(std::string mafInputName, std::string clrName, std::string mafOutputName)
+/* Generates a 3-way maf file from data contained in input maf file and cLR file */
 {
 	std::ifstream mafInput (mafInputName, std::ios::in);
 	std::ifstream clrInput (clrName, std::ios::in);
@@ -121,6 +123,8 @@ void generateMaf(std::string mafInputName, std::string clrName, std::string mafO
 }
 
 void performStatistics(std::string mafName)
+/* Given a 3-way MAF file between cLR, uLR and ref sequences, perform
+ * statistics. */
 {
 	std::ifstream mafFile (mafName, std::ios::in);
 	std::string line = "";
@@ -177,13 +181,29 @@ int main(int argc, char *argv[])
 
 	int opt;
 
+	if (argc == 1) {
+		std::cerr << "Please select a mode\n";
+		std::cerr << "Usage: " << argv[0] << " [mode] [-m MAF input path] [-c cLR input path] "
+		      	  << "[-o MAF output path]\n";
+		std::cerr << argv[0] << " maf to create 3-way MAF file\n";
+		std::cerr << argv[0] << " stats to perform statistics on MAF file\n";
+		return 1;
+	} else {
 
-	std::string mode = "";
+		std::string mode = argv[1];
+		
+		if (mode != "maf" && mode != "stats") {
+			std::cerr << "Please select a mode\n";
+			std::cerr << "Usage: " << argv[0] << " [mode] [-m MAF input path] [-c cLR input path] "
+		      		  << "[-o MAF output path]\n";
+			std::cerr << argv[0] << " maf to create 3-way MAF file\n";
+			std::cerr << argv[0] << " stats to perform statistics on MAF file\n";
+			return 1;
+		}
+	}
 
-	if (argc > 1) {
-		mode = argv[1];
-		optind = 2;
-	} 
+	std::string mode = argv[1];
+	optind = 2;
 
 	// Command line argument handling
 
@@ -206,7 +226,7 @@ int main(int argc, char *argv[])
 				std::cout << "Usage: " << argv[0] << " [mode] [-m MAF input path] [-c cLR input path] "
 					<< "[-o MAF output path]\n";
 				std::cout << argv[0] << " maf to create 3-way MAF file\n";
-				std::cout << argv[0] << " maf to perform statistics on MAF file\n";
+				std::cout << argv[0] << " stats to perform statistics on MAF file\n";
 				return 0;
 			default:
 				std::cerr << "Usage: " << argv[0] << " [mode] [-m MAF input path] [-c cLR input path] "
@@ -219,14 +239,6 @@ int main(int argc, char *argv[])
 
 	// Pass an error if essential option is not set
 	
-	if (mode != "maf" && mode != "stats") {
-		std::cerr << "Please select a mode\n";
-		std::cerr << "Usage: " << argv[0] << " [mode] [-m MAF input path] [-c cLR input path] "
-		      	  << "[-o MAF output path]\n";
-		std::cerr << argv[0] << " maf to create 3-way MAF file\n";
-		std::cerr << argv[0] << " maf to perform statistics on MAF file\n";
-		return 1;
-	}
 	if (mafInputName == "") {
 		std::cerr << "ERROR: MAF input path required\n";
 		optionsPresent = false;
