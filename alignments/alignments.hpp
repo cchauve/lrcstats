@@ -18,9 +18,8 @@ class Alignments
 		// Get cLR/ref without (-,-)
                 std::string get_cAlignment();
                 std::string getRefAlignment();
-		int getDistance();
                 void printMatrix();
-        private:
+	protected:
 		// long reads and ref before processing
                 std::string clr;
                 std::string ulr;
@@ -35,15 +34,30 @@ class Alignments
 		// Specs for matrix
                 int rows;
                 int columns;
-		// Holds matrix
                 int** matrix;
-		int distance;
-		// Member functions
-		void initialize();
-		void deleteMatrix();
                 int cost(char refBase, char cBase);
-                void findAlignments();
+		// Removes pairs of the form (-,-)
                 void processAlignments();
+		void deleteMatrix();
+        private:
+		// These methods are format specific - proovread files will need to use
+		// the version provided by ProovreadAlignments
+		void initialize();
+                void findAlignments();
+};
+
+class ProovreadAlignments: public Alignments
+/* Processes and returns the optimal alignment between proovread cLRs and the reference sequence. */
+{
+	public:
+		ProovreadAlignments(std::string reference, std::string uLongRead, std::vector< std::string > cLongReads);
+		void reset(std::string reference, std::string uLongRead, std::vector< std::string > cLongReads);
+	private:
+		// The trimmed components of the corrected long reads provided by proovread 
+		std::vector< std::string > trimmedClrs; 
+		// These methods are proovread format specific.
+		void initialize();
+                void findAlignments();
 };
 
 #endif // ALIGNMENTS_H

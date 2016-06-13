@@ -31,7 +31,6 @@ Alignments::Alignments(const Alignments &alignments)
 	refAlignment = alignments.refAlignment;
 	rows = alignments.rows;
 	columns = alignments.columns;
-	distance = alignments.distance;
 	
 	// Next, copy the matrix
 	// Allocate memory for the matrix
@@ -160,7 +159,6 @@ void Alignments::initialize()
 			}
 		}		
 	}
-	distance = matrix[rows-1][columns-1];
 	findAlignments();
 	processAlignments();
 }
@@ -205,12 +203,6 @@ std::string Alignments::getRefAlignment()
  * (i.e. no pairs of the form (-,-) exist in the alignments) */
 {
 	return refAlignment;
-}
-
-int Alignments::getDistance()
-/* Return the minimal edit distance between the ref sequence and cLR sequence */
-{
-	return distance;
 }
 
 void Alignments::printMatrix()
@@ -439,4 +431,205 @@ void Alignments::processAlignments()
 			refAlignment = refAlignment + refMaf[i];
 		}
 	}
+}
+
+ProovreadAlignments::ProovreadAlignments(std::string reference, std::string uLongRead, std::vector< std::string > cLongReads)
+{
+	ref = reference;
+	ulr = uLongRead;
+	trimmedClrs = cLongReads;
+	initialize();
+}
+
+void ProovreadAlignments::initialize()
+{
+	for (int index = 0; index < trimmedClrs.size(); index++) {
+		clr = clr + trimmedClrs.at(index);	
+	}
+
+	rows = clr.length() + 1;
+	columns = ref.length() + 1;
+
+	int cIndex;
+	int urIndex;
+	int substitute;
+	int insert;
+	int deletion;
+
+	int lastBaseIndex = -1;
+	std::vector<int> lastBaseIndices;
+	bool isLastBase;
+	
+	// Record the indices of the last bases of all the reads
+	for (int index = 0; index < trimmedClrs.size(); index++) {
+		lastBaseIndex = lastBaseIndex + trimmedClrs.at(index).length();
+		lastBaseIndices.push_back(lastBaseIndex);	
+	}
+
+	// Allocate memory for the matrix
+	try {
+		matrix = new int*[rows];
+	} catch( std::bad_alloc& ba ) {
+		std::cerr << "Memory allocation failed; unable to create DP matrix.\n";
+	}
+	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
+		try {
+			matrix[rowIndex] = new int[columns];
+		} catch( std::bad_alloc& ba ) {
+			std::cerr << "Memory allocation failed; unable to create DP matrix.\n";
+		}
+	}
+
+	// Set the base cases for the DP matrix
+	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
+		matrix[rowIndex][0] = rowIndex;	
+	}
+	for (int columnIndex = 1; columnIndex < columns; columnIndex++) {
+		matrix[0][columnIndex] = 0;
+	}
+
+	// Find the minimal edit distances
+	for (int rowIndex = 1; rowIndex < rows; rowIndex++) {
+		for (int columnIndex = 1; columnIndex < columns; columnIndex++) {
+			cIndex = rowIndex - 1;
+			urIndex = columnIndex - 1;
+
+			// Check if cIndex is the last base of a read
+			if (std::find( lastBaseIndices.begin(), lastBaseIndices.end(), cIndex ) != v.end()) {
+				isLastBase = true;
+			} else {
+				isLastBase = false;
+			} 
+
+			if (isLastBase) {
+				deletion = matrix[rowIndex][columnIndex-1];
+			} else {
+				deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
+			}	
+
+			insertion = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
+			substitution = matrix[rowIndex-1][columnIndex-1] + cost(clr[cIndex], ref[urIndex]);
+			matrix[rowIndex][columnIndex] = std::min( deletion, std::min( insertion, substitution ) );
+		}
+	}
+
+	findAlignments();
+	processAlignments();
+}
+
+void ProovreadAlignments::findAlignments()
+{
+	clrMaf = "";
+	ulrMaf = "";
+	refMaf = "";
+	int rowIndex = rows - 1;
+	int columnIndex = columns - 1;
+	int cIndex;
+	int urIndex;
+	int insert;
+	int deletion;
+	int substitute;
+	int currentCost;
+	int infinity = std::numeric_limits<int>::max();
+
+	// Follow the best path from the bottom right to the top left of the matrix.
+	// This is equivalent to the optimal alignment between ulr and clr.
+	// The path we follow is restricted to the conditions set when computing the matrix,
+	// i.e. we can never follow a path that the edit distance equations do not allow.
+	while (rowIndex > 0 || columnIndex > 0) {
+		/*
+		std::cout << "rowIndex == " << rowIndex << "\n";
+		std::cout << "columnIndex == " << columnIndex << "\n";
+		std::cout << "Before\n";
+		std::cout << "clrMaf == " << clrMaf << "\n";
+		std::cout << "ulrMaf == " << ulrMaf << "\n";
+		std::cout << "refMaf == " << refMaf << "\n";
+		*/
+
+		urIndex = columnIndex - 1;
+		cIndex = rowIndex - 1;
+		currentCost = matrix[rowIndex][columnIndex];
+
+		// Check if cIndex is the last base of a read
+		if (std::find(lastBaseIndices.begin(), lastBaseIndices.end(), cIndex) != v.end()) {
+			isLastBase = true;
+		} else {
+			isLastBase = false;
+		} 
+
+		// Set the costs of the different operations, 
+		// ensuring we don't go out of bounds of the matrix.
+		if (rowIndex > 0 && columnIndex > 0) {
+			if (isLastBase) {
+				deletion = matrix[rowIndex][columnIndex-1]; 
+			} else {
+				deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
+			}
+			insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
+			substitute = matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]);	
+		} else if (rowIndex <= 0 && columnIndex > 0) {
+			if (isLastBase) {
+				deletion = matrix[rowIndex][columnIndex-1];
+			} else {
+				deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
+			}
+			insert = infinity;
+			substitute = infinity;
+		} else if (rowIndex > 0 && columnIndex <= 0) {
+			deletion = infinity;
+			insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
+			substitute = infinity;
+		} 
+
+		if (rowIndex == 0 || columnIndex == 0) {
+				//std::cout << "Path 6\n";
+				if (rowIndex == 0) {
+					//std::cout << "Deletion\n";
+					clrMaf = '-' + clrMaf;
+					ulrMaf = ulr[urIndex] + ulrMaf;
+					refMaf = ref[urIndex] + refMaf;
+					columnIndex--;
+				} else {
+					//std::cout << "Insertion\n";
+					clrMaf = clr[cIndex] + clrMaf;
+					ulrMaf = '-' + ulrMaf;
+					refMaf = '-' + refMaf;
+					rowIndex--;
+				}
+		} else if (deletion == currentCost) {
+			//std::cout << "Deletion\n";
+			clrMaf = '-' + clrMaf;
+			ulrMaf = ulr[urIndex] + ulrMaf;
+			refMaf = ref[urIndex] + refMaf;
+			columnIndex--;
+		} else if (insert == currentCost) {
+			//std::cout << "Insertion\n";
+			clrMaf = clr[cIndex] + clrMaf;
+			ulrMaf = '-' + ulrMaf;
+			refMaf = '-' + refMaf;
+			rowIndex--;
+		} else if (substitute == currentCost) {
+			//std::cout << "Substitution\n";
+			clrMaf = clr[cIndex] + clrMaf;
+			ulrMaf = ulr[urIndex] + ulrMaf;
+			refMaf = ref[urIndex] + refMaf;
+			rowIndex--;
+			columnIndex--;
+		} else {
+			std::cerr << "ERROR CODE 6: No paths found. Terminating backtracking.\n";
+			rowIndex = 0;
+			columnIndex = 0;
+		}
+	}
+}
+
+void ProovreadAlignments::reset(std::string reference, std::string uLongRead, std::vector< std::string > cLongReads)
+/* Resets variables to new values and deletes and recreates matrix given new information */
+{
+	// Resets in case of need to reassign values of object
+	deleteMatrix();
+	ref = reference;
+	ulr = uLongRead;
+	trimmedClrs = cLongReads;
+	initialize();
 }
