@@ -22,7 +22,6 @@ void generateMaf(std::string mafInputName, std::string clrName, std::string mafO
 	}	
 
 	std::string mafLine;
-	std::string clrLine;
 
 	std::vector<std::string> mafTokens;
 	std::vector<std::string> clrTokens;
@@ -86,29 +85,15 @@ void generateMaf(std::string mafInputName, std::string clrName, std::string mafO
 			//std::cout << mafLine << "\n\n";
 
 			if (refNonEmpty && ulrNonEmpty) {
+				// Reset readInfo object
 				readInfo.reset(readName, refOrient, readOrient, start, srcSize);
 				// Next, read from clr file
 			
 				// Skip first line
-				getline(clrInput, clrLine);
-			
-				if (clrLine[0] != '>') {
-					clr = clr + clrLine;
-					//std::cout << clrLine << "\n";
-				}
+				getline(clrInput, clr);
 
-				// Start reading the first line of clr
-
-				while ( getline(clrInput, clrLine) && clrLine[0] != '>') {
-					clr = clr + clrLine;
-					//std::cout << clrLine << "\n";
-				}
-
-			/*	
-			std::cout << ref << "\n";
-			std::cout << ulr << "\n";	
-			std::cout << clr << "\n";
-			*/
+				// Read clr line
+				getline(clrInput, clr);
 			
 				if (clr != "") {
 					alignments.reset(ref, ulr, clr);
@@ -143,7 +128,6 @@ void generateMaf(std::string mafInputName, std::string clrName, std::string mafO
 				refOrient = mafTokens.at(4);
 				start = mafTokens.at(2);
 				srcSize = mafTokens.at(5);
-			
 				refNonEmpty = true;
 			} else {
 				refNonEmpty = false;
@@ -172,25 +156,10 @@ void generateMaf(std::string mafInputName, std::string clrName, std::string mafO
 				// Next, read from clr file
 			
 				// Skip first line
-				getline(clrInput, clrLine);
-			
-				if (clrLine[0] != '>') {
-					clr = clr + clrLine;
-					//std::cout << clrLine << "\n";
-				}
-
-				// Start reading the first line of clr
-
-				while ( getline(clrInput, clrLine) && clrLine[0] != '>') {
-					clr = clr + clrLine;
-					//std::cout << clrLine << "\n";
-				}
-
-			/*	
-			std::cout << ref << "\n";
-			std::cout << ulr << "\n";	
-			std::cout << clr << "\n";
-			*/
+				getline(clrInput, clr);
+				
+				// Read clr line
+				getline(clrInput, clr);
 			
 				if (clr != "") {
 					alignments.reset(ref, ulr, clr);
