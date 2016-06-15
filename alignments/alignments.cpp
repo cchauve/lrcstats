@@ -1,95 +1,75 @@
 #include <iostream>
+#include <vector>
 #include <string>
 #include <algorithm>
 #include <limits>
 #include <cmath>
-#include "alignments.hpp"
 
-Alignments::Alignments(std::string reference, std::string uLongRead, std::string cLongRead)
-/* Constructor */
+#include "alignments.hpp"
+#include "../data/data.hpp"
+
+Reads::Reads(std::string reference, std::string uLongRead, std::string cLongRead)
 {
 	ref = reference;
 	ulr = uLongRead;
 	clr = cLongRead;
-	rows = clr.length() + 1;
-	columns = ulr.length() + 1;
-	initialize();
+	createMatrix();
 }
 
-Alignments::Alignments(const Alignments &alignments)
-/* Copy Constructor; Since matrix is a pointer that points to a region in the heap, it must be deep copied
- * to ensure no double deletions of matrix when calling the destructor */
+Reads::Reads(const Reads &reads)
 {
 	// First, copy all member fields
-	clr = alignments.clr;
-	ulr = alignments.ulr;
-	ref = alignments.ref;
-	clrMaf = alignments.refMaf;
-	ulrMaf = alignments.ulrMaf;
-	refMaf = alignments.refMaf;
-	cAlignment = alignments.cAlignment;
-	refAlignment = alignments.refAlignment;
-	rows = alignments.rows;
-	columns = alignments.columns;
-	
-	// Next, copy the matrix
-	// Allocate memory for the matrix
-	
-	try {
-		matrix = new int*[rows];
-	} catch (std::bad_alloc& b) {
-		std::cerr << "Memory allocation failed; unable to copy DP matrix.\n";
-	}
-
-	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
-		try {
-			matrix[rowIndex] = new int[columns];
-		} catch (std::bad_alloc& ba) {
-			std::cerr << "Memory allocation failed; unable to copy DP matrix.\n";
-		}
-	}
-
-	int columnIndex;
-	
-	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
-		for (columnIndex = 0; columnIndex < columns; columnIndex++) {
-			matrix[rowIndex][columnIndex] = alignments.matrix[rowIndex][columnIndex];
-		}
-	}
+	clr = reads.clr;
+	ulr = reads.ulr;
+	ref = reads.ref;
+	rows = 0;
+	columns = 0;
+	matrix = NULL;
 }
 
-Alignments::~Alignments(void)
-/* Destructor - deletes matrix 2D array allocated in the heap */
+Reads::~Reads()
 {
 	deleteMatrix();
 }
 
-void Alignments::reset(std::string reference, std::string uLongRead, std::string cLongRead)
+void Reads::reset(std::string reference, std::string uLongRead, std::string cLongRead)
 /* Resets variables to new values and deletes and recreates matrix given new information */
 {
 	// Resets in case of need to reassign values of object
-	deleteMatrix();
 	ref = reference;
 	ulr = uLongRead;
 	clr = cLongRead;
-	rows = clr.length() + 1;
-	columns = ulr.length() + 1;
-	initialize();
+	deleteMatrix();
+	createMatrix();
 }
 
-void Alignments::initialize()
-/* Given cLR, uLR and ref sequences, construct the DP matrix for the optimal alignments. 
- * Requires these member variables to be set before use. */
+std::string Reads::getClr()
+/* Returns optimal cLR alignment ready to be written in 3-way MAF file */
 {
-	int cIndex;
-	int urIndex;
-	bool isEndingLC;
-	int keep;
-	int substitute;
-	int insert;
-	int deletion;
-	int infinity = std::numeric_limits<int>::max();
+	return clr;
+}
 
+
+std::string Reads::getUlr()
+/* Returns optimal uLR alignment ready to be written in 3-way MAF file */
+{
+	return ulr;
+}
+
+std::string Reads::getRef()
+/* Returns optimal ref alignment ready to be written in 3-way MAF file */
+{
+	return ref;
+}
+
+void Reads::createMatrix()
+{
+	std::string cleanedClr = clr; 
+	cleanedClr.erase(std::remove(cleanedClr.begin(), cleanedClr.end(), ' '), cleanedClr.end());
+
+	rows = cleanedClr.length() + 1;
+	columns = ulr.length() + 1;
+ 
 	try {
 		matrix = new int*[rows];
 	} catch( std::bad_alloc& ba ) {
@@ -103,6 +83,62 @@ void Alignments::initialize()
 			std::cerr << "Memory allocation failed; unable to create DP matrix.\n";
 		}
 	}
+}
+
+void Reads::deleteMatrix()
+/* Delete the matrix allocated in the heap */
+{
+	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
+		if (matrix[rowIndex] != NULL) {
+			delete matrix[rowIndex];
+		} 	
+	}
+
+	if (matrix != NULL) {
+		delete matrix;
+	}
+}
+
+int Reads::cost(char refBase, char cBase)
+/* Cost function for dynamic programming algorithm */
+{
+	if ( islower(cBase) ) {
+		return 0;
+	} else if ( toupper(refBase) == cBase ) {
+		return 0;
+	} else {
+		// Ideally, in an alignment between cLR and ref we want to minimize the number of discrepancies
+		// as much as possible, so if both bases are different, we assign a cost of 2.
+		return 2;
+	}
+}
+
+/*--------------------------------------------------------------------------------------------------------*/
+
+GenericAlignments::GenericAlignments(std::string reference, std::string uLongRead, std::string cLongRead)
+	: Reads(reference, uLongRead, cLongRead)
+/* Constructor */
+{ initialize(); }
+
+void GenericAlignments::reset(std::string reference, std::string uLongRead, std::string cLongRead)
+/* Resets variables to new values and deletes and recreates matrix given new information */
+{ 
+	Reads::reset(reference, uLongRead, cLongRead);
+	initialize(); 
+}
+
+void GenericAlignments::initialize()
+/* Given cLR, uLR and ref sequences, construct the DP matrix for the optimal alignments. 
+ * Requires these member variables to be set before use. */
+{
+	int cIndex;
+	int urIndex;
+	bool isEndingLC;
+	int keep;
+	int substitute;
+	int insert;
+	int deletion;
+	int infinity = std::numeric_limits<int>::max();
 
 	// Set the base cases for the DP matrix
 	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
@@ -160,92 +196,15 @@ void Alignments::initialize()
 		}		
 	}
 	findAlignments();
-	processAlignments();
 }
 
-void Alignments::deleteMatrix()
-/* Delete the matrix allocated in the heap */
-{
-	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
-		delete matrix[rowIndex];
-	}
-	delete matrix;
-}
-
-std::string Alignments::getClr()
-/* Returns optimal cLR alignment ready to be written in 3-way MAF file */
-{
-	return clrMaf;
-}
-
-
-std::string Alignments::getUlr()
-/* Returns optimal uLR alignment ready to be written in 3-way MAF file */
-{
-	return ulrMaf;
-}
-
-std::string Alignments::getRef()
-/* Returns optimal ref alignment ready to be written in 3-way MAF file */
-{
-	return refMaf;
-}
-
-std::string Alignments::get_cAlignment()
-/* Returns a cLR alignment such that it shares no gap with ref alignment 
- * (i.e. no pairs of the form (-,-) exist in the alignments) */
-{
-	return cAlignment;
-}
-
-std::string Alignments::getRefAlignment()
-/* Returns a ref alignment such that it shares no gap with cLR alignment 
- * (i.e. no pairs of the form (-,-) exist in the alignments) */
-{
-	return refAlignment;
-}
-
-void Alignments::printMatrix()
-/* Print the DP matrix for debugging purposed. */
-{
-	int columnIndex;
-	int infinity = std::numeric_limits<int>::max();
-
-	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
-		for (columnIndex = 0; columnIndex < columns; columnIndex++) {
-			if (matrix[rowIndex][columnIndex] == infinity) {
-				std::cout << '-' << "  ";
-			} else if (matrix[rowIndex][columnIndex] < 10) {
-				std::cout << matrix[rowIndex][columnIndex] << "  ";
-			} else {
-				std::cout << matrix[rowIndex][columnIndex] << " ";
-			}
-		}
-		std::cout << "\n";
-	}
-}
-
-int Alignments::cost(char refBase, char cBase)
-/* Cost function for dynamic programming algorithm */
-{
-	if ( islower(cBase) ) {
-		return 0;
-	} else if ( toupper(refBase) == cBase ) {
-		return 0;
-	} else {
-		// Ideally, in an alignment between cLR and ref we want to minimize the number of discrepancies
-		// as much as possible, so if both bases are different, we assign a cost of 2.
-		return 2;
-	}
-}
-
-void Alignments::findAlignments()
+void GenericAlignments::findAlignments()
 /* Backtracks through the DP matrix to find the optimal alignments. 
  * Follows same schema as the DP algorithm. */
 {
-	clrMaf = "";
-	ulrMaf = "";
-	refMaf = "";
+	std::string clrMaf = "";
+	std::string ulrMaf = "";
+	std::string refMaf = "";
 	int rowIndex = rows - 1;
 	int columnIndex = columns - 1;
 	int cIndex;
@@ -416,36 +375,28 @@ void Alignments::findAlignments()
 		std::cout << "refMaf == " << refMaf << "\n\n";
 		*/
 	}
+
+	clr = clrMaf;
+	ulr = ulrMaf;
+	ref = refMaf;
 }
 
-void Alignments::processAlignments()
-/* Remove all pairs of the form (-,-) in cLR alignment and ref alignment */
-{
-	cAlignment = "";
-	refAlignment = "";	
-	int length = clrMaf.length();
+/* --------------------------------------------------------------------------------------------- */
 
-	for (int i = 0; i < length; i++) {
-		if (clrMaf[i] != '-' || refMaf[i] != '-') {
-			cAlignment = cAlignment + clrMaf[i];
-			refAlignment = refAlignment + refMaf[i];
-		}
-	}
-}
+ProovreadAlignments::ProovreadAlignments(std::string reference, std::string uLongRead, std::string cLongRead)
+	: Reads(reference, uLongRead, cLongRead)
+{ initialize(); }
 
-ProovreadAlignments::ProovreadAlignments(std::string reference, std::string uLongRead, std::vector< std::string > cLongReads)
+void ProovreadAlignments::reset(std::string reference, std::string uLongRead, std::string cLongRead)
 {
-	ref = reference;
-	ulr = uLongRead;
-	trimmedClrs = cLongReads;
-	initialize();
+	Reads::reset(reference, uLongRead, cLongRead);
+ 	initialize(); 
 }
 
 void ProovreadAlignments::initialize()
 {
-	for (int index = 0; index < trimmedClrs.size(); index++) {
-		clr = clr + trimmedClrs.at(index);	
-	}
+	std::vector< std::string > trimmedClrs = split(clr);
+	clr.erase(std::remove(clr.begin(), clr.end(), ' '), clr.end());
 
 	rows = clr.length() + 1;
 	columns = ref.length() + 1;
@@ -457,27 +408,12 @@ void ProovreadAlignments::initialize()
 	int deletion;
 
 	int lastBaseIndex = -1;
-	std::vector<int> lastBaseIndices;
 	bool isLastBase;
 	
 	// Record the indices of the last bases of all the reads
 	for (int index = 0; index < trimmedClrs.size(); index++) {
 		lastBaseIndex = lastBaseIndex + trimmedClrs.at(index).length();
 		lastBaseIndices.push_back(lastBaseIndex);	
-	}
-
-	// Allocate memory for the matrix
-	try {
-		matrix = new int*[rows];
-	} catch( std::bad_alloc& ba ) {
-		std::cerr << "Memory allocation failed; unable to create DP matrix.\n";
-	}
-	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
-		try {
-			matrix[rowIndex] = new int[columns];
-		} catch( std::bad_alloc& ba ) {
-			std::cerr << "Memory allocation failed; unable to create DP matrix.\n";
-		}
 	}
 
 	// Set the base cases for the DP matrix
@@ -495,7 +431,7 @@ void ProovreadAlignments::initialize()
 			urIndex = columnIndex - 1;
 
 			// Check if cIndex is the last base of a read
-			if (std::find( lastBaseIndices.begin(), lastBaseIndices.end(), cIndex ) != v.end()) {
+			if (std::find( lastBaseIndices.begin(), lastBaseIndices.end(), cIndex ) != lastBaseIndices.end()) {
 				isLastBase = true;
 			} else {
 				isLastBase = false;
@@ -507,21 +443,20 @@ void ProovreadAlignments::initialize()
 				deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
 			}	
 
-			insertion = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
-			substitution = matrix[rowIndex-1][columnIndex-1] + cost(clr[cIndex], ref[urIndex]);
-			matrix[rowIndex][columnIndex] = std::min( deletion, std::min( insertion, substitution ) );
+			insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
+			substitute = matrix[rowIndex-1][columnIndex-1] + cost(clr[cIndex], ref[urIndex]);
+			matrix[rowIndex][columnIndex] = std::min( deletion, std::min( insert, substitute ) );
 		}
 	}
 
 	findAlignments();
-	processAlignments();
 }
 
 void ProovreadAlignments::findAlignments()
 {
-	clrMaf = "";
-	ulrMaf = "";
-	refMaf = "";
+	std::string clrMaf = "";
+	std::string ulrMaf = "";
+	std::string refMaf = "";
 	int rowIndex = rows - 1;
 	int columnIndex = columns - 1;
 	int cIndex;
@@ -531,6 +466,7 @@ void ProovreadAlignments::findAlignments()
 	int substitute;
 	int currentCost;
 	int infinity = std::numeric_limits<int>::max();
+	bool isLastBase;
 
 	// Follow the best path from the bottom right to the top left of the matrix.
 	// This is equivalent to the optimal alignment between ulr and clr.
@@ -551,7 +487,7 @@ void ProovreadAlignments::findAlignments()
 		currentCost = matrix[rowIndex][columnIndex];
 
 		// Check if cIndex is the last base of a read
-		if (std::find(lastBaseIndices.begin(), lastBaseIndices.end(), cIndex) != v.end()) {
+		if (std::find(lastBaseIndices.begin(), lastBaseIndices.end(), cIndex) != lastBaseIndices.end()) {
 			isLastBase = true;
 		} else {
 			isLastBase = false;
@@ -621,15 +557,8 @@ void ProovreadAlignments::findAlignments()
 			columnIndex = 0;
 		}
 	}
-}
 
-void ProovreadAlignments::reset(std::string reference, std::string uLongRead, std::vector< std::string > cLongReads)
-/* Resets variables to new values and deletes and recreates matrix given new information */
-{
-	// Resets in case of need to reassign values of object
-	deleteMatrix();
-	ref = reference;
-	ulr = uLongRead;
-	trimmedClrs = cLongReads;
-	initialize();
+	clr = clrMaf;
+	ulr = ulrMaf;
+	ref = refMaf;
 }
