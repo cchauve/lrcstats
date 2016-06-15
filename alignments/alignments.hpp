@@ -2,6 +2,7 @@
 #define ALIGNMENTS_H
 
 class Reads
+/* Is the parent class of GenericAlignments and ProovreadAlignments - for ease of maintenance. */
 {
 	public:
 		Reads(std::string reference, std::string uLongRead, std::string cLongRead);
@@ -25,8 +26,8 @@ class Reads
 };
 
 class GenericAlignments : public Reads
-/* Class that returns the optimal alignments between cLR and reference sequences.
- * Performs a dynamic programming algorithm to find such alignments. */
+/* Class that returns the optimal alignments between cLR constructed by non-proovread programs 
+ * and reference sequences. Performs a dynamic programming algorithm to find such alignments. */
 {
         public:
                 GenericAlignments(std::string reference, std::string uLongRead, std::string cLongRead);

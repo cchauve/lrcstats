@@ -9,6 +9,7 @@
 #include "../data/data.hpp"
 
 Reads::Reads(std::string reference, std::string uLongRead, std::string cLongRead)
+/* Constructor for general reads class - is the parent of GenericAlignments and ProovreadAlignments */
 {
 	ref = reference;
 	ulr = uLongRead;
@@ -17,6 +18,7 @@ Reads::Reads(std::string reference, std::string uLongRead, std::string cLongRead
 }
 
 Reads::Reads(const Reads &reads)
+/* Copy constructor */
 {
 	// First, copy all member fields
 	clr = reads.clr;
@@ -28,6 +30,7 @@ Reads::Reads(const Reads &reads)
 }
 
 Reads::~Reads()
+/* Delete the matrix when calling the destructor */
 {
 	deleteMatrix();
 }
@@ -63,6 +66,7 @@ std::string Reads::getRef()
 }
 
 void Reads::createMatrix()
+/* Preconstruct the matrix */
 {
 	std::string cleanedClr = clr; 
 	cleanedClr.erase(std::remove(cleanedClr.begin(), cleanedClr.end(), ' '), cleanedClr.end());
@@ -385,17 +389,22 @@ void GenericAlignments::findAlignments()
 
 ProovreadAlignments::ProovreadAlignments(std::string reference, std::string uLongRead, std::string cLongRead)
 	: Reads(reference, uLongRead, cLongRead)
+/* Constructor - is a child class of Reads */
 { initialize(); }
 
 void ProovreadAlignments::reset(std::string reference, std::string uLongRead, std::string cLongRead)
+/* Resets the alignment object to be used again */
 {
 	Reads::reset(reference, uLongRead, cLongRead);
  	initialize(); 
 }
 
 void ProovreadAlignments::initialize()
+/* Create the DP matrix similar to generic alignment object */
 {
+	// Split the clr into its corrected parts
 	std::vector< std::string > trimmedClrs = split(clr);
+	// Remove spaces in clr
 	clr.erase(std::remove(clr.begin(), clr.end(), ' '), clr.end());
 
 	rows = clr.length() + 1;
@@ -453,6 +462,7 @@ void ProovreadAlignments::initialize()
 }
 
 void ProovreadAlignments::findAlignments()
+/* Construct the optimal alignments between the three reads */
 {
 	std::string clrMaf = "";
 	std::string ulrMaf = "";
