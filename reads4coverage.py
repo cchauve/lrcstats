@@ -34,9 +34,8 @@ def findRefLength(refPath):
 	return refLength
 
 if __name__ == "__main__":
-	helpMessage = "Outputs the integral number of reads necessary to achieve a required coverage given the mean length of the
-			long reads contained in a FASTQ file and the length of reference sequence given in a FASTA file."
-	usageMessage = "Usage: %s [-c coverage] [-i long reads FASTQ path] [-r reference genome path]" % (sys.argv[0])
+	helpMessage = "Outputs the integral number of reads necessary to achieve a required coverage given the mean length of the long reads contained in a FASTQ file and the length of reference sequence given in a FASTA file."
+	usageMessage = "Usage: %s [-h help and usage] [-c coverage] [-i long reads FASTQ path] [-r reference genome path]" % (sys.argv[0])
 	options = "hc:i:r:"
 
 	try:
