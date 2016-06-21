@@ -173,7 +173,7 @@ if __name__ == "__main__":
 		jabba = "j"	
 	if doProovread:
 		programs.append("proovread")
-		lordec = "l"
+		proovread = "p"
 
 	# yes, specie is not the proper singular form of species, but im lazy
 	for specie in species:
