@@ -19,7 +19,7 @@ def writeJob(program, species, shortCov, longCov):
 	######## Write other important information for job ############
 	file.write("#PBS -l epilogue=/home/seanla/Jobs/epilogue.script\n")
 	file.write("#PBS -M laseanl@sfu.ca\n")
-	file.write("#PBS -m bea\n")
+	file.write("#PBS -m ea\n")
 	file.write("#PBS -j oe\n")
 
 	outlog = "#PBS -o /global/scratch/seanla/Data/%s/corrections/%s/%s/%s/%s/%s.out\n" %(species, now.month, now.day, program, test, test) 
@@ -86,7 +86,7 @@ def writeJob(program, species, shortCov, longCov):
 		file.write(samtools)
 			
 		dir = "cd /home/seanla/Software/proovread/bin\n\n"
-		command = "./proovread --bam %s -l %s -p %s" % (bam, long, output)
+		command = "./proovread --lr-qv-offset --bam %s -l %s -p %s" % (bam, long, output)
 		file.write(dir)
 		file.write(command)
 
