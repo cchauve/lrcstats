@@ -1,16 +1,30 @@
 import sys, getopt, datetime
 
 def writeJob(program, species, shortCov, longCov):
+	################ Various variables ##########################
 	now = datetime.datetime.now()
-
 	test = "%s-%s-%sSx%sL" % (program, species, shortCov, longCov)
-	filename = "/home/seanla/Jobs/lrcstats/corrections/%s.pbs" % (test)
+	# LoRDeC uses more memory than other programs
+	if program is "lordec":
+		mem = 48
+	else:
+		mem = 32
+	resources = ["walltime=24:00:00", "mem=%dgb" % (mem), "nodes=1:ppn=8"]
+	################## Data paths #################################
+	prefix = "/global/scratch/seanla/Data/%s" % (species)
+	art = "%s/art" % (prefix)
+	short1 = "%s/short-paired-d%s/%s-short-paired-d%s1.fastq" % (art, shortCov, species, shortCov)
+	short2 = "%s/short-paired-d%s/%s-short-paired-d%s2.fastq" % (art, shortCov, species, shortCov)
+
+	long = "%s/simlord/long-d%s/%s-long-d%s.fastq" % (prefix, longCov, species, longCov) 
+	outputdir = "%s/corrections/%s/%s/%s/%s" % (prefix, now.month, now.day, program, test)
+	###############################################################
 	
+	filename = "/home/seanla/Jobs/lrcstats/corrections/%s.pbs" % (test)
 	file = open(filename, 'w')
 	
 	################### Write the resources #######################
 	file.write("#!/bin/bash\n")
-	resources = ["walltime=24:00:00", "mem=64gb", "nodes=1:ppn=1"]
 	for resource in resources:
 		line = "#PBS -l %s\n" %(resource)
 		file.write(line)
@@ -29,15 +43,6 @@ def writeJob(program, species, shortCov, longCov):
 	file.write(jobName)
 	###############################################################
 
-	################## Data paths #################################
-	prefix = "/global/scratch/seanla/Data/%s" % (species)
-	art = "%s/art" % (prefix)
-	short1 = "%s/short-paired-d%s/%s-short-paired-d%s1.fastq" % (art, shortCov, species, shortCov)
-	short2 = "%s/short-paired-d%s/%s-short-paired-d%s2.fastq" % (art, shortCov, species, shortCov)
-
-	long = "%s/simlord/long-d%s/%s-long-d%s.fastq" % (prefix, longCov, species, longCov) 
-	outputdir = "%s/corrections/%s/%s/%s/%s" % (prefix, now.month, now.day, program, test)
-	###############################################################
 
 	mkdir = "mkdir -p %s\n" % (outputdir)
 
@@ -47,11 +52,15 @@ def writeJob(program, species, shortCov, longCov):
 	if program is "lordec":
 		output = "%s/%s.fasta" % (outputdir, test)
 		dir = "cd /home/seanla/Software/LoRDEC-0.6\n\n"
-		command = "./lordec-correct --trials 5 --branch 200 --errorrate 0.4 -2 %s %s -k 19 -s 3 -i %s -o %s" % (short1, short2, long, output)
+		command = "./lordec-correct -t ${PBS_NUM_PPN} --trials 5 --branch 200 --errorrate 0.4 -2 %s %s -k 19 -s 3 -i %s -o %s" % (short1, short2, long, output)
 		file.write(dir)
 		file.write(command)
 
 	if program is "jabba":
+		karectOutput = "%s/karect" % (outputdir)
+		mkdir = "mkdir -p %s\n" % (karectOutput)
+		file.write(mkdir)
+
 		brownieOutput = "%s/brownie" % (outputdir)
 		mkdir = "mkdir -p %s\n" % (brownieOutput)
 		file.write(mkdir)
@@ -60,11 +69,18 @@ def writeJob(program, species, shortCov, longCov):
 		mkdir = "mkdir -p %s\n" % (jabbaOutput)
 		file.write(mkdir)
 
-		command = "/home/seanla/Software/brownie/brownie graphCorrection -k 45 -p %s %s %s\n\n" % (brownieOutput, short1, short2)
-		file.write(command)
+		karectCommand = "/home/seanla/Software/karect/karect -correct -inputfile=%s -inputfile=%s -resultdir=%s -tempdir=%s -celltype=haploid -matchtype=hamming -threads=${PBS_NUM_PPN}\n\n" % (short1, short2, karectOutput, karectOutput)
+		file.write(karectCommand)
+
+		karectShort1="%s/karect_%s-short-paired-d%s1.fastq" % (karectOutput, species, shortCov)
+		karectShort2="%s/karect_%s-short-paired-d%s2.fastq" % (karectOutput, species, shortCov)
+
+		brownieCommand = "/home/seanla/Software/brownie/brownie graphCorrection -k 75 -p %s %s %s\n\n" % (brownieOutput, karectShort1, karectShort2)
+		file.write(brownieCommand)
+
 		dbgraph = "%s/DBGraph.fasta" % (brownieOutput)
-		command = "/home/seanla/Software/jabba/jabba -t 6 -l 20 -k 45 -o %s -g %s -fastq %s" % (jabbaOutput, dbgraph, long) 
-		file.write(command)
+		jabbaCommand = "/home/seanla/Software/jabba/jabba -t ${PBS_NUM_PPN} -l 20 -k 75 -o %s -g %s -fastq %s" % (jabbaOutput, dbgraph, long) 
+		file.write(jabbaCommand)
 
 	if program is "proovread":
 		output = "%s/%s" % (outputdir, test)
@@ -86,7 +102,7 @@ def writeJob(program, species, shortCov, longCov):
 		file.write(samtools)
 			
 		dir = "cd /home/seanla/Software/proovread/bin\n\n"
-		command = "./proovread --lr-qv-offset --bam %s -l %s -p %s" % (bam, long, output)
+		command = "./proovread -t ${PBS_NUM_PPN} --lr-qv-offset 70 --bam %s -l %s -p %s" % (bam, long, output)
 		file.write(dir)
 		file.write(command)
 
