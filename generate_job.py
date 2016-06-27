@@ -6,7 +6,10 @@ def writeJob(program, species, shortCov, longCov):
 	test = "%s-%s-%sSx%sL" % (program, species, shortCov, longCov)
 	# LoRDeC uses more memory than other programs
 	if program is "lordec":
-		mem = 48
+		if int(shortCov) >= 200:
+			mem = 64
+		else:
+			mem = 48
 	else:
 		mem = 32
 	resources = ["walltime=24:00:00", "mem=%dgb" % (mem), "nodes=1:ppn=8"]
@@ -110,8 +113,8 @@ def writeJob(program, species, shortCov, longCov):
 
 if __name__ == "__main__":
         helpMessage = "Generate  PBS job scripts."
-        usageMessage = "Usage: %s [-h help and usage] [-a do all programs, species, and coverages] [-e ecoli] [-y yeast] [-d LoRDeC] [-j Jabba] [-p proovread] [-s short read coverage] [-l long read coverage]" % (sys.argv[0])
-        options = "heydjps:l:a"
+        usageMessage = "Usage: %s [-h help and usage] [-c do all coverages] [-e ecoli] [-y yeast] [-d LoRDeC] [-j Jabba] [-p proovread] [-s short read coverage] [-l long read coverage]" % (sys.argv[0])
+        options = "heydjps:l:c"
 
         try:
                 opts, args = getopt.getopt(sys.argv[1:], options)
@@ -130,7 +133,7 @@ if __name__ == "__main__":
 	doLordec = False
 	doJabba = False
 	doProovread = False
-	allJobs = False
+	allCov = False
 
         for opt, arg in opts:
                 # Help message
@@ -152,22 +155,15 @@ if __name__ == "__main__":
 			doJabba = True
 		elif opt == '-p':
 			doProovread = True
-		elif opt == '-a':
-			allJobs = True
+		elif opt == '-c':
+			allCov = True
 
 	optsIncomplete = False
 
-	if allJobs:
-		doEcoli = True
-		doYeast = True
-		doLordec = True
-		doJabba = True
-		doProovread = True
-
-	if shortCov is None and allJobs is False:
+	if shortCov is None and allCov is False:
 		print "Please input the short coverage."
 		optsIncomplete = True
-	if longCov is None and allJobs is False:
+	if longCov is None and allCov is False:
 		print "Please input the required long coverage."
 		optsIncomplete = True
 	if not doYeast and not doEcoli:
@@ -204,9 +200,9 @@ if __name__ == "__main__":
 		proovread = "p"
 
 	# Do all the short and long coverages
-	if allJobs:
-		shortCovs = [50, 100, 200]
-		longCovs = [10, 20, 50, 75]
+	if allCov:
+		shortCovs = ['50', '100', '200']
+		longCovs = ['10', '20', '50', '75']
 	else:
 		shortCovs.append(shortCov)
 		longCovs.append(longCov)
@@ -218,8 +214,8 @@ if __name__ == "__main__":
 				for program in programs:
 					writeJob(program, specie, shortCov, longCov)	
 
-	if allJobs:	
-		submitFile = "/home/seanla/Jobs/lrcstats/corrections/submitjobs-all.sh"
+	if allCov:	
+		submitFile = "/home/seanla/Jobs/lrcstats/corrections/submitjobs-%s%s%s-all.sh" % (lordec, jabba, proovread)
 	else:
 		submitFile = "/home/seanla/Jobs/lrcstats/corrections/submitjobs-%s%s%s-%sSx%sL.sh" % (lordec, jabba, proovread, shortCov, longCov)
 
