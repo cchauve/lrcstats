@@ -52,7 +52,7 @@ def writeJob(program, species, shortCov, longCov):
 	if program is "lordec":
 		output = "%s/%s.fasta" % (outputdir, test)
 		dir = "cd /home/seanla/Software/LoRDEC-0.6\n\n"
-		command = "./lordec-correct -t ${PBS_NUM_PPN} --trials 5 --branch 200 --errorrate 0.4 -2 %s %s -k 19 -s 3 -i %s -o %s" % (short1, short2, long, output)
+		command = "./lordec-correct -T ${PBS_NUM_PPN} --trials 5 --branch 200 --errorrate 0.4 -2 %s %s -k 19 -s 3 -i %s -o %s" % (short1, short2, long, output)
 		file.write(dir)
 		file.write(command)
 
@@ -110,8 +110,8 @@ def writeJob(program, species, shortCov, longCov):
 
 if __name__ == "__main__":
         helpMessage = "Generate  PBS job scripts."
-        usageMessage = "Usage: %s [-h help and usage] [-e ecoli] [-y yeast] [-d LoRDeC] [-j Jabba] [-p proovread] [-s short read coverage] [-l long read coverage]" % (sys.argv[0])
-        options = "heydjps:l:"
+        usageMessage = "Usage: %s [-h help and usage] [-a do all programs, species, and coverages] [-e ecoli] [-y yeast] [-d LoRDeC] [-j Jabba] [-p proovread] [-s short read coverage] [-l long read coverage]" % (sys.argv[0])
+        options = "heydjps:l:a"
 
         try:
                 opts, args = getopt.getopt(sys.argv[1:], options)
@@ -130,6 +130,7 @@ if __name__ == "__main__":
 	doLordec = False
 	doJabba = False
 	doProovread = False
+	allJobs = False
 
         for opt, arg in opts:
                 # Help message
@@ -151,13 +152,22 @@ if __name__ == "__main__":
 			doJabba = True
 		elif opt == '-p':
 			doProovread = True
+		elif opt == '-a':
+			allJobs = True
 
 	optsIncomplete = False
 
-	if shortCov is None:
+	if allJobs:
+		doEcoli = True
+		doYeast = True
+		doLordec = True
+		doJabba = True
+		doProovread = True
+
+	if shortCov is None and allJobs is False:
 		print "Please input the short coverage."
 		optsIncomplete = True
-	if longCov is None:
+	if longCov is None and allJobs is False:
 		print "Please input the required long coverage."
 		optsIncomplete = True
 	if not doYeast and not doEcoli:
@@ -172,6 +182,8 @@ if __name__ == "__main__":
 
 	species = []
 	programs = []
+	shortCovs = []
+	longCovs = []
 
 	proovread = ""
 	jabba = ""
@@ -191,17 +203,33 @@ if __name__ == "__main__":
 		programs.append("proovread")
 		proovread = "p"
 
+	# Do all the short and long coverages
+	if allJobs:
+		shortCovs = [50, 100, 200]
+		longCovs = [10, 20, 50, 75]
+	else:
+		shortCovs.append(shortCov)
+		longCovs.append(longCov)
+
 	# yes, specie is not the proper singular form of species, but im lazy
-	for specie in species:
-		for program in programs:
-			writeJob(program, specie, shortCov, longCov)	
+	for shortCov in shortCovs:
+		for longCov in longCovs:
+			for specie in species:
+				for program in programs:
+					writeJob(program, specie, shortCov, longCov)	
 
-	submitFile = "/home/seanla/Jobs/lrcstats/corrections/submitjobs-%s%s%s-%sSx%sL.sh" % (lordec, jabba, proovread, shortCov, longCov)
+	if allJobs:	
+		submitFile = "/home/seanla/Jobs/lrcstats/corrections/submitjobs-all.sh"
+	else:
+		submitFile = "/home/seanla/Jobs/lrcstats/corrections/submitjobs-%s%s%s-%sSx%sL.sh" % (lordec, jabba, proovread, shortCov, longCov)
 
+	# Create the shell script to execute all jobs
 	with open(submitFile, 'w') as file:
 		file.write("#!/bin/bash\n\n")
-		for specie in species:
-			for program in programs:
-				test = "%s-%s-%sSx%sL" % (program, specie, shortCov, longCov)
-				filename = "%s.pbs" % (test)
-				file.write( "qsub %s\n" % (filename) )
+		for shortCov in shortCovs:
+			for longCov in longCovs:
+				for specie in species:
+					for program in programs:
+						test = "%s-%s-%sSx%sL" % (program, specie, shortCov, longCov)
+						filename = "%s.pbs" % (test)
+						file.write( "qsub %s\n" % (filename) )
