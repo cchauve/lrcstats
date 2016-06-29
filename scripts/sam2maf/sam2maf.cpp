@@ -5,8 +5,9 @@
 #include <string>
 #include <unistd.h> // For getopts
 #include <sstream> // for std::stringstream
-#include <ctype> // For isdigit and isalpha
+#include <cctype> // For isdigit and isalpha
 #include <queue>
+#include <algorithm> // For std::remove
 
 void displayHelp()
 {
@@ -18,32 +19,9 @@ void displayHelp()
 
 void displayUsage()
 {
-	std::cout << "Usage: " << argv[0] << " [-h help] [-r FASTA reference path] [-s SAM alignment file path] [-o MAF output prefix]\n";
+	std::cout << "Usage: [-h help] [-r FASTA reference path] [-s SAM alignment file path] [-o MAF output prefix]\n";
 }
 
-std::vector<std::string> split(const std::string &s)
-/* Tokenizes (i.e. isolates words in sentences and adds to vector) similar 
- *  * to .split() function in python */ 
-{
-        std::vector<std::string> elems;
-        std::stringstream ss(s);
-        std::string item;
-
-        while (std::getline(ss, item, ' ')) {
-                if (!item.empty()) {
-                        elems.push_back(item); 
-		} 
-	}
-
-        return elems;
-}
-
-int64_t gaplessLength(std::string read) 
-/* Returns the gapless length of MAF formatted reads */
-{
-        read.erase(std::remove(read.begin(), read.end(), '-'), read.end());
-        return read.length(); 
-}
 
 std::string addSpaces(std::string cigar)
 /* Add spaces before every number and letter in CIGAR string
@@ -55,7 +33,7 @@ std::string addSpaces(std::string cigar)
 
 	for (int i = 0; i < cigar.length(); i++) {
 		if ( (lastWasAlpha and std::isdigit( cigar[i] )) or (lastWasDigit and !std::isdigit( cigar[i] )) ) {
-			newCigar = newCigar + " " cigar[i];
+			newCigar = newCigar + " " + cigar[i];
 		} else {
 			newCigar = newCigar + cigar[i];
 		}
@@ -71,6 +49,30 @@ std::string addSpaces(std::string cigar)
 	return newCigar;
 }
 
+std::vector<std::string> split(const std::string &s, char delim)
+/* Tokenizes (i.e. isolates words in sentences and adds to vector) similar 
+ *  * to .split() function in python */ 
+{
+        std::vector<std::string> elems;
+        std::stringstream ss(s);
+        std::string item;
+
+        while (std::getline(ss, item, delim)) {
+                if (!item.empty()) {
+                        elems.push_back(item);
+		} 
+	}
+
+        return elems;
+}
+
+int gaplessLength(std::string read) 
+/* Returns the gapless length of MAF formatted reads */
+{
+        read.erase(std::remove(read.begin(), read.end(), '-'), read.end());
+        return read.length(); 
+}
+
 std::queue< std::string > getCigarQueue( std::vector< std::string > cigarOps ) 
 /* Create a queue out of cigar operators */
 {
@@ -84,7 +86,7 @@ std::queue< std::string > getCigarQueue( std::vector< std::string > cigarOps )
 		// Elements at even indices are integers,
 		// odd indices are operators
 		if (index % 2 == 0) {
-			int num = atoi( cigarOps.at(index) );
+			int num = atoi( cigarOps.at(index).c_str() );
 			numOps.push_back(num);
 		} else {
 			std::string op = cigarOps.at(index);
@@ -94,14 +96,14 @@ std::queue< std::string > getCigarQueue( std::vector< std::string > cigarOps )
 
 	std::queue< std::string > cigarQueue;
 
-	for (int vectorIndex = 0; index < numOps.size(); index++) {
+	for (int vectorIndex = 0; vectorIndex < numOps.size(); vectorIndex++) {
 		// The number of the current operation at vectorIndex in ops
 		int numOp = numOps.at(vectorIndex);
 		// If there are x ops, then add x ops to the queue e.g.
-		// if the cigar string is 3D, then the queue will contain
+		// if the cigar string is 3D, then the queue will be
 		// ['D', 'D', 'D']
 		for (int opIndex = 0; opIndex < numOp; opIndex++) {
-			cigarQueue.push_back( ops.at(vectorIndex) );	
+			cigarQueue.push( ops.at(vectorIndex) );	
 		} 
 	}
 
@@ -111,7 +113,7 @@ std::queue< std::string > getCigarQueue( std::vector< std::string > cigarOps )
 std::string getRef(std::string refPath)
 /* Find the reference sequence from the FASTA file */
 {
-	ifstream file (refPath, std::ios::in);
+	std::ifstream file (refPath, std::ios::in);
 
 	std::string line;
 	// Skip the first header line
@@ -121,7 +123,7 @@ std::string getRef(std::string refPath)
 
 	file.close();
 
-	return line
+	return line;
 } 
 
 std::string getRefAlignment(std::string ref, std::string start, std::queue< std::string > cigarQueue)
@@ -129,7 +131,7 @@ std::string getRefAlignment(std::string ref, std::string start, std::queue< std:
 {
 	// The leftmost position in the reference where the read aligns to 
 	std::string refAlignment = "";
-	int64_t refPos = atoi(start) - 1;
+	int64_t refPos = atoi( start.c_str() ) - 1;
 
 	while ( !cigarQueue.empty() and refPos < ref.length() ) {
 		std::string currentOp = cigarQueue.front();
@@ -141,6 +143,7 @@ std::string getRefAlignment(std::string ref, std::string start, std::queue< std:
 		}
 		cigarQueue.pop();
 	}	
+
 	return refAlignment;
 }
 
@@ -155,19 +158,20 @@ std::string getReadAlignment(std::string read, std::queue< std::string > cigarQu
 		if (currentOp == "D") {
 			readAlignment = readAlignment + "-";
 		} else {
-			readAlignment = readAlignment + seq[ readIndex ];
+			readAlignment = readAlignment + read[readIndex];
 			readIndex++;
 		}
 		cigarQueue.pop();
 	}
+
 	return readAlignment;
 }
 
 void convertSam2Maf(std::string ref, std::string samPath, std::string mafPath)
 /* Create the MAF file from SAM data */
 {
-	ifstream sam (samPath, std::ios::in);
-	ofstream maf (mafPath, std::ios::out | std::ios::app);
+	std::ifstream sam (samPath, std::ios::in);
+	std::ofstream maf (mafPath, std::ios::out | std::ios::app);
 
 	// Length of the genome
 	int64_t srcSize = ref.length();
@@ -177,10 +181,12 @@ void convertSam2Maf(std::string ref, std::string samPath, std::string mafPath)
 	std::string line;
 
 	// Skip the SAM header line
-	getline(samPath, line);
+	std::getline(sam, line);
 
-	while ( getline(samPath, line) ) {
-		std::vector< std::string > tokens = split(line);
+	while ( std::getline(sam, line) ) {
+		// For flying spaghetti monster knows why, SAM files outputted by SimLoRD 
+		// use tabs to separate columns
+		std::vector< std::string > tokens = split(line, '	');
 
 		// Get MAF column data
 		std::string start = tokens.at(3);
@@ -189,20 +195,21 @@ void convertSam2Maf(std::string ref, std::string samPath, std::string mafPath)
 
 		// Preprocess cigar string
 		cigar = addSpaces(cigar);
-		std::vector< std::string > cigarOps = split(cigar);
+		std::vector< std::string > cigarOps = split(cigar, ' ');
 		std::queue< std::string > cigarQueue = getCigarQueue(cigarOps);
 
 		// Find the reference and read alignments
 		std::string refAlignment = getRefAlignment(ref, start, cigarQueue);
 		std::string readAlignment = getReadAlignment(read, cigarQueue);
 
+		// More column data
 		int8_t readSize = read.length();	
 		int64_t refSize = gaplessLength(refAlignment);
 
 		// Write data into MAF file
 		maf << "a\n";
 		maf << "s ref " << start <<  " " << refSize << " + " << srcSize << " " << refAlignment << "\n";
-		maf << "s read" << readNumber << " " << start <<  " " << refSize << " + " << srcSize << " " 
+		maf << "s read" << readNumber << " 0 " << refSize << " + " << srcSize << " " 
 			<< readAlignment << "\n";
 		maf << "\n";
 
@@ -220,8 +227,10 @@ int main(int argc, char* argv[])
 	std::string samPath = "";
 	std::string mafPrefix = "";
 
-	while ( (c = getopt(argc, argv, "hr:s:o:") ) != -1 ) {
-		switch (c) {
+	int opt;
+
+	while ( (opt = getopt(argc, argv, "hr:s:o:") ) != -1 ) {
+		switch (opt) {
 			case 'h':
 				displayHelp();
 				displayUsage();
@@ -234,6 +243,7 @@ int main(int argc, char* argv[])
 				break;
 			case 'o':
 				mafPrefix = optarg;
+				break;
 			default:
 				std::cerr << "Error: unknown argument.\n";
 				displayUsage();
@@ -257,6 +267,8 @@ int main(int argc, char* argv[])
 		return 1;
 	}	
 
+	std::string mafPath;
+
 	if (mafPrefix == "") {
 		mafPath = samPath + ".maf";
 	} else {
@@ -265,7 +277,7 @@ int main(int argc, char* argv[])
 
 	std::string ref = getRef(refPath);
 
-	convertSam2maf(ref, samPath, mafPath);
+	convertSam2Maf(ref, samPath, mafPath);
 
 	return 0;
 }
