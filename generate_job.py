@@ -97,7 +97,7 @@ def writeJob(program, species, shortCov, longCov):
 
 		sam = "%s/%s-%sSx%sL.sam" % (samPath, species, shortCov, longCov)
 
-		bwaMem = "/home/seanla/Software/proovread/util/bwa/bwa-proovread mem %s %s  %s > %s\n\n" % (long, short1, short2, sam) 
+		bwaMem = "/home/seanla/Software/proovread/util/bwa/bwa-proovread mem %s %s %s > %s\n\n" % (long, short1, short2, sam) 
 		file.write(bwaMem)
 			
 		bam = "%s.bam" % (sam)
