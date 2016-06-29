@@ -216,6 +216,9 @@ void convertSam2Maf(std::string ref, std::string samPath, std::string mafPath)
 	std::ifstream sam (samPath, std::ios::in);
 	std::ofstream maf (mafPath, std::ios::out | std::ios::trunc);
 
+	// Write the MAF header
+	maf << "##maf version=1\n";
+
 	// Length of the genome
 	int64_t srcSize = ref.length();
 	// Read numbers start at 0 for simlord data
