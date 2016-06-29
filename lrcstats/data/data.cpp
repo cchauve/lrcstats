@@ -96,7 +96,7 @@ MafFile::MafFile(std::string fileName)
 	}
 }
 
-void MafFile::addReads(GenericAlignments alignments, ReadInfo readInfo)
+void MafFile::addReads(TrimmedAlignments alignments, ReadInfo readInfo)
 /* Reads data from alignment and readInfo objects and writes to file in MAF format 
  * as described in https://genome.ucsc.edu/FAQ/FAQformat.html */
 {
@@ -144,7 +144,7 @@ void MafFile::addReads(GenericAlignments alignments, ReadInfo readInfo)
 	}
 }
 
-void MafFile::addReads(ProovreadAlignments alignments, ReadInfo readInfo)
+void MafFile::addReads(UntrimmedAlignments alignments, ReadInfo readInfo)
 /* Reads data from alignment and readInfo objects and writes to file in MAF format 
  * as described in https://genome.ucsc.edu/FAQ/FAQformat.html */
 {

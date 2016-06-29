@@ -4,12 +4,13 @@
 #include <vector>
 #include <string.h>
 #include <unistd.h>
+#include <cassert>
 
 #include "data/data.hpp"
 #include "alignments/alignments.hpp"
 #include "measures/measures.hpp"
 
-void generateMaf(std::string mafInputName, std::string clrName, std::string mafOutputName, bool isProovread)
+void generateUntrimmedMaf(std::string mafInputName, std::string clrName, std::string mafOutputName)
 /* Generates a 3-way maf file from data contained in input maf file and cLR file */
 {
 	std::ifstream mafInput (mafInputName, std::ios::in);
@@ -39,142 +40,182 @@ void generateMaf(std::string mafInputName, std::string clrName, std::string mafO
 	bool refNonEmpty;
 	bool ulrNonEmpty;
 
-	if (isProovread) {
-		ProovreadAlignments alignments(ref, ulr, clr);
-		ReadInfo readInfo(readName, refOrient, readOrient, start, srcSize);	
+	UntrimmedAlignments alignments(ref, ulr, clr);
+	ReadInfo readInfo(readName, refOrient, readOrient, start, srcSize);	
 
-		while (!mafInput.eof() && !clrInput.eof()) {
-			// Read from maf file first
-		
-			// //Skip line
-			std::getline(mafInput, mafLine); 
-			//std::cout << mafLine << "\n";
+	while (!mafInput.eof() && !clrInput.eof()) {
+		// Read from maf file first
+	
+		// //Skip line
+		std::getline(mafInput, mafLine); 
+		//std::cout << mafLine << "\n";
 
-			// Read ref line
-			std::getline(mafInput, mafLine);
-			//std::cout << mafLine << "\n";
+		// Read ref line
+		std::getline(mafInput, mafLine);
+		//std::cout << mafLine << "\n";
 
-			if (mafLine != "") {
-				mafTokens = split(mafLine);	
-				ref = mafTokens.at(6);			
-				refOrient = mafTokens.at(4);
-				start = mafTokens.at(2);
-				srcSize = mafTokens.at(5);
-			
-				refNonEmpty = true;
-			} else {
-				refNonEmpty = false;
-			}
+		if (mafLine != "") {
+			mafTokens = split(mafLine);	
 
-			// Read ulr line
-			std::getline(mafInput, mafLine);
-			//std::cout << mafLine << "\n";
+			assert( mafTokens.size() > 5 );
 
-			if (mafLine != "") {
-				mafTokens = split(mafLine);	
-				ulr = mafTokens.at(6);
-				readName = mafTokens.at(1);
-				readOrient = mafTokens.at(4);
-				ulrNonEmpty = true;
-			} else {
-				ulrNonEmpty = false;
-			}
-
-			//Skip line again
-			std::getline(mafInput, mafLine); 
-			//std::cout << mafLine << "\n\n";
-
-			if (refNonEmpty && ulrNonEmpty) {
-				// Reset readInfo object
-				readInfo.reset(readName, refOrient, readOrient, start, srcSize);
-				// Next, read from clr file
-			
-				// Skip first line
-				getline(clrInput, clr);
-
-				// Read clr line
-				getline(clrInput, clr);
-			
-				if (clr != "") {
-					alignments.reset(ref, ulr, clr);
-
-					// Write info into maf file
-					mafOutput.addReads(alignments, readInfo);
-				}	
-			}
-			clr = "";
+			ref = mafTokens.at(6);			
+			refOrient = mafTokens.at(4);
+			start = mafTokens.at(2);
+			srcSize = mafTokens.at(5);
+			refNonEmpty = true;
+		} else {
+			refNonEmpty = false;
 		}
 
-		mafInput.close();
-		clrInput.close();
-	} else {
-		GenericAlignments alignments(ref, ulr, clr);
-		ReadInfo readInfo(readName, refOrient, readOrient, start, srcSize);	
+		// Read ulr line
+		std::getline(mafInput, mafLine);
+		//std::cout << mafLine << "\n";
 
-		while (!mafInput.eof() && !clrInput.eof()) {
-			// Read from maf file first
-		
-			// //Skip line
-			std::getline(mafInput, mafLine); 
-			//std::cout << mafLine << "\n";
+		if (mafLine != "") {
+			mafTokens = split(mafLine);	
 
-			// Read ref line
-			std::getline(mafInput, mafLine);
-			//std::cout << mafLine << "\n";
+			assert( mafTokens.size() > 5 );
 
-			if (mafLine != "") {
-				mafTokens = split(mafLine);	
-				ref = mafTokens.at(6);			
-				refOrient = mafTokens.at(4);
-				start = mafTokens.at(2);
-				srcSize = mafTokens.at(5);
-				refNonEmpty = true;
-			} else {
-				refNonEmpty = false;
-			}
-
-			// Read ulr line
-			std::getline(mafInput, mafLine);
-			//std::cout << mafLine << "\n";
-
-			if (mafLine != "") {
-				mafTokens = split(mafLine);	
-				ulr = mafTokens.at(6);
-				readName = mafTokens.at(1);
-				readOrient = mafTokens.at(4);
-				ulrNonEmpty = true;
-			} else {
-				ulrNonEmpty = false;
-			}
-
-			//Skip line again
-			std::getline(mafInput, mafLine); 
-			//std::cout << mafLine << "\n\n";
-
-			if (refNonEmpty && ulrNonEmpty) {
-				readInfo.reset(readName, refOrient, readOrient, start, srcSize);
-				// Next, read from clr file
-			
-				// Skip first line
-				getline(clrInput, clr);
-				
-				// Read clr line
-				getline(clrInput, clr);
-			
-				if (clr != "") {
-					alignments.reset(ref, ulr, clr);
-
-					// Write info into maf file
-					mafOutput.addReads(alignments, readInfo);
-				}	
-			}
-			clr = "";
+			ulr = mafTokens.at(6);
+			readName = mafTokens.at(1);
+			readOrient = mafTokens.at(4);
+			ulrNonEmpty = true;
+		} else {
+			ulrNonEmpty = false;
 		}
 
-		mafInput.close();
-		clrInput.close();
+		//Skip line again
+		std::getline(mafInput, mafLine); 
+		//std::cout << mafLine << "\n\n";
+
+		if (refNonEmpty && ulrNonEmpty) {
+			readInfo.reset(readName, refOrient, readOrient, start, srcSize);
+			// Next, read from clr file
+		
+			// Skip first line
+			getline(clrInput, clr);
+			
+			// Read clr line
+			getline(clrInput, clr);
+		
+			if (clr != "") {
+				alignments.reset(ref, ulr, clr);
+
+				// Write info into maf file
+				mafOutput.addReads(alignments, readInfo);
+			}	
+		}
+		clr = "";
 	}
 
+	mafInput.close();
+	clrInput.close();
+}
+
+void generateTrimmedMaf(std::string mafInputName, std::string clrName, std::string mafOutputName)
+/* Generates a 3-way maf file from data contained in input maf file and cLR file */
+{
+	std::ifstream mafInput (mafInputName, std::ios::in);
+	std::ifstream clrInput (clrName, std::ios::in);
+	MafFile mafOutput (mafOutputName);
+
+	if (!mafInput.is_open() || !clrInput.is_open()) {
+		std::cerr << "Unable to open either maf input or corrected long reads file\n";
+		return; 
+	}	
+
+	std::string mafLine;
+
+	std::vector<std::string> mafTokens;
+	std::vector<std::string> clrTokens;
+
+	std::string ref = "";
+	std::string ulr = "";
+	std::string clr = "";
+
+	std::string readName = "";
+	std::string refOrient = "";
+	std::string readOrient = "";
+	std::string start = "";
+	std::string srcSize = "";
+
+	bool refNonEmpty;
+	bool ulrNonEmpty;
+
+	TrimmedAlignments alignments(ref, ulr, clr);
+	ReadInfo readInfo(readName, refOrient, readOrient, start, srcSize);	
+
+	while (!mafInput.eof() && !clrInput.eof()) {
+		// Read from maf file first
+	
+		// //Skip line
+		std::getline(mafInput, mafLine); 
+		//std::cout << mafLine << "\n";
+
+		// Read ref line
+		std::getline(mafInput, mafLine);
+		//std::cout << mafLine << "\n";
+
+		if (mafLine != "") {
+			mafTokens = split(mafLine);	
+
+			assert( mafTokens.size() > 5 );
+
+			ref = mafTokens.at(6);			
+			refOrient = mafTokens.at(4);
+			start = mafTokens.at(2);
+			srcSize = mafTokens.at(5);
+			
+			refNonEmpty = true;
+		} else {
+			refNonEmpty = false;
+		}
+
+		// Read ulr line
+		std::getline(mafInput, mafLine);
+		//std::cout << mafLine << "\n";
+
+		if (mafLine != "") {
+			mafTokens = split(mafLine);	
+
+			assert( mafTokens.size() > 5 );
+
+			ulr = mafTokens.at(6);
+			readName = mafTokens.at(1);
+			readOrient = mafTokens.at(4);
+			ulrNonEmpty = true;
+		} else {
+			ulrNonEmpty = false;
+		}
+
+		//Skip line again
+		std::getline(mafInput, mafLine); 
+		//std::cout << mafLine << "\n\n";
+
+		if (refNonEmpty && ulrNonEmpty) {
+			// Reset readInfo object
+			readInfo.reset(readName, refOrient, readOrient, start, srcSize);
+			// Next, read from clr file
+		
+			// Skip first line
+			getline(clrInput, clr);
+
+			// Read clr line
+			getline(clrInput, clr);
+		
+				if (clr != "") {
+				alignments.reset(ref, ulr, clr);
+
+				// Write info into maf file
+				mafOutput.addReads(alignments, readInfo);
+			}	
+		}
+		clr = "";
+	}
+
+	mafInput.close();
+	clrInput.close();
 }
 
 void performStatistics(std::string mafName)
@@ -191,7 +232,9 @@ void performStatistics(std::string mafName)
 	// Skip first four lines
 	
 	for (int i = 0; i < 4; i++) {
-		std::getline(mafFile, line); 
+		if (!mafFile.eof()) {
+			std::getline(mafFile, line); 
+		}	
 	} 
 
 
@@ -228,16 +271,21 @@ void performStatistics(std::string mafName)
 	}
 }
 
+void displayUsage()
+{
+		std::cerr << "Usage: lrcstats [mode] [-m MAF input path] [-c cLR input path] [-t cLR are trimmed] "
+		      	  << "[-o MAF output path]\n";
+		std::cerr << "lrcstats maf to create 3-way MAF file\n";
+		std::cerr << "lrcstats stats to perform statistics on MAF file\n";
+}
+
 int main(int argc, char *argv[])
 {
 	int opt;
 
 	if (argc == 1) {
 		std::cerr << "Please select a mode\n";
-		std::cerr << "Usage: " << argv[0] << " [mode] [-m MAF input path] [-c cLR input path] "
-		      	  << "[-o MAF output path]\n";
-		std::cerr << argv[0] << " maf to create 3-way MAF file\n";
-		std::cerr << argv[0] << " stats to perform statistics on MAF file\n";
+		displayUsage();
 		return 1;
 	} else {
 
@@ -245,10 +293,7 @@ int main(int argc, char *argv[])
 		
 		if (mode != "maf" && mode != "stats") {
 			std::cerr << "Please select a mode\n";
-			std::cerr << "Usage: " << argv[0] << " [mode] [-m MAF input path] [-c cLR input path] "
-		      		  << "[-o MAF output path]\n";
-			std::cerr << argv[0] << " maf to create 3-way MAF file\n";
-			std::cerr << argv[0] << " stats to perform statistics on MAF file\n";
+			displayUsage();
 			return 1;
 		}
 	}
@@ -261,9 +306,9 @@ int main(int argc, char *argv[])
 	std::string mafInputName = "";
 	std::string clrName = "";
 	std::string mafOutputName = "output.maf";
-	bool isProovread = false;
+	bool trimmed = false;
 
-	while ((opt = getopt(argc, argv, "m:c:o:ph")) != -1) {
+	while ((opt = getopt(argc, argv, "m:c:o:ht")) != -1) {
 		switch (opt) {
 			case 'm':
 				// Source maf file name
@@ -277,18 +322,17 @@ int main(int argc, char *argv[])
 				// maf output file name
 				mafOutputName = optarg;
 				break;
-			case 'p':
-				isProovread = true;
+			case 't':
+				// Whether the corrected long reads are trimmed or not
+				trimmed = true;
+				break;
 			case 'h':
 				// Displays usage
-				std::cout << "Usage: " << argv[0] << " [mode] [-m MAF input path] [-c cLR input path] "
-					<< "[-o MAF output path]\n";
-				std::cout << argv[0] << " maf to create 3-way MAF file\n";
-				std::cout << argv[0] << " stats to perform statistics on MAF file\n";
+				displayUsage();
 				return 0;
 			default:
-				std::cerr << "Usage: " << argv[0] << " [mode] [-m MAF input path] [-c cLR input path] "
-					<< "[-o MAF output path]\n";
+				std::cerr << "Error: unrecognized option.\n";
+				displayUsage();
 				return 1;
 		}
 	}
@@ -305,14 +349,18 @@ int main(int argc, char *argv[])
 		std::cerr << "ERROR: cLR input path required\n";
 		optionsPresent = false;
 	}
+
 	if (!optionsPresent) {
-		std::cerr << "Usage: " << argv[0] << " [mode] [-m MAF input path] [-c cLR input path] "
-		      	  << "[-o MAF output path]\n";
+		displayUsage();
 		return 1;
 	}
 
 	if (mode == "maf") {
-		generateMaf(mafInputName, clrName, mafOutputName, isProovread);
+		if (trimmed) {
+			generateTrimmedMaf(mafInputName, clrName, mafOutputName);
+		} else {
+			generateUntrimmedMaf(mafInputName, clrName, mafOutputName);
+		}
 	} else {
 		performStatistics(mafInputName);				
 	}

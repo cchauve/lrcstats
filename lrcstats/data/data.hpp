@@ -35,8 +35,8 @@ class MafFile
 {
 	public:
 		MafFile(std::string fileName);
-		void addReads(GenericAlignments alignments, ReadInfo readInfo);
-		void addReads(ProovreadAlignments alignments, ReadInfo readInfo);
+		void addReads(TrimmedAlignments alignments, ReadInfo readInfo);
+		void addReads(UntrimmedAlignments alignments, ReadInfo readInfo);
 	private:
 		std::string filename;
 };

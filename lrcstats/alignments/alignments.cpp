@@ -4,12 +4,13 @@
 #include <algorithm>
 #include <limits>
 #include <cmath>
+#include <cassert>
 
 #include "alignments.hpp"
 #include "../data/data.hpp"
 
-Reads::Reads(std::string reference, std::string uLongRead, std::string cLongRead)
-/* Constructor for general reads class - is the parent of GenericAlignments and ProovreadAlignments */
+Alignments::Alignments(std::string reference, std::string uLongRead, std::string cLongRead)
+/* Constructor for general reads class - is the parent of UntrimmedAlignments and TrimmedAlignments */
 {
 	ref = reference;
 	ulr = uLongRead;
@@ -17,7 +18,7 @@ Reads::Reads(std::string reference, std::string uLongRead, std::string cLongRead
 	createMatrix();
 }
 
-Reads::Reads(const Reads &reads)
+Alignments::Alignments(const Alignments &reads)
 /* Copy constructor */
 {
 	// First, copy all member fields
@@ -29,13 +30,13 @@ Reads::Reads(const Reads &reads)
 	matrix = NULL;
 }
 
-Reads::~Reads()
+Alignments::~Alignments()
 /* Delete the matrix when calling the destructor */
 {
 	deleteMatrix();
 }
 
-void Reads::reset(std::string reference, std::string uLongRead, std::string cLongRead)
+void Alignments::reset(std::string reference, std::string uLongRead, std::string cLongRead)
 /* Resets variables to new values and deletes and recreates matrix given new information */
 {
 	// Resets in case of need to reassign values of object
@@ -46,26 +47,26 @@ void Reads::reset(std::string reference, std::string uLongRead, std::string cLon
 	createMatrix();
 }
 
-std::string Reads::getClr()
+std::string Alignments::getClr()
 /* Returns optimal cLR alignment ready to be written in 3-way MAF file */
 {
 	return clr;
 }
 
 
-std::string Reads::getUlr()
+std::string Alignments::getUlr()
 /* Returns optimal uLR alignment ready to be written in 3-way MAF file */
 {
 	return ulr;
 }
 
-std::string Reads::getRef()
+std::string Alignments::getRef()
 /* Returns optimal ref alignment ready to be written in 3-way MAF file */
 {
 	return ref;
 }
 
-void Reads::createMatrix()
+void Alignments::createMatrix()
 /* Preconstruct the matrix */
 {
 	std::string cleanedClr = clr; 
@@ -89,7 +90,7 @@ void Reads::createMatrix()
 	}
 }
 
-void Reads::deleteMatrix()
+void Alignments::deleteMatrix()
 /* Delete the matrix allocated in the heap */
 {
 	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
@@ -103,7 +104,7 @@ void Reads::deleteMatrix()
 	}
 }
 
-int Reads::cost(char refBase, char cBase)
+int Alignments::cost(char refBase, char cBase)
 /* Cost function for dynamic programming algorithm */
 {
 	if ( islower(cBase) ) {
@@ -119,19 +120,19 @@ int Reads::cost(char refBase, char cBase)
 
 /*--------------------------------------------------------------------------------------------------------*/
 
-GenericAlignments::GenericAlignments(std::string reference, std::string uLongRead, std::string cLongRead)
-	: Reads(reference, uLongRead, cLongRead)
+UntrimmedAlignments::UntrimmedAlignments(std::string reference, std::string uLongRead, std::string cLongRead)
+	: Alignments(reference, uLongRead, cLongRead)
 /* Constructor */
 { initialize(); }
 
-void GenericAlignments::reset(std::string reference, std::string uLongRead, std::string cLongRead)
+void UntrimmedAlignments::reset(std::string reference, std::string uLongRead, std::string cLongRead)
 /* Resets variables to new values and deletes and recreates matrix given new information */
 { 
-	Reads::reset(reference, uLongRead, cLongRead);
+	Alignments::reset(reference, uLongRead, cLongRead);
 	initialize(); 
 }
 
-void GenericAlignments::initialize()
+void UntrimmedAlignments::initialize()
 /* Given cLR, uLR and ref sequences, construct the DP matrix for the optimal alignments. 
  * Requires these member variables to be set before use. */
 {
@@ -202,7 +203,7 @@ void GenericAlignments::initialize()
 	findAlignments();
 }
 
-void GenericAlignments::findAlignments()
+void UntrimmedAlignments::findAlignments()
 /* Backtracks through the DP matrix to find the optimal alignments. 
  * Follows same schema as the DP algorithm. */
 {
@@ -387,19 +388,19 @@ void GenericAlignments::findAlignments()
 
 /* --------------------------------------------------------------------------------------------- */
 
-ProovreadAlignments::ProovreadAlignments(std::string reference, std::string uLongRead, std::string cLongRead)
-	: Reads(reference, uLongRead, cLongRead)
-/* Constructor - is a child class of Reads */
+TrimmedAlignments::TrimmedAlignments(std::string reference, std::string uLongRead, std::string cLongRead)
+	: Alignments(reference, uLongRead, cLongRead)
+/* Constructor - is a child class of Alignments */
 { initialize(); }
 
-void ProovreadAlignments::reset(std::string reference, std::string uLongRead, std::string cLongRead)
+void TrimmedAlignments::reset(std::string reference, std::string uLongRead, std::string cLongRead)
 /* Resets the alignment object to be used again */
 {
-	Reads::reset(reference, uLongRead, cLongRead);
+	Alignments::reset(reference, uLongRead, cLongRead);
  	initialize(); 
 }
 
-void ProovreadAlignments::initialize()
+void TrimmedAlignments::initialize()
 /* Create the DP matrix similar to generic alignment object */
 {
 	// Split the clr into its corrected parts
@@ -461,7 +462,7 @@ void ProovreadAlignments::initialize()
 	findAlignments();
 }
 
-void ProovreadAlignments::findAlignments()
+void TrimmedAlignments::findAlignments()
 /* Construct the optimal alignments between the three reads */
 {
 	std::string clrMaf = "";
@@ -567,7 +568,6 @@ void ProovreadAlignments::findAlignments()
 			columnIndex = 0;
 		}
 	}
-
 	clr = clrMaf;
 	ulr = ulrMaf;
 	ref = refMaf;
