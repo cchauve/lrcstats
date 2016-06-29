@@ -8,6 +8,7 @@
 #include <cctype> // For isdigit and isalpha
 #include <queue>
 #include <algorithm> // For std::remove
+#include <cassert> // for assert
 
 void displayHelp()
 {
@@ -31,7 +32,7 @@ std::string addSpaces(std::string cigar)
 	bool lastWasAlpha = false;
 	bool lastWasDigit = false;
 
-	for (int i = 0; i < cigar.length(); i++) {
+	for (int64_t i = 0; i < cigar.length(); i++) {
 		if ( (lastWasAlpha and std::isdigit( cigar[i] )) or (lastWasDigit and !std::isdigit( cigar[i] )) ) {
 			newCigar = newCigar + " " + cigar[i];
 		} else {
@@ -66,11 +67,34 @@ std::vector<std::string> split(const std::string &s, char delim)
         return elems;
 }
 
-int gaplessLength(std::string read) 
+std::string removeDelim(std::string read, char delim)
+{
+	read.erase(std::remove(read.begin(), read.end(), delim), read.end());
+	return read;
+}
+
+int64_t gaplessLength(std::string read) 
 /* Returns the gapless length of MAF formatted reads */
 {
-        read.erase(std::remove(read.begin(), read.end(), '-'), read.end());
-        return read.length(); 
+	std::string newRead = removeDelim(read, '-'); 
+	assert(newRead.length() > 0);
+        return newRead.length(); 
+}
+
+void printVector( std::vector< std::string > cigarVector )
+{
+	for (int i = 0; i < cigarVector.size(); i++) {
+		std::cout << cigarVector.at(i) << " ";
+	}
+	std::cout << "\n";
+}
+
+void printIntVector( std::vector< int64_t > cigarVector )
+{
+	for (int i = 0; i < cigarVector.size(); i++) {
+		std::cout << std::to_string( cigarVector.at(i) ) << " ";
+	}
+	std::cout << "\n";
 }
 
 std::queue< std::string > getCigarQueue( std::vector< std::string > cigarOps ) 
@@ -78,15 +102,15 @@ std::queue< std::string > getCigarQueue( std::vector< std::string > cigarOps )
 {
 	// Stores number of each operation e.g. if the cigar string is 5=10D, then
 	// this vector stores the 5 and 10
-	std::vector< int8_t > numOps;
+	std::vector< int64_t > numOps;
 	// Likewise, this vector would store the = and D symbols
 	std::vector< std::string > ops;	
 
-	for (int index = 0; index < cigarOps.size(); index++) {
+	for (int64_t index = 0; index < cigarOps.size(); index++) {
 		// Elements at even indices are integers,
 		// odd indices are operators
 		if (index % 2 == 0) {
-			int num = atoi( cigarOps.at(index).c_str() );
+			int64_t num = atoi( cigarOps.at(index).c_str() );
 			numOps.push_back(num);
 		} else {
 			std::string op = cigarOps.at(index);
@@ -94,16 +118,18 @@ std::queue< std::string > getCigarQueue( std::vector< std::string > cigarOps )
 		}
 	}
 
+	assert( numOps.size() == ops.size() );
+
 	std::queue< std::string > cigarQueue;
 
-	for (int vectorIndex = 0; vectorIndex < numOps.size(); vectorIndex++) {
-		// The number of the current operation at vectorIndex in ops
-		int numOp = numOps.at(vectorIndex);
+	for (int64_t opsIndex = 0; opsIndex < numOps.size(); opsIndex++) {
+		// The number of the current operation at opsIndex in ops
+		int64_t numOp = numOps.at(opsIndex);
 		// If there are x ops, then add x ops to the queue e.g.
 		// if the cigar string is 3D, then the queue will be
 		// ['D', 'D', 'D']
-		for (int opIndex = 0; opIndex < numOp; opIndex++) {
-			cigarQueue.push( ops.at(vectorIndex) );	
+		for (int64_t opIndex = 0; opIndex < numOp; opIndex++) {
+			cigarQueue.push( ops.at(opsIndex) );	
 		} 
 	}
 
@@ -115,23 +141,33 @@ std::string getRef(std::string refPath)
 {
 	std::ifstream file (refPath, std::ios::in);
 
+	std::string reference = "";
+
 	std::string line;
 	// Skip the first header line
 	std::getline(file, line);
+
 	// Read the reference sequence
-	std::getline(file, line);
+	while (std::getline(file,line)) {
+		reference = reference + line;
+	}
 
 	file.close();
 
-	return line;
+	reference = removeDelim(reference, '\n');	
+
+	return reference;
 } 
 
-std::string getRefAlignment(std::string ref, std::string start, std::queue< std::string > cigarQueue)
+std::string getRefAlignment(std::string ref, int64_t refPos, std::queue< std::string > cigarQueue)
 /* Find the reference sequence alignment */
 {
+	assert( !cigarQueue.empty() );
+	assert( ref.length() > 0 );
+	assert( refPos < ref.length() );
+
 	// The leftmost position in the reference where the read aligns to 
 	std::string refAlignment = "";
-	int64_t refPos = atoi( start.c_str() ) - 1;
 
 	while ( !cigarQueue.empty() and refPos < ref.length() ) {
 		std::string currentOp = cigarQueue.front();
@@ -144,12 +180,17 @@ std::string getRefAlignment(std::string ref, std::string start, std::queue< std:
 		cigarQueue.pop();
 	}	
 
+	assert( refAlignment.length() > 0 );
+
 	return refAlignment;
 }
 
 std::string getReadAlignment(std::string read, std::queue< std::string > cigarQueue)
 /* Find the read sequence alignment */
 {
+	assert( !cigarQueue.empty() );
+	assert( read.length() > 0 );
+
 	std::string readAlignment = "";
 	int64_t readIndex = 0;
 
@@ -164,6 +205,8 @@ std::string getReadAlignment(std::string read, std::queue< std::string > cigarQu
 		cigarQueue.pop();
 	}
 
+	assert(readAlignment.length() > 0);
+
 	return readAlignment;
 }
 
@@ -171,12 +214,12 @@ void convertSam2Maf(std::string ref, std::string samPath, std::string mafPath)
 /* Create the MAF file from SAM data */
 {
 	std::ifstream sam (samPath, std::ios::in);
-	std::ofstream maf (mafPath, std::ios::out | std::ios::app);
+	std::ofstream maf (mafPath, std::ios::out | std::ios::trunc);
 
 	// Length of the genome
 	int64_t srcSize = ref.length();
 	// Read numbers start at 0 for simlord data
-	int8_t readNumber = 0;
+	int64_t readNumber = 0;
 
 	std::string line;
 
@@ -189,27 +232,46 @@ void convertSam2Maf(std::string ref, std::string samPath, std::string mafPath)
 		std::vector< std::string > tokens = split(line, '	');
 
 		// Get MAF column data
-		std::string start = tokens.at(3);
-		std::string cigar = tokens.at(5);
+		std::string refPos = tokens.at(3);
+		std::string unprocessedCigar = tokens.at(5);
 		std::string read = tokens.at(9);
 
+		assert(refPos != "");
+		assert(unprocessedCigar != "");
+		assert(read != "");
+
+		int64_t start = atoi( refPos.c_str() ) - 1;
+
 		// Preprocess cigar string
-		cigar = addSpaces(cigar);
+		std::string cigar = addSpaces(unprocessedCigar);
+		
 		std::vector< std::string > cigarOps = split(cigar, ' ');
+		assert( cigarOps.size() > 0 );
+
 		std::queue< std::string > cigarQueue = getCigarQueue(cigarOps);
+		assert( !cigarQueue.empty() );
 
 		// Find the reference and read alignments
 		std::string refAlignment = getRefAlignment(ref, start, cigarQueue);
 		std::string readAlignment = getReadAlignment(read, cigarQueue);
 
+		assert(refAlignment.length() > 0);
+		assert(readAlignment.length() > 0);
+
 		// More column data
-		int8_t readSize = read.length();	
+		int64_t readSize = read.length();	
 		int64_t refSize = gaplessLength(refAlignment);
+		// Writing int datatypes to files doesn't seem to work, so 
+		// instead we convert to string beforehand
+		std::string readNumberString = std::to_string(readNumber);
+
+		assert(readSize > 0);
+		assert(refSize > 0);
 
 		// Write data into MAF file
 		maf << "a\n";
 		maf << "s ref " << start <<  " " << refSize << " + " << srcSize << " " << refAlignment << "\n";
-		maf << "s read" << readNumber << " 0 " << refSize << " + " << srcSize << " " 
+		maf << "s read" << readNumberString << " 0 " << refSize << " + " << srcSize << " " 
 			<< readAlignment << "\n";
 		maf << "\n";
 
@@ -274,6 +336,7 @@ int main(int argc, char* argv[])
 	} else {
 		mafPath = mafPrefix + ".maf";
 	}
+
 
 	std::string ref = getRef(refPath);
 
