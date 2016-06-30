@@ -56,3 +56,4 @@ if __name__ == "__main__":
 				print "Merging %s..." % (input)
 				for line in infile:
 					outfile.write(line)
+	print "Done merging."
