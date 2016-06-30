@@ -44,7 +44,7 @@ int64_t substitutions(std::string ref, std::string read)
 	int64_t subs = 0;
 
 	for (int64_t index = 0; index < ref.length(); index++) {
-		if ( toupper(ref[index]) != toupper(read[index]) ) {
+		if ( ref[index] != '-' and read[index] != '-' and toupper(ref[index]) != toupper(read[index]) ) {
 			subs++;
 		}			
 	}
@@ -93,7 +93,7 @@ int64_t correctedTruePositives(std::string ref, std::string read)
 	int64_t truePositives = 0;
 
 	for (int64_t index = 0; index < ref.length(); index++) {
-		if ( isupper(read[index]) and toupper(read[index]) == toupper(ref[index]) ) {
+		if ( (isupper(read[index]) or read[index] == '-') and toupper(read[index]) == toupper(ref[index]) ) {
 			truePositives++;		
 		}	
 	}
@@ -110,7 +110,7 @@ int64_t correctedFalsePositives(std::string ref, std::string read)
 	int64_t falsePositives = 0;
 
 	for (int64_t index = 0; index < ref.length(); index++) {
-		if ( isupper(read[index]) and toupper(read[index]) != toupper(ref[index]) ) {
+		if ( (isupper(read[index]) or read[index] == '-') and toupper(read[index]) != toupper(ref[index]) ) {
 			falsePositives++;		
 		}	
 	}
@@ -160,7 +160,9 @@ int64_t correctedBases(std::string read)
 	int64_t corrected = 0;
 
 	for (int64_t index = 0; index < read.length(); index++) { 
-		if ( isupper(read[index]) ) { corrected++; }	
+		if ( isupper(read[index]) or read[index] == '-' ) { 
+			corrected++; 
+		}	
 	}
 
 	return corrected;
