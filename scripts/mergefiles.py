@@ -53,5 +53,6 @@ if __name__ == "__main__":
 	with open(output, 'w') as outfile:
 		for input in inputs:
 			with open(input) as infile:
+				print "Merging %s..." % (input)
 				for line in infile:
 					outfile.write(line)

@@ -109,12 +109,35 @@ def writeJob(program, species, shortCov, longCov):
 		file.write(dir)
 		file.write(command)
 
+	if program is "colormap":
+		mergefilesPath = "mergefiles=/home/seanla/Projects/lrcstats/scripts/mergefiles.py\n"
+		colormapPath = "colormap=/home/seanla/Software/colormap/runBoth.sh\n"
+		short1path = "short1=%s\n" % (short1)
+		short2path = "short2=%s\n" % (short2)
+		outputPrefix = "outputPrefix=%s/%s\n" % (outputdir, test)
+		mergedShortPath = "mergedShort=%s/merged-short.fastq\n" % (outputdir)
+		longPath = "long=%s\n" % (long)
+		mergeCommand = "python $mergefiles -1 $short1 -2 $short2 -o $mergedShort\n"
+		colormap = "$colormap $long $mergedShort $outputPrefix ${PBS_NUM_PPN}\n" 
+
+		file.write(mergefilesPath)
+		file.write(colormapPath)
+		file.write(short1path)
+		file.write(short2path)
+		file.write(outputPrefix)
+		file.write(mergedShortPath)
+		file.write(longPath)
+		file.write('\n')
+		file.write(mergeCommand)
+		file.write(colormap)
+
 	file.close()
 
 if __name__ == "__main__":
         helpMessage = "Generate  PBS job scripts."
-        usageMessage = "Usage: %s [-h help and usage] [-c do all coverages] [-e ecoli] [-y yeast] [-d LoRDeC] [-j Jabba] [-p proovread] [-s short read coverage] [-l long read coverage]" % (sys.argv[0])
-        options = "heydjps:l:c"
+        usageMessage = "Usage: %s [-h help and usage] [-a do all coverages] [-e ecoli] [-y yeast] [-c CoLoRMap] [-d LoRDeC] [-j Jabba] [-p proovread] [-s short read coverage] [-l long read coverage]" % (sys.argv[0])
+
+        options = "haeycdjps:l:"
 
         try:
                 opts, args = getopt.getopt(sys.argv[1:], options)
@@ -133,6 +156,7 @@ if __name__ == "__main__":
 	doLordec = False
 	doJabba = False
 	doProovread = False
+	doColormap = False
 	allCov = False
 
         for opt, arg in opts:
@@ -155,8 +179,14 @@ if __name__ == "__main__":
 			doJabba = True
 		elif opt == '-p':
 			doProovread = True
-		elif opt == '-c':
+		elif opt == '-a':
 			allCov = True
+		elif opt == '-c':
+			doColormap = True
+		else:
+			print "Error: unknown argument!"
+			print usageMessage
+			sys.exit(2)
 
 	optsIncomplete = False
 
@@ -169,9 +199,10 @@ if __name__ == "__main__":
 	if not doYeast and not doEcoli:
 		print "Please indicate which species you would like to test."
 		optsIncomplete = True
-	if not doLordec and not doJabba and not doProovread:
+	if not doColormap and not doLordec and not doJabba and not doProovread:
 		print "Please select a program to use."
 		optsIncomplete = True
+
 	if optsIncomplete:
 		print usageMessage
 		sys.exit(2)
@@ -184,6 +215,7 @@ if __name__ == "__main__":
 	proovread = ""
 	jabba = ""
 	lordec = ""
+	colormap = ""
 
 	if doYeast:
 		species.append("yeast")
@@ -198,6 +230,9 @@ if __name__ == "__main__":
 	if doProovread:
 		programs.append("proovread")
 		proovread = "p"
+	if doColormap:
+		programs.append("colormap")
+		colormap = "c"
 
 	# Do all the short and long coverages
 	if allCov:
@@ -215,9 +250,9 @@ if __name__ == "__main__":
 					writeJob(program, specie, shortCov, longCov)	
 
 	if allCov:	
-		submitFile = "/home/seanla/Jobs/lrcstats/corrections/submitjobs-%s%s%s-all.sh" % (lordec, jabba, proovread)
+		submitFile = "/home/seanla/Jobs/lrcstats/corrections/submitjobs-%s%s%s%s-all.sh" % (colormap, lordec, jabba, proovread)
 	else:
-		submitFile = "/home/seanla/Jobs/lrcstats/corrections/submitjobs-%s%s%s-%sSx%sL.sh" % (lordec, jabba, proovread, shortCov, longCov)
+		submitFile = "/home/seanla/Jobs/lrcstats/corrections/submitjobs-%s%s%s%s-%sSx%sL.sh" % (colormap, lordec, jabba, proovread, shortCov, longCov)
 
 	# Create the shell script to execute all jobs
 	with open(submitFile, 'w') as file:
