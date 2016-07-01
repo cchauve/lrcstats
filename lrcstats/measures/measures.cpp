@@ -4,7 +4,7 @@
 #include <cctype> // for toupper, tolower, isupper, and islower
 #include "measures.hpp"
 
-int editScore(std::string ref, std::string lr)
+int64_t editScore(std::string ref, std::string lr)
 {
 /* Since maf files give the true alignment, we can find the true "edit distance"
  * (or edit score, as we call it) without trying to find an approximation.
@@ -118,7 +118,7 @@ int64_t correctedFalsePositives(std::string ref, std::string read)
 	return falsePositives;
 }
 
-int64_t uncorrectedTruePositive(std::string ref, std::string read)
+int64_t uncorrectedTruePositives(std::string ref, std::string read)
 // Returns the number of pairs of bases where the read base is uncorrected and
 // the read base is equivalent to the reference base.
 {
@@ -168,7 +168,7 @@ int64_t correctedBases(std::string read)
 	return corrected;
 }
 
-int64_t uncorrectedBases(std::string read);
+int64_t uncorrectedBases(std::string read)
 // Returns the number of uncorrected bases in the read 
 {
 	assert( read.length() > 0 );

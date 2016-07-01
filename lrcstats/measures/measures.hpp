@@ -16,15 +16,15 @@ int64_t insertions(std::string ref, std::string read);
 int64_t deletions(std::string ref, std::string read);
 // Returns the number of insertions between the reference and read string
 
-int64_t correctTruePositives(std::string ref, std::string read);
+int64_t correctedTruePositives(std::string ref, std::string read);
 // Returns the number of pairs of bases such that the read base is corrected and
 // the read base is equivalent to the reference base.
 
-int64_t correctFalsePositives(std::string ref, std::string read);
+int64_t correctedFalsePositives(std::string ref, std::string read);
 // Returns the number of pairs of bases such that the read base is corrected and
 // the read base is not equivalent to the reference base.
 
-int64_t uncorrectedTruePositive(std::string ref, std::string read);
+int64_t uncorrectedTruePositives(std::string ref, std::string read);
 // Returns the number of pairs of bases where the read base is uncorrected and
 // the read base is equivalent to the reference base.
 
