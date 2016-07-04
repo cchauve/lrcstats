@@ -4,27 +4,39 @@
 #include <cctype> // for toupper, tolower, isupper, and islower
 #include "measures.hpp"
 
-struct InsertionProportion {
-	int64_t cReadQuantity;
-	int64_t uReadQuanity;
-};
-struct DeletionProportion {
+/* The following three structs are simple containers for the proportion of the respective
+ * mutations between a corrected long read segment and its respective uncorrected long
+ * read segment */
+
+struct InsertionProportion 
+{
 	int64_t cReadQuantity;
 	int64_t uReadQuanity;
 };
 
-struct SubstitutionProportion {
+struct DeletionProportion 
+{
 	int64_t cReadQuantity;
 	int64_t uReadQuanity;
 };
 
-struct CorrespondingSegments {
+struct SubstitutionProportion 
+{
+	int64_t cReadQuantity;
+	int64_t uReadQuanity;
+};
+
+struct CorrespondingSegments 
+/* This struct is a simple container for corrected segments of corrected long reads and its
+ * respective segments in the uncorrected long read and reference sequences. */
+{
 	std::string cReadSegment;
 	std::string uReadSegment;
 	std::string refSegment;
 };
 
 std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref) 
+/* Returns a vector of all the CorrespondingSegments of the given cLR, uLR and reference sequences. */
 {
 	assert(cRead.length() == uRead.length());	
 	assert(cRead.length() == ref.length());	
@@ -66,6 +78,7 @@ std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cR
 }
 
 SubstitutionProportion getSubstitutionProportion( CorrespondingSegments correspondingSegments )
+/* Returns the proportion of substitutions between the reads in the correspondingSegments */
 {
 	cRead = correspondingSegments.cReadSegment;
 	uRead = correspondingSegments.uReadSegment;
@@ -79,6 +92,7 @@ SubstitutionProportion getSubstitutionProportion( CorrespondingSegments correspo
 }
 
 InsertionProportion getInsertionProportion( CorrespondingSegments correspondingSegments )
+/* Returns the proportion of insertions between the reads in the correspondingSegments */
 {
 	cRead = correspondingSegments.cReadSegment;
 	uRead = correspondingSegments.uReadSegment;
@@ -92,6 +106,7 @@ InsertionProportion getInsertionProportion( CorrespondingSegments correspondingS
 }
 
 DeletionProportion getDeletionProportion( CorrespondingSegments correspondingSegments )
+/* Returns the proportion of deletions between the reads in the correspondingSegments */
 {
 	cRead = correspondingSegments.cReadSegment;
 	uRead = correspondingSegments.uReadSegment;
@@ -105,12 +120,12 @@ DeletionProportion getDeletionProportion( CorrespondingSegments correspondingSeg
 }
 
 int64_t editScore(std::string ref, std::string lr)
-{
 /* Since maf files give the true alignment, we can find the true "edit distance"
  * (or edit score, as we call it) without trying to find an approximation.
  * We can also use this module to find the edit distance between cLRs and the ref
  * using the same metric as when calculating the edit score between the ref and lr
  */
+{
 	int score = 0;
 	int del = 1;
 	int ins = 1;
