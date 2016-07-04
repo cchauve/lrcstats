@@ -4,6 +4,106 @@
 #include <cctype> // for toupper, tolower, isupper, and islower
 #include "measures.hpp"
 
+struct InsertionProportion {
+	int64_t cReadQuantity;
+	int64_t uReadQuanity;
+};
+struct DeletionProportion {
+	int64_t cReadQuantity;
+	int64_t uReadQuanity;
+};
+
+struct SubstitutionProportion {
+	int64_t cReadQuantity;
+	int64_t uReadQuanity;
+};
+
+struct CorrespondingSegments {
+	std::string cReadSegment;
+	std::string uReadSegment;
+	std::string refSegment;
+};
+
+std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref) 
+{
+	assert(cRead.length() == uRead.length());	
+	assert(cRead.length() == ref.length());	
+	assert(ref.length() == uRead.length());	
+
+	int64_t length = ref.length();
+	bool inCorrectedSegment;
+	std::string cReadSegment;
+	std::string uReadSegment;
+	std::string refSegment;
+	CorrespondingSegments correspondingSegments;
+	std::vector< CorrespondingSegments > segmentList;
+
+	for (int index = 0; index < length; index++) {
+		if ( isupper(cRead[index]) ) {
+			inCorrectedSegment = true;
+		} else if ( islower(cRead[index]) and inCorrectedSegment ) {
+			inCorrectedSegment = false;
+
+			correspondingSegments.cReadSegment = cReadSegment;
+			correspondingSegments.uReadSegment = uReadSegment;
+			correspondingSegments.refSegment = refSegment;
+			
+			segmentList.push_back(correspondingSegments);	
+
+			cReadSegment = "";
+			uReadSegment = "";
+			refSegment = "";
+		}
+		
+		if (inCorrectedSegment) {
+			cReadSegment = cReadSegment + cRead[index];
+			uReadSegment = uReadSegment + uRead[index];
+			refSegment = refSegment + ref[index];
+		}
+	}
+
+	return segmentList;
+}
+
+SubstitutionProportion getSubstitutionProportion( CorrespondingSegments correspondingSegments )
+{
+	cRead = correspondingSegments.cReadSegment;
+	uRead = correspondingSegments.uReadSegment;
+	ref = correspondingSegments.refSegment;
+
+	SubstitutionProportion proportion;
+	proportion.cRead = substitutions(ref, cRead);
+	proportion.cRead = substitutions(ref, uRead);
+		
+	return proportion;
+}
+
+InsertionProportion getInsertionProportion( CorrespondingSegments correspondingSegments )
+{
+	cRead = correspondingSegments.cReadSegment;
+	uRead = correspondingSegments.uReadSegment;
+	ref = correspondingSegments.refSegment;
+
+	InsertionProportion proportion;
+	proportion.cRead = insertions(ref, cRead);
+	proportion.cRead = insertions(ref, uRead);
+		
+	return proportion;
+}
+
+DeletionProportion getDeletionProportion( CorrespondingSegments correspondingSegments )
+{
+	cRead = correspondingSegments.cReadSegment;
+	uRead = correspondingSegments.uReadSegment;
+	ref = correspondingSegments.refSegment;
+
+	DeletionProportion proportion;
+	proportion.cRead = deletions(ref, cRead);
+	proportion.cRead = deletions(ref, uRead);
+		
+	return proportion;
+}
+
 int64_t editScore(std::string ref, std::string lr)
 {
 /* Since maf files give the true alignment, we can find the true "edit distance"
@@ -180,4 +280,9 @@ int64_t uncorrectedBases(std::string read)
 	}
 
 	return uncorrected;
+}
+
+std::vector<MutationProportion> getInsertionProportion(std::string cRead, std::string uRead, std::string ref)
+{
+
 }

@@ -1,7 +1,30 @@
 #ifndef MEASURES_H
 #define MEASURES_H
 
-#include <cstdint>
+// The following three structs are simple containers for the proportion of the respective
+// mutations between a corrected long read segment and its respective uncorrected long
+// read segment
+struct InsertionProportion;
+
+struct DeletionProportion;
+
+struct SubstitutionProportion;
+
+struct CorrespondingSegments;
+/* This struct is a simple container for corrected segments of corrected long reads and its
+ * respective segments in the uncorrected long read and reference sequences. */
+
+std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref);
+/* Returns a vector of all the CorrespondingSegments of the given cLR, uLR and reference sequences. */
+
+SubstitutionProportion getSubstitutionProportion( CorrespondingSegments correspondingSegments);
+/* Returns the proportion of substitutions between the reads in the correspondingSegments */
+
+InsertionProportion getInsertionProportion( CorrespondingSegments correspondingSegments);
+/* Returns the proportion of insertions between the reads in the correspondingSegments */
+
+DeletionProportion getDeletionProportion( CorrespondingSegments correspondingSegments);
+/* Returns the proportion of deletions between the reads in the correspondingSegments */
 
 int64_t editScore(std::string ref, std::string lr);
 /* Returns the "edit score" of two alignments. 
