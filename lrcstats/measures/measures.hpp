@@ -4,15 +4,32 @@
 // The following three structs are simple containers for the proportion of the respective
 // mutations between a corrected long read segment and its respective uncorrected long
 // read segment
-struct InsertionProportion;
+struct InsertionProportion
+{
+        int64_t cRead;
+        int64_t uRead;
+};
 
-struct DeletionProportion;
+struct DeletionProportion
+{
+        int64_t cRead;
+        int64_t uRead;
+};
 
-struct SubstitutionProportion;
+struct SubstitutionProportion
+{
+        int64_t cRead;
+        int64_t uRead;
+};
 
-struct CorrespondingSegments;
+struct CorrespondingSegments
 /* This struct is a simple container for corrected segments of corrected long reads and its
- * respective segments in the uncorrected long read and reference sequences. */
+ *  * respective segments in the uncorrected long read and reference sequences. */
+{
+        std::string cReadSegment;
+        std::string uReadSegment;
+        std::string refSegment;
+};
 
 std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref);
 /* Returns a vector of all the CorrespondingSegments of the given cLR, uLR and reference sequences. */

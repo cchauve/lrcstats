@@ -2,38 +2,8 @@
 #include <string>
 #include <cassert> // for assert
 #include <cctype> // for toupper, tolower, isupper, and islower
+#include <vector>
 #include "measures.hpp"
-
-/* The following three structs are simple containers for the proportion of the respective
- * mutations between a corrected long read segment and its respective uncorrected long
- * read segment */
-
-struct InsertionProportion 
-{
-	int64_t cReadQuantity;
-	int64_t uReadQuanity;
-};
-
-struct DeletionProportion 
-{
-	int64_t cReadQuantity;
-	int64_t uReadQuanity;
-};
-
-struct SubstitutionProportion 
-{
-	int64_t cReadQuantity;
-	int64_t uReadQuanity;
-};
-
-struct CorrespondingSegments 
-/* This struct is a simple container for corrected segments of corrected long reads and its
- * respective segments in the uncorrected long read and reference sequences. */
-{
-	std::string cReadSegment;
-	std::string uReadSegment;
-	std::string refSegment;
-};
 
 std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref) 
 /* Returns a vector of all the CorrespondingSegments of the given cLR, uLR and reference sequences. */
@@ -51,7 +21,7 @@ std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cR
 	std::vector< CorrespondingSegments > segmentList;
 
 	for (int index = 0; index < length; index++) {
-		if ( isupper(cRead[index]) ) {
+		if ( isupper(cRead[index]) or cRead[index] == '-' ) {
 			inCorrectedSegment = true;
 		} else if ( islower(cRead[index]) and inCorrectedSegment ) {
 			inCorrectedSegment = false;
@@ -80,13 +50,13 @@ std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cR
 SubstitutionProportion getSubstitutionProportion( CorrespondingSegments correspondingSegments )
 /* Returns the proportion of substitutions between the reads in the correspondingSegments */
 {
-	cRead = correspondingSegments.cReadSegment;
-	uRead = correspondingSegments.uReadSegment;
-	ref = correspondingSegments.refSegment;
+	std::string cRead = correspondingSegments.cReadSegment;
+	std::string uRead = correspondingSegments.uReadSegment;
+	std::string ref = correspondingSegments.refSegment;
 
 	SubstitutionProportion proportion;
 	proportion.cRead = substitutions(ref, cRead);
-	proportion.cRead = substitutions(ref, uRead);
+	proportion.uRead = substitutions(ref, uRead);
 		
 	return proportion;
 }
@@ -94,13 +64,13 @@ SubstitutionProportion getSubstitutionProportion( CorrespondingSegments correspo
 InsertionProportion getInsertionProportion( CorrespondingSegments correspondingSegments )
 /* Returns the proportion of insertions between the reads in the correspondingSegments */
 {
-	cRead = correspondingSegments.cReadSegment;
-	uRead = correspondingSegments.uReadSegment;
-	ref = correspondingSegments.refSegment;
+	std::string cRead = correspondingSegments.cReadSegment;
+	std::string uRead = correspondingSegments.uReadSegment;
+	std::string ref = correspondingSegments.refSegment;
 
 	InsertionProportion proportion;
 	proportion.cRead = insertions(ref, cRead);
-	proportion.cRead = insertions(ref, uRead);
+	proportion.uRead = insertions(ref, uRead);
 		
 	return proportion;
 }
@@ -108,13 +78,13 @@ InsertionProportion getInsertionProportion( CorrespondingSegments correspondingS
 DeletionProportion getDeletionProportion( CorrespondingSegments correspondingSegments )
 /* Returns the proportion of deletions between the reads in the correspondingSegments */
 {
-	cRead = correspondingSegments.cReadSegment;
-	uRead = correspondingSegments.uReadSegment;
-	ref = correspondingSegments.refSegment;
+	std::string cRead = correspondingSegments.cReadSegment;
+	std::string uRead = correspondingSegments.uReadSegment;
+	std::string ref = correspondingSegments.refSegment;
 
 	DeletionProportion proportion;
 	proportion.cRead = deletions(ref, cRead);
-	proportion.cRead = deletions(ref, uRead);
+	proportion.uRead = deletions(ref, uRead);
 		
 	return proportion;
 }
@@ -295,9 +265,4 @@ int64_t uncorrectedBases(std::string read)
 	}
 
 	return uncorrected;
-}
-
-std::vector<MutationProportion> getInsertionProportion(std::string cRead, std::string uRead, std::string ref)
-{
-
 }
