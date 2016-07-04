@@ -10,12 +10,12 @@
 #include "alignments/alignments.hpp"
 #include "measures/measures.hpp"
 
-void generateUntrimmedMaf(std::string mafInputName, std::string clrName, std::string mafOutputName)
+void generateUntrimmedMaf(std::string mafInputName, std::string clrName, std::string outputPath)
 /* Generates a 3-way maf file from data contained in input maf file and cLR file */
 {
 	std::ifstream mafInput (mafInputName, std::ios::in);
 	std::ifstream clrInput (clrName, std::ios::in);
-	MafFile mafOutput (mafOutputName);
+	MafFile mafOutput (outputPath);
 
 	if (!mafInput.is_open() || !clrInput.is_open()) {
 		std::cerr << "Unable to open either maf input or corrected long reads file\n";
@@ -113,12 +113,12 @@ void generateUntrimmedMaf(std::string mafInputName, std::string clrName, std::st
 	clrInput.close();
 }
 
-void generateTrimmedMaf(std::string mafInputName, std::string clrName, std::string mafOutputName)
+void generateTrimmedMaf(std::string mafInputName, std::string clrName, std::string outputPath)
 /* Generates a 3-way maf file from data contained in input maf file and cLR file */
 {
 	std::ifstream mafInput (mafInputName, std::ios::in);
 	std::ifstream clrInput (clrName, std::ios::in);
-	MafFile mafOutput (mafOutputName);
+	MafFile mafOutput (outputPath);
 
 	if (!mafInput.is_open() || !clrInput.is_open()) {
 		std::cerr << "Unable to open either maf input or corrected long reads file\n";
@@ -218,57 +218,113 @@ void generateTrimmedMaf(std::string mafInputName, std::string clrName, std::stri
 	clrInput.close();
 }
 
-void performStatistics(std::string mafName)
-/* Given a 3-way MAF file between cLR, uLR and ref sequences, perform
- * statistics. */
+std::vector<int64_t> completeReadStats(std::string ref, std::string cRead, int64_t cSize, std::string uRead, int64_t uSize)
+{
+	std::vector<int64_t> statistics;
+
+	statistics.push_back(cSize);
+	statistics.push_back(uSize);
+
+	statistics.push_back( getDeletions(ref,cRead) );
+	statistics.push_back( getDeletions(ref,uRead) );
+
+	statistics.push_back( getInsertions(ref,cRead) );
+	statistics.push_back( getInsertions(ref,uRead) );
+
+	statistics.push_back( getSubstitutions(ref,cRead) );
+	statistics.push_back( getSubstitutions(ref,uRead) );
+
+	statistics.push_back( correctedTruePositives(ref,cRead) );
+	statistics.push_back( correctedFalsePositives(ref,uRead) );
+
+	statistics.push_back( uncorrectedTruePositives(ref,cRead) );
+	statistics.push_back( uncorrectedFalsePositives(ref,cRead) );
+
+	statistics.push_back( correctedBases(cRead) );
+	statistics.push_back( uncorrectedBases(uRead) );
+
+	return statistics;
+}
+
+void createStat(std::string mafName, std::string outputPath)
+/* Given a 3-way MAF file between cLR, uLR and ref sequences, outputs a
+ */
 {
 	std::ifstream mafFile (mafName, std::ios::in);
+	std::ofstream output (outputPath, std::ios::out);
 	std::string line = "";
 
-	std::string ref;
-	std::string ulr;
-	std::string clr;
+	// Indices where each respective information lies in the MAF file line
+	int sizeIndex = 3; 
+	int seqIndex = 6;
+	// Number of statistics we consider
+	int numStatistics = 10;
 
 	// Skip first four lines
 	
 	for (int i = 0; i < 4; i++) {
-		if (!mafFile.eof()) {
-			std::getline(mafFile, line); 
-		}	
+		assert( !mafFile.eof() );	
+		std::getline(mafFile, line); 
 	} 
 
-
-	while (!mafFile.eof()) {
-		// Skip first line
-		std::getline(mafFile, line);
-		
+	while (std::getline(mafFile, line)) {
 		// Read ref line
 		std::getline(mafFile, line);
 
-		if (line != "") {
-			ref = split(line).at(6);	
-		}
+		std::string ref = split(line).at(seqIndex);
+		assert(ref != "");
 
 		// Read ulr line
 		std::getline(mafFile, line);
 
-		if (line != "") {
-			ulr = split(line).at(6);
-		}
+		std::string ulr = split(line).at(seqIndex);
+		assert(ulr != "");
+
+		int64_t ulrSize = atoi( split(line).at(sizeIndex).c_str() );
+		assert( ulrSize > 0 );
 
 		// Read clr line
 		std::getline(mafFile, line);
 
-		if (line != "") {
-			clr = split(line).at(6);	
-		}
+		std::string clr = split(line).at(seqIndex);	
+		assert(clr != "");
+
+		int64_t clrSize = atoi( split(line).at(sizeIndex).c_str() );
+		assert( clrSize > 0 );
 
 		// Skip last line
 		std::getline(mafFile, line);
 
-		// Do statistics
-		// ...
+		// Write whole read statistics
+		std::vector<int64_t> statistics = completeReadStats(ref,clr,clrSize,ulr,ulrSize);
+		assert( statistics.size() == 14 );
+
+		for (int index = 0; index < statistics.size(); index++) {
+			output << statistics.at(index) << " ";
+		} 
+		output << "\n";
+
+		// Write corrected segment statistics
+		std::vector<CorrespondingSegments> correspondingSegmentsList = getCorrespondingSegmentsList(clr,ulr,ref);
+
+		for (int index = 0; index < correspondingSegmentsList.size(); index++) {
+			CorrespondingSegments segments = correspondingSegmentsList.at(index);
+
+			DeletionProportion delProp = getDeletionProportion( segments );
+			output << delProp.cRead << " " << delProp.uRead << "\n";
+
+			InsertionProportion insProp = getInsertionProportion( segments ); 
+			output << insProp.cRead << " " << insProp.uRead << "\n";
+
+			SubstitutionProportion subProp = getSubstitutionProportion( segments );
+			output << subProp.cRead << " " << subProp.uRead << "\n";
+		}
+
+		output << "\n";
 	}
+
+	mafFile.close();
+	output.close();
 }
 
 void displayUsage()
@@ -305,7 +361,7 @@ int main(int argc, char *argv[])
 
 	std::string mafInputName = "";
 	std::string clrName = "";
-	std::string mafOutputName = "output.maf";
+	std::string outputPath = "output.maf";
 	bool trimmed = false;
 
 	while ((opt = getopt(argc, argv, "m:c:o:ht")) != -1) {
@@ -320,7 +376,7 @@ int main(int argc, char *argv[])
 				break;
 			case 'o':
 				// maf output file name
-				mafOutputName = optarg;
+				outputPath = optarg;
 				break;
 			case 't':
 				// Whether the corrected long reads are trimmed or not
@@ -345,6 +401,10 @@ int main(int argc, char *argv[])
 		std::cerr << "ERROR: MAF input path required\n";
 		optionsPresent = false;
 	}
+	if (outputPath == "") {
+		std::cerr << "ERROR: Output path required\n";
+		optionsPresent = false;
+	}
 	if (mode == "maf" && clrName == "") {
 		std::cerr << "ERROR: cLR input path required\n";
 		optionsPresent = false;
@@ -357,12 +417,12 @@ int main(int argc, char *argv[])
 
 	if (mode == "maf") {
 		if (trimmed) {
-			generateTrimmedMaf(mafInputName, clrName, mafOutputName);
+			generateTrimmedMaf(mafInputName, clrName, outputPath);
 		} else {
-			generateUntrimmedMaf(mafInputName, clrName, mafOutputName);
+			generateUntrimmedMaf(mafInputName, clrName, outputPath);
 		}
 	} else {
-		performStatistics(mafInputName);				
+		createStat(mafInputName,outputPath);				
 	}
 	
 	return 0;

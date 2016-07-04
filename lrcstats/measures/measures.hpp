@@ -47,13 +47,13 @@ int64_t editScore(std::string ref, std::string lr);
 /* Returns the "edit score" of two alignments. 
  * Uses a similar scoring schema as the Levenshtein edit distance equations. */
 
-int64_t substitutions(std::string ref, std::string read);
+int64_t getSubstitutions(std::string ref, std::string read);
 // Returns the number of substitutions between the reference and read string
 
-int64_t insertions(std::string ref, std::string read);
+int64_t getInsertions(std::string ref, std::string read);
 // Returns the number of insertions between the reference and read string
 
-int64_t deletions(std::string ref, std::string read);
+int64_t getDeletions(std::string ref, std::string read);
 // Returns the number of insertions between the reference and read string
 
 int64_t correctedTruePositives(std::string ref, std::string read);

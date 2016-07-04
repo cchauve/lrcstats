@@ -48,43 +48,43 @@ std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cR
 }
 
 SubstitutionProportion getSubstitutionProportion( CorrespondingSegments correspondingSegments )
-/* Returns the proportion of substitutions between the reads in the correspondingSegments */
+/* Returns the proportion of getSubstitutions between the reads in the correspondingSegments */
 {
 	std::string cRead = correspondingSegments.cReadSegment;
 	std::string uRead = correspondingSegments.uReadSegment;
 	std::string ref = correspondingSegments.refSegment;
 
 	SubstitutionProportion proportion;
-	proportion.cRead = substitutions(ref, cRead);
-	proportion.uRead = substitutions(ref, uRead);
+	proportion.cRead = getSubstitutions(ref, cRead);
+	proportion.uRead = getSubstitutions(ref, uRead);
 		
 	return proportion;
 }
 
 InsertionProportion getInsertionProportion( CorrespondingSegments correspondingSegments )
-/* Returns the proportion of insertions between the reads in the correspondingSegments */
+/* Returns the proportion of getInsertions between the reads in the correspondingSegments */
 {
 	std::string cRead = correspondingSegments.cReadSegment;
 	std::string uRead = correspondingSegments.uReadSegment;
 	std::string ref = correspondingSegments.refSegment;
 
 	InsertionProportion proportion;
-	proportion.cRead = insertions(ref, cRead);
-	proportion.uRead = insertions(ref, uRead);
+	proportion.cRead = getInsertions(ref, cRead);
+	proportion.uRead = getInsertions(ref, uRead);
 		
 	return proportion;
 }
 
 DeletionProportion getDeletionProportion( CorrespondingSegments correspondingSegments )
-/* Returns the proportion of deletions between the reads in the correspondingSegments */
+/* Returns the proportion of getDeletions between the reads in the correspondingSegments */
 {
 	std::string cRead = correspondingSegments.cReadSegment;
 	std::string uRead = correspondingSegments.uReadSegment;
 	std::string ref = correspondingSegments.refSegment;
 
 	DeletionProportion proportion;
-	proportion.cRead = deletions(ref, cRead);
-	proportion.uRead = deletions(ref, uRead);
+	proportion.cRead = getDeletions(ref, cRead);
+	proportion.uRead = getDeletions(ref, uRead);
 		
 	return proportion;
 }
@@ -121,7 +121,7 @@ int64_t editScore(std::string ref, std::string lr)
 	return score;
 }
 
-int64_t substitutions(std::string ref, std::string read)
+int64_t getSubstitutions(std::string ref, std::string read)
 // Returns the number of substitutions between the reference and read string
 {
 	assert( ref.length() == read.length() );
@@ -137,7 +137,7 @@ int64_t substitutions(std::string ref, std::string read)
 	return subs;
 }
 
-int64_t insertions(std::string ref, std::string read)
+int64_t getInsertions(std::string ref, std::string read)
 // Returns the number of insertions between the reference and read string
 {
 	assert( ref.length() == read.length() );
@@ -153,8 +153,8 @@ int64_t insertions(std::string ref, std::string read)
 	return ins;
 }
 
-int64_t deletions(std::string ref, std::string read)
-// Returns the number of insertions between the reference and read string
+int64_t getDeletions(std::string ref, std::string read)
+// Returns the number of deletions between the reference and read string
 {
 	assert( ref.length() == read.length() );
 
