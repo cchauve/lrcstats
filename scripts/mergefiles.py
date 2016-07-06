@@ -50,6 +50,8 @@ if __name__ == "__main__":
 
 	inputs = [input1, input2]
 
+	print "Writing output to %s" % (output)
+
 	with open(output, 'w') as outfile:
 		for input in inputs:
 			with open(input) as infile:

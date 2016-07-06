@@ -18,6 +18,7 @@ def writeJob(program, species, shortCov, longCov):
 	art = "%s/art" % (prefix)
 	short1 = "%s/short-paired-d%s/%s-short-paired-d%s1.fastq" % (art, shortCov, species, shortCov)
 	short2 = "%s/short-paired-d%s/%s-short-paired-d%s2.fastq" % (art, shortCov, species, shortCov)
+	mergedShort = "%s/short-paired-d%s/%s-short-paired-d%s-merged.fastq" % (art, shortCov, species, shortCov)
 
 	long = "%s/simlord/long-d%s/%s-long-d%s.fastq" % (prefix, longCov, species, longCov) 
 	outputdir = "%s/corrections/%s/%s/%s/%s" % (prefix, now.month, now.day, program, test)
@@ -110,25 +111,25 @@ def writeJob(program, species, shortCov, longCov):
 		file.write(command)
 
 	if program is "colormap":
-		mergefilesPath = "mergefiles=/home/seanla/Projects/lrcstats/scripts/mergefiles.py\n"
 		colormapPath = "colormap=/home/seanla/Software/colormap/runBoth.sh\n"
 		short1path = "short1=%s\n" % (short1)
 		short2path = "short2=%s\n" % (short2)
+		output = "outputDir=%s\n" % (outputdir)
 		outputPrefix = "outputPrefix=%s/%s\n" % (outputdir, test)
-		mergedShortPath = "mergedShort=%s/merged-short.fastq\n" % (outputdir)
+		mergedShortPath = "mergedShort=%s\n" % (mergedShort)
 		longPath = "long=%s\n" % (long)
-		mergeCommand = "python $mergefiles -1 $short1 -2 $short2 -o $mergedShort\n"
+		cdCommand = "cd $outputDir\n"
 		colormap = "$colormap $long $mergedShort $outputPrefix ${PBS_NUM_PPN}\n" 
 
-		file.write(mergefilesPath)
 		file.write(colormapPath)
 		file.write(short1path)
 		file.write(short2path)
+		file.write(output)
 		file.write(outputPrefix)
 		file.write(mergedShortPath)
 		file.write(longPath)
 		file.write('\n')
-		file.write(mergeCommand)
+		file.write(cdCommand)
 		file.write(colormap)
 
 	file.close()
