@@ -31,7 +31,10 @@ struct CorrespondingSegments
         std::string refSegment;
 };
 
-std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref);
+std::vector< CorrespondingSegments > getUntrimmedCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref);
+/* Returns a vector of all the CorrespondingSegments of the given cLR, uLR and reference sequences. */
+
+std::vector< CorrespondingSegments > getTrimmedCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref);
 /* Returns a vector of all the CorrespondingSegments of the given cLR, uLR and reference sequences. */
 
 SubstitutionProportion getSubstitutionProportion( CorrespondingSegments correspondingSegments);

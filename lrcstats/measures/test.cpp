@@ -7,11 +7,11 @@
 
 int main()
 {
-	std::string ref = "AAA-AT-TTTCCCCGGGG";
-	std::string ulr = "ATTAATAAATCGGCGCCG";
-	std::string clr = "aAA-at-TTtcCCcgGGg";
+	std::string clr = "----XTTTTX----XTTTTX-XAAAAX";
+	std::string ulr = "AAAA-TTTT-CCCC-GGGG---AAAA-";
+	std::string ref = "AAAA-TTTT-CCCC-GGGG---AAAA-";
 
-	std::vector< CorrespondingSegments > segmentList = getCorrespondingSegmentsList(clr, ulr, ref);
+	std::vector< CorrespondingSegments > segmentList = getTrimmedCorrespondingSegmentsList(clr, ulr, ref);
 
 	for (int i = 0; i < segmentList.size(); i++) {
 		std::cout << segmentList.at(i).cReadSegment << " " << segmentList.at(i).uReadSegment << " " << segmentList.at(i).refSegment << "\n";

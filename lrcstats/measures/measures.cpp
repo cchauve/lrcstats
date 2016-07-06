@@ -5,7 +5,7 @@
 #include <vector>
 #include "measures.hpp"
 
-std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref) 
+std::vector< CorrespondingSegments > getUntrimmedCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref) 
 /* Returns a vector of all the CorrespondingSegments of the given cLR, uLR and reference sequences. */
 {
 	assert(cRead.length() == uRead.length());	
@@ -13,7 +13,7 @@ std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cR
 	assert(ref.length() == uRead.length());	
 
 	int64_t length = ref.length();
-	bool inCorrectedSegment;
+	bool inCorrectedSegment = false;
 	std::string cReadSegment;
 	std::string uReadSegment;
 	std::string refSegment;
@@ -21,9 +21,11 @@ std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cR
 	std::vector< CorrespondingSegments > segmentList;
 
 	for (int index = 0; index < length; index++) {
-		if ( isupper(cRead[index]) or cRead[index] == '-' ) {
+		// Check if we're at the beginning of a corrected segment
+		if ( not inCorrectedSegment and (isupper(cRead[index]) or cRead[index] == '-') ) {
 			inCorrectedSegment = true;
-		} else if ( islower(cRead[index]) and inCorrectedSegment ) {
+		// Check if we've left the end of a corrected segement
+		} else if ( inCorrectedSegment and islower(cRead[index]) ) {
 			inCorrectedSegment = false;
 
 			correspondingSegments.cReadSegment = cReadSegment;
@@ -36,7 +38,6 @@ std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cR
 			uReadSegment = "";
 			refSegment = "";
 		}
-		
 		if (inCorrectedSegment) {
 			cReadSegment = cReadSegment + cRead[index];
 			uReadSegment = uReadSegment + uRead[index];
@@ -44,9 +45,62 @@ std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cR
 		}
 	}
 
+	// If at the end of the loop we were still in a corrected segment, add
+	// that last segment into the vector
+	if (inCorrectedSegment) {
+		correspondingSegments.cReadSegment = cReadSegment;
+		correspondingSegments.uReadSegment = uReadSegment;
+		correspondingSegments.refSegment = refSegment;
+		
+		segmentList.push_back(correspondingSegments);	
+
+		cReadSegment = "";
+		uReadSegment = "";
+		refSegment = "";
+	}
 	return segmentList;
 }
 
+std::vector< CorrespondingSegments > getTrimmedCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref) 
+/* Returns a vector of all the CorrespondingSegments of the given cLR, uLR and reference sequences. */
+{
+	assert(cRead.length() == uRead.length());	
+	assert(cRead.length() == ref.length());	
+	assert(ref.length() == uRead.length());	
+
+	int64_t length = ref.length();
+	bool inCorrectedSegment = false;
+	std::string cReadSegment;
+	std::string uReadSegment;
+	std::string refSegment;
+	CorrespondingSegments correspondingSegments;
+	std::vector< CorrespondingSegments > segmentList;
+
+	for (int index = 0; index < length; index++) {
+		// Check if we've just entered a corrected segment
+		if ( not inCorrectedSegment and cRead[index] == 'X') {
+			inCorrectedSegment = true;
+		} else if (inCorrectedSegment and cRead[index] != 'X') {
+			cReadSegment = cReadSegment + cRead[index];
+			uReadSegment = uReadSegment + uRead[index];
+			refSegment = refSegment + ref[index];
+		// Check if we've just left an uncorrected segment
+		} else if (inCorrectedSegment and cRead[index] == 'X') {
+			inCorrectedSegment = false;
+
+			correspondingSegments.cReadSegment = cReadSegment;
+			correspondingSegments.uReadSegment = uReadSegment;
+			correspondingSegments.refSegment = refSegment;
+			segmentList.push_back(correspondingSegments);	
+
+			cReadSegment = "";
+			uReadSegment = "";
+			refSegment = "";
+		}
+	}
+
+	return segmentList;
+}
 SubstitutionProportion getSubstitutionProportion( CorrespondingSegments correspondingSegments )
 /* Returns the proportion of getSubstitutions between the reads in the correspondingSegments */
 {

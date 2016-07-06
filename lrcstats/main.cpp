@@ -218,7 +218,7 @@ void generateTrimmedMaf(std::string mafInputName, std::string clrName, std::stri
 	clrInput.close();
 }
 
-std::vector<int64_t> completeReadStats(std::string ref, std::string cRead, int64_t cSize, std::string uRead, int64_t uSize)
+std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int64_t cSize, std::string uRead, int64_t uSize)
 {
 	std::vector<int64_t> statistics;
 
@@ -246,7 +246,30 @@ std::vector<int64_t> completeReadStats(std::string ref, std::string cRead, int64
 	return statistics;
 }
 
-void createStat(std::string mafName, std::string outputPath)
+std::vector<int64_t> trimmedReadStats(CorrespondingSegments segments)
+{
+	std::vector<int64_t> statistics;
+
+	std::string clr = segments.cReadSegment;
+	int64_t length = gaplessLength(clr);
+	statistics.push_back(length);
+
+	DeletionProportion delProp = getDeletionProportion( segments );
+	statistics.push_back(delProp.cRead);
+	statistics.push_back(delProp.uRead);
+
+	InsertionProportion insProp = getInsertionProportion( segments ); 
+	statistics.push_back(insProp.cRead);
+	statistics.push_back(insProp.uRead);
+
+	SubstitutionProportion subProp = getSubstitutionProportion( segments );
+	statistics.push_back(subProp.cRead);
+	statistics.push_back(subProp.uRead);
+
+	return statistics;
+}
+
+void createUntrimmedStat(std::string mafName, std::string outputPath)
 /* Given a 3-way MAF file between cLR, uLR and ref sequences, outputs a
  */
 {
@@ -296,35 +319,113 @@ void createStat(std::string mafName, std::string outputPath)
 		std::getline(mafFile, line);
 
 		// Write whole read statistics
-		std::vector<int64_t> statistics = completeReadStats(ref,clr,clrSize,ulr,ulrSize);
+		std::vector<int64_t> statistics = untrimmedReadStats(ref,clr,clrSize,ulr,ulrSize);
 		assert( statistics.size() == 14 );
 
+		output << "u ";
 		for (int index = 0; index < statistics.size(); index++) {
 			output << statistics.at(index) << " ";
 		} 
 		output << "\n";
 
 		// Write corrected segment statistics
-		std::vector<CorrespondingSegments> correspondingSegmentsList = getCorrespondingSegmentsList(clr,ulr,ref);
+		std::vector<CorrespondingSegments> correspondingSegmentsList = getUntrimmedCorrespondingSegmentsList(clr,ulr,ref);
 
 		for (int index = 0; index < correspondingSegmentsList.size(); index++) {
 			CorrespondingSegments segments = correspondingSegmentsList.at(index);
+			std::vector<int64_t> statistics = trimmedReadStats(segments);
+			assert( statistics.size() == 7 );
 
-			DeletionProportion delProp = getDeletionProportion( segments );
-			output << delProp.cRead << " " << delProp.uRead << "\n";
-
-			InsertionProportion insProp = getInsertionProportion( segments ); 
-			output << insProp.cRead << " " << insProp.uRead << "\n";
-
-			SubstitutionProportion subProp = getSubstitutionProportion( segments );
-			output << subProp.cRead << " " << subProp.uRead << "\n";
+			output << "t ";
+			for (int i = 0; i < 7; i++) {
+				output << statistics.at(i) << " ";
+			}
+			output << "\n";
 		}
-
-		output << "\n";
 	}
 
 	mafFile.close();
 	output.close();
+}
+
+void createTrimmedStat(std::string mafName, std::string outputPath)
+/* Given a 3-way MAF file between cLR, uLR and ref sequences, outputs a
+ */
+{
+	std::ifstream mafFile (mafName, std::ios::in);
+	std::ofstream output (outputPath, std::ios::out);
+	std::string line = "";
+
+	// Indices where each respective information lies in the MAF file line
+	int sizeIndex = 3; 
+	int seqIndex = 6;
+	// Number of statistics we consider
+	int numStatistics = 10;
+
+	// Skip first four lines
+	
+	for (int i = 0; i < 4; i++) {
+		assert( !mafFile.eof() );	
+		std::getline(mafFile, line); 
+	} 
+
+	while (std::getline(mafFile, line)) {
+		// Read ref line
+		std::getline(mafFile, line);
+
+		std::string ref = split(line).at(seqIndex);
+		assert(ref != "");
+
+		// Read ulr line
+		std::getline(mafFile, line);
+
+		std::string ulr = split(line).at(seqIndex);
+		assert(ulr != "");
+
+		int64_t ulrSize = atoi( split(line).at(sizeIndex).c_str() );
+		assert( ulrSize > 0 );
+
+		// Read clr line
+		std::getline(mafFile, line);
+
+		std::string clr = split(line).at(seqIndex);	
+		assert(clr != "");
+
+		int64_t clrSize = atoi( split(line).at(sizeIndex).c_str() );
+		assert( clrSize > 0 );
+
+		// Skip last line
+		std::getline(mafFile, line);
+
+		// Write corrected segment statistics
+		std::vector<CorrespondingSegments> correspondingSegmentsList = getTrimmedCorrespondingSegmentsList(clr,ulr,ref);
+
+		for (int index = 0; index < correspondingSegmentsList.size(); index++) {
+			CorrespondingSegments segments = correspondingSegmentsList.at(index);
+			std::vector<int64_t> statistics = trimmedReadStats(segments);
+
+			assert( statistics.size() == 7 );
+
+			output << "t ";
+			for (int i = 0; i < 7; i++) {
+				output << statistics.at(i) << " ";
+			}
+			output << "\n";
+		}
+	}
+
+	mafFile.close();
+	output.close();
+}
+
+void displayHelp()
+{
+	std::cout << "This program has two functions: outputting three way MAF alignments between corrected long reads,\n";
+	std::cout << "uncorrected long reads, and reference sequences, and computing simple statistics about the\n";
+	std::cout << "corrected. This program accepts either trimmed or untrimmed corrected long reads. If the\n";
+	std::cout << "long reads are trimmed and MAF file creation mode is chosen, the three way alignments will contain\n";
+	std::cout << "triples of the form (X,-,-) (where the bases correspond to the cLR, uLR and ref, respectively)\n";
+	std::cout << "that indicates the boundaries of the original individual trimmed long read segments.\n";
 }
 
 void displayUsage()
@@ -384,6 +485,7 @@ int main(int argc, char *argv[])
 				break;
 			case 'h':
 				// Displays usage
+				displayHelp();
 				displayUsage();
 				return 0;
 			default:
@@ -422,7 +524,11 @@ int main(int argc, char *argv[])
 			generateUntrimmedMaf(mafInputName, clrName, outputPath);
 		}
 	} else {
-		createStat(mafInputName,outputPath);				
+		if (trimmed) {
+			createTrimmedStat(mafInputName,outputPath);				
+		} else {
+			createUntrimmedStat(mafInputName,outputPath);
+		}
 	}
 	
 	return 0;

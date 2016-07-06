@@ -421,7 +421,7 @@ void TrimmedAlignments::initialize()
 	int lastBaseIndex = -1;
 	bool isLastBase;
 	
-	// Record the indices of the last bases of all the reads
+	// Record the indices of the first bases of all the reads
 	for (int index = 0; index < trimmedClrs.size(); index++) {
 		lastBaseIndex = lastBaseIndex + trimmedClrs.at(index).length();
 		lastBaseIndices.push_back(lastBaseIndex);	
@@ -441,7 +441,7 @@ void TrimmedAlignments::initialize()
 			cIndex = rowIndex - 1;
 			urIndex = columnIndex - 1;
 
-			// Check if cIndex is the last base of a read
+			// Check if cIndex is the first base of a read
 			if (std::find( lastBaseIndices.begin(), lastBaseIndices.end(), cIndex ) != lastBaseIndices.end()) {
 				isLastBase = true;
 			} else {
@@ -464,7 +464,11 @@ void TrimmedAlignments::initialize()
 }
 
 void TrimmedAlignments::findAlignments()
-/* Construct the optimal alignments between the three reads */
+/* Construct the optimal alignments between the trimmed corrected long reads, 
+ * uncorrected long read and reference sequence. These algorithm indicates the boundaries
+ * of the original trimmed long reads by placing X's immediately left and right of the boundaries
+ * of the trimmed long reads.
+*/
 {
 	std::string clrMaf = "";
 	std::string ulrMaf = "";
@@ -499,7 +503,7 @@ void TrimmedAlignments::findAlignments()
 		cIndex = rowIndex - 1;
 		currentCost = matrix[rowIndex][columnIndex];
 
-		// Check if cIndex is the last base of a read
+		// Check if cIndex is the first base of a read
 		if (std::find(lastBaseIndices.begin(), lastBaseIndices.end(), cIndex) != lastBaseIndices.end()) {
 			isLastBase = true;
 		} else {
@@ -533,12 +537,14 @@ void TrimmedAlignments::findAlignments()
 		if (rowIndex == 0 || columnIndex == 0) {
 				//std::cout << "Path 6\n";
 				if (rowIndex == 0) {
+					// Mark the beginning of a trimmed long read
 					if (firstDeletion) { 
 						clrMaf = 'X' + clrMaf; 
-					} else { 
-						clrMaf = '-' + clrMaf; 
+						ulrMaf = '-' + ulrMaf;
+						refMaf = '-' + refMaf;
 					}
 					firstDeletion = false;
+					clrMaf = '-' + clrMaf; 
 					ulrMaf = ulr[urIndex] + ulrMaf;
 					refMaf = ref[urIndex] + refMaf;
 					columnIndex--;
@@ -551,36 +557,71 @@ void TrimmedAlignments::findAlignments()
 				}
 		} else if (deletion == currentCost) {
 			//std::cout << "Deletion\n";
+			// Marke the beginning of a trimmed long read
 			if (isLastBase and firstDeletion) {
 				clrMaf = 'X' + clrMaf;
-			} else {
-				clrMaf = '-' + clrMaf;
+				ulrMaf = '-' + ulrMaf;
+				refMaf = '-' + refMaf;
 			}
-			firstDeletion = false;
+			clrMaf = '-' + clrMaf;
 			ulrMaf = ulr[urIndex] + ulrMaf;
 			refMaf = ref[urIndex] + refMaf;
+
+			// If we're at the first base of both sequences and we are in a corrected
+			// segment, add an X
+			if (cIndex == 0 and urIndex == 0) {
+				clrMaf = 'X' + clrMaf;
+				ulrMaf = '-' + ulrMaf;
+				refMaf = '-' + refMaf;
+			}
+
 			columnIndex--;
+			firstDeletion = false;
 		} else if (insert == currentCost) {
 			//std::cout << "Insertion\n";
-			if (isLastBase and clrMaf.length() > 0) {
-				clrMaf = 'X' + clrMaf.substr(1, clrMaf.length() - 1);
+			// Mark the end of a trimmed long read
+			if (isLastBase) {
+				clrMaf = 'X' + clrMaf;
+				ulrMaf = '-' + ulrMaf;
+				refMaf = '-' + refMaf;
 			}	
-			firstDeletion = true;
 			clrMaf = clr[cIndex] + clrMaf;
 			ulrMaf = '-' + ulrMaf;
 			refMaf = '-' + refMaf;
+
+			// If we're at the first base of both sequences and we are in a corrected
+			// segment, add an X
+			if (cIndex == 0 and urIndex == 0) {
+				clrMaf = 'X' + clrMaf;
+				ulrMaf = '-' + ulrMaf;
+				refMaf = '-' + refMaf;
+			}
+
 			rowIndex--;
-		} else if (substitute == currentCost) {
-			if (isLastBase and clrMaf.length() > 0) {
-				clrMaf = 'X' + clrMaf.substr(1, clrMaf.length() - 1);
-			}	
 			firstDeletion = true;
+		} else if (substitute == currentCost) {
+			// Mark the end of a trimmed long read
+			if (isLastBase) {
+				clrMaf = 'X' + clrMaf;
+				ulrMaf = '-' + ulrMaf;
+				refMaf = '-' + refMaf;
+			}	
 			//std::cout << "Substitution\n";
 			clrMaf = clr[cIndex] + clrMaf;
 			ulrMaf = ulr[urIndex] + ulrMaf;
 			refMaf = ref[urIndex] + refMaf;
+
+			// If we're at the first base of both sequences and we are in a corrected
+			// segment, add an X
+			if (cIndex == 0 and urIndex == 0) {
+				clrMaf = 'X' + clrMaf;
+				ulrMaf = '-' + ulrMaf;
+				refMaf = '-' + refMaf;
+			}
+
 			rowIndex--;
 			columnIndex--;
+			firstDeletion = true;
 		} else {
 			std::cerr << "ERROR CODE 6: No paths found. Terminating backtracking.\n";
 			rowIndex = 0;
