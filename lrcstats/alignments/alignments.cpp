@@ -397,6 +397,7 @@ void TrimmedAlignments::reset(std::string reference, std::string uLongRead, std:
 /* Resets the alignment object to be used again */
 {
 	Alignments::reset(reference, uLongRead, cLongRead);
+	lastBaseIndices.clear();
  	initialize(); 
 }
 
@@ -478,6 +479,7 @@ void TrimmedAlignments::findAlignments()
 	int currentCost;
 	int infinity = std::numeric_limits<int>::max();
 	bool isLastBase;
+	bool firstDeletion = false;
 
 	// Follow the best path from the bottom right to the top left of the matrix.
 	// This is equivalent to the optimal alignment between ulr and clr.
@@ -531,8 +533,12 @@ void TrimmedAlignments::findAlignments()
 		if (rowIndex == 0 || columnIndex == 0) {
 				//std::cout << "Path 6\n";
 				if (rowIndex == 0) {
-					//std::cout << "Deletion\n";
-					clrMaf = '-' + clrMaf;
+					if (firstDeletion) { 
+						clrMaf = 'X' + clrMaf; 
+					} else { 
+						clrMaf = '-' + clrMaf; 
+					}
+					firstDeletion = false;
 					ulrMaf = ulr[urIndex] + ulrMaf;
 					refMaf = ref[urIndex] + refMaf;
 					columnIndex--;
@@ -545,17 +551,30 @@ void TrimmedAlignments::findAlignments()
 				}
 		} else if (deletion == currentCost) {
 			//std::cout << "Deletion\n";
-			clrMaf = '-' + clrMaf;
+			if (isLastBase and firstDeletion) {
+				clrMaf = 'X' + clrMaf;
+			} else {
+				clrMaf = '-' + clrMaf;
+			}
+			firstDeletion = false;
 			ulrMaf = ulr[urIndex] + ulrMaf;
 			refMaf = ref[urIndex] + refMaf;
 			columnIndex--;
 		} else if (insert == currentCost) {
 			//std::cout << "Insertion\n";
+			if (isLastBase and clrMaf.length() > 0) {
+				clrMaf = 'X' + clrMaf.substr(1, clrMaf.length() - 1);
+			}	
+			firstDeletion = true;
 			clrMaf = clr[cIndex] + clrMaf;
 			ulrMaf = '-' + ulrMaf;
 			refMaf = '-' + refMaf;
 			rowIndex--;
 		} else if (substitute == currentCost) {
+			if (isLastBase and clrMaf.length() > 0) {
+				clrMaf = 'X' + clrMaf.substr(1, clrMaf.length() - 1);
+			}	
+			firstDeletion = true;
 			//std::cout << "Substitution\n";
 			clrMaf = clr[cIndex] + clrMaf;
 			ulrMaf = ulr[urIndex] + ulrMaf;
