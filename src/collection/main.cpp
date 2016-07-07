@@ -251,8 +251,13 @@ std::vector<int64_t> trimmedReadStats(CorrespondingSegments segments)
 	std::vector<int64_t> statistics;
 
 	std::string clr = segments.cReadSegment;
-	int64_t length = gaplessLength(clr);
-	statistics.push_back(length);
+	std::string ulr = segments.uReadSegment;
+
+	int64_t cLength = gaplessLength(clr);
+	statistics.push_back(cLength);
+
+	int64_t uLength = gaplessLength(ulr);
+	statistics.push_back(uLength);
 
 	DeletionProportion delProp = getDeletionProportion( segments );
 	statistics.push_back(delProp.cRead);
