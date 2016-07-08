@@ -234,12 +234,15 @@ std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int6
 	statistics.push_back( getSubstitutions(ref,cRead) );
 	statistics.push_back( getSubstitutions(ref,uRead) );
 
+	// True and false positive numbers in the corrected long read
 	statistics.push_back( correctedTruePositives(ref,cRead) );
-	statistics.push_back( correctedFalsePositives(ref,uRead) );
+	statistics.push_back( correctedFalsePositives(ref,cRead) );
 
 	statistics.push_back( uncorrectedTruePositives(ref,cRead) );
 	statistics.push_back( uncorrectedFalsePositives(ref,cRead) );
 
+	// Number of corrected and uncorrected bases in the corrected
+	// long read
 	statistics.push_back( correctedBases(cRead) );
 	statistics.push_back( uncorrectedBases(uRead) );
 
@@ -258,6 +261,9 @@ std::vector<int64_t> trimmedReadStats(CorrespondingSegments segments)
 
 	int64_t uLength = gaplessLength(ulr);
 	statistics.push_back(uLength);
+
+	// Push the number of mutations in the corrected segments and its
+	// corresponding segment in the uncorrected long read
 
 	DeletionProportion delProp = getDeletionProportion( segments );
 	statistics.push_back(delProp.cRead);
