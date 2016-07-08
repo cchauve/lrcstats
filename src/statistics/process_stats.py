@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-class TrimmedStat:
+class TrimmedDatum:
 	def __init__(self, data):
 		self.cLength = data[1]
 		self.uLength = data[2]
@@ -34,7 +34,7 @@ class TrimmedStat:
 	def getUncorrErrorRate(self):
 		return (self.uDel + self.uIns + self.uSub)/self.uLength
 
-class UntrimmedStat:
+class UntrimmedDatum:
 	def __init__(self, data):
 		self.cLength = data[1]
 		self.uLength = data[2]
@@ -74,30 +74,30 @@ def retrieveRawData(dataPath):
 	return rawData
 
 def processRawData(rawData):
-	TrimmedStats = []
-	UntrimmedStats = []
+	TrimmedData = []
+	UntrimmedData = []
 
 	for datum in rawData:
 		datum = datum.split()
 
 		if datum[0] == 'u':
-			stat = UntrimmedStat(datum)
-			UntrimmedStats.append(stat)
+			datum = UntrimmedDatum(datum)
+			UntrimmedData.append(datum)
 		elif datum[0] == 't':
-			stat = TrimmedStat(datum)
-			TrimmedStats.append(stat)
+			datum = TrimmedDatum(datum)
+			TrimmedData.append(datum)
 
-	return (TrimmedStats, UntrimmedStats)
+	return (TrimmedData, UntrimmedData)
 
-def makeErrorRateBoxPlot(stats, test):
+def makeErrorRateBoxPlot(data, test):
 	corrErrorRates = []
 	uncorrErrorRates = []
 
 	# Collect the data from the stats list
-	for read in stats:
-		corrErrorRate = read.getCorrErrorRate()
+	for datum in data:
+		corrErrorRate = datum.getCorrErrorRate()
 		corrErrorRates.append(corrErrorRate)
-		uncorrErrorRate = read.getUncorrErrorRate()
+		uncorrErrorRate = datum.getUncorrErrorRate()
 		uncorrErrorRates.append(uncorrErrorRate)
 
 	data = [corrErrorRates, uncorrErrorRates]
@@ -123,6 +123,17 @@ def makeErrorRateBoxPlot(stats, test):
 	savePath = "%s/%s_error_rate_boxplot.png" % (dir,test)
 	fig.savefig(savePath, bbox_inches='tight')
 
+def findMeanAndStdev(errorRates):
+	length = len(errorRates)
+	errorRates = array(corrErrorRates).reshape( cLength, 2 )
+	bins = np.linspace(0, np.max(errorRates[:,1]), 50) 
+	# Digitize returns the indices of the elements that belong to bin i
+	digitized = np.digitize(errorRates[:,1], bins)
+	means = [ errorRates[digitized == i, 0].mean() for i in range( 1, len(bins) ) ]
+	# Find the standard deviations
+	stdev = [ np.std( errorRates[digitized == i, 0], dtype=np.float64 ) for i in range( 1, len(bins) ) ]
+	return means, stdev
+
 def makeErrorRateBarGraph(stats, test):
 	corrErrorRates = [] 
 	uncorrErrorRates = [] 
@@ -139,16 +150,12 @@ def makeErrorRateBarGraph(stats, test):
 		uncorrDataPoint = (uncorrLength,uncorrErrorRate)
 		uncorrErrorRates.append(uncorrDataPoint)
 
-	cLength = len(corrErrorRates)
-	uLength = len(uncorrErrorRates)
-	corrErrorRates = array(corrErrorRates).reshape( len(corrErrorRates), 2 )
-	uncorrErrorRates = array(uncorrErrorRates).reshape( len(uncorrErrorRates), 2 ) 
+	# Find mean, stdev
+	corrMean, corrStdev = findMeanAndStdev(corrErrorRates)
+	uncorrMean, uncorrStdev = findMeanAndStdev(uncorrErrorRates)
 
-	corrBins = np.linspace(0, corrErrorRates[:,1].max(), 
-
-	# Save the figure
-	savePath = "%s/%s_error_rate_bargraph.png" % (dir,test)
-	fig.savefig(savePath, bbox_inches='tight')
+	fig, (corrAxes, uncorrAxes) = plt.subplots(1, 2, sharey=True)
+	corrNum = len(corrMean)
 
 # agg backend is used to create plot as a .png file
 mpl.use('agg')
