@@ -1,8 +1,11 @@
+import sys, os, getopt
 import numpy as np
 import matplotlib as mpl
 # agg backend is used to create plot as a .png file
 mpl.use('agg')
 import matplotlib.pyplot as plt
+from random import randint
+import math # for ceil
 
 class ReadDatum(object):
 	'''
@@ -13,6 +16,7 @@ class ReadDatum(object):
 		Accepts as input list of trimmed read data points obtained
 		directly from the STATS file outputted by lrcstats
 		'''
+		data = [int(datum) in datum in data[1:]]
 		self.cLength = data[1]
 		self.uLength = data[2]
 
@@ -103,6 +107,7 @@ class UntrimmedReadDatum(ReadDatum):
 		directly from the STATS file outputted by lrcstats
 		'''
 		ReadDatum.__init__(self, data)
+		data = [int(datum) in datum in data[1:]]
 
 		self.correctedTruePos = data[9]
 		self.correctedFalsePos = data[10]
@@ -248,7 +253,7 @@ def findMeanAndStdev(errorRates):
 
 	return means, stdevs
 
-def makeErrorRateBarGraph(stats, testPrefix):
+def makeErrorRateBarGraph(data, testPrefix):
 	'''
 	Creates an error rate bar graph and saves at the location given
 	by testPrefix.
@@ -263,7 +268,7 @@ def makeErrorRateBarGraph(stats, testPrefix):
 	uncorrErrorRates = [] 
 
 	# Collect the data from the stats list
-	for read in stats:
+	for read in data:
 		corrLength = read.getCorrLength()
 		corrErrorRate = read.getCorrErrorRate()
 		corrDataPoint = (corrLength,corrErrorRate)
@@ -391,7 +396,38 @@ def makeMutationProportionsBarGraphs(data, testPrefix):
 	and substitution proportions of the corrected and uncorrected long reads.
 	''' 
 	return
-	
+
+def untrimmedTest():
+	testPath = "test.stats"
+
+	with open(testPath, 'w') as file:
+		N = 10000
+		data = []
+
+		for i in range(N):
+			cLength = randint(1,60000)
+			uLength = cLength
+			cLength = uLength 
+
+			cDel = math.ceil( (9/2000)*cLength )
+			cIns = cDel
+			cSub = math.ceil( (1/1000)*cLength )
+
+			uDel = math.ceil( (9/2000)*uLength )
+			uIns = uDel
+			uSub = math.ceil( (1/1000)*uLength )
+
+			cFalsePos = cDel + cIns + cSub
+			cTruePos = cLength - cFalsePos 
+			uFalsePos = uDel + uIns + uSub
+			uTruePos = uLength - uFalsePos
+			line = "%s %d %d %d %d %d %d %d %d %d %d %d %d\n" % ('t', cLength, uLength, cDel, cIns, cSub, uDel, uIns, uSub, cFalsePos, cTruePos, uFalsePos, uTruePos)
+			file.write(line)
+
+	data = retrieveRawData(testPath)[0]
+
+	testPrefix = "test"
+	makeErrorRateBarGraph(data, testPrefix)	
 
 # global variables
 # Maximum expected read length
@@ -399,4 +435,50 @@ g_maxReadLength = 15000
 # Interval of read length bins
 g_readLengthInterval = 100
 
+helpMessage = "Visual long read correction data statistics."
+#usageMessage = "Usage: %s [-h help and usage] [-i directory]" % (sys.argv[0])
+usageMessage = "Usage: %s [-h help and usage] [-t test functions]" % (sys.argv[0])
+options = "hi:o:t"
 
+try:
+	opts, args = getopt.getopt(sys.argv[1:], options)
+except getopt.GetoptError:
+	print "Error: unable to read command line arguments."
+	sys.exit(2)
+
+if len(sys.argv) == 1:
+	print usageMessage
+	sys.exit(2)
+
+inputPath = ""
+outputPrefix = ""
+
+for opt, arg in opts:
+	if opt == '-h':
+		print helpMessage
+		print usageMessage
+		sys.exit()
+	elif opt == '-i':
+		inputPath = arg
+	elif opt == '-o':
+		outputPrefix = arg
+	elif opt == '-t':
+		untrimmedTest()
+		sys.exit()
+	else:
+		print "Error: unrecognized command line option."
+		print helpMessage
+		print usageMessage
+		sys.exit(2)
+
+optsIncomplete = False
+
+if inputPath == "":
+	print "Please provide an input path."
+	optsIncomplete = True
+if outputPath == "":
+	print "Please provide an output prefix."
+	optsIncomplete = True
+if optsIncomplete:
+	print usageMessage
+	sys.exit(2)
