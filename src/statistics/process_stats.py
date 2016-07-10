@@ -1,3 +1,4 @@
+from __future__ import division
 import sys, os, getopt
 import numpy as np
 import matplotlib as mpl
@@ -5,7 +6,7 @@ import matplotlib as mpl
 mpl.use('agg')
 import matplotlib.pyplot as plt
 from random import randint
-import math # for ceil
+from math import ceil
 
 class ReadDatum(object):
 	'''
@@ -16,16 +17,16 @@ class ReadDatum(object):
 		Accepts as input list of trimmed read data points obtained
 		directly from the STATS file outputted by lrcstats
 		'''
-		data = [int(datum) in datum in data[1:]]
-		self.cLength = data[1]
-		self.uLength = data[2]
+		data = [int(data[i]) for i in range(len(data)) if i != 0]
+		self.cLength = data[0]
+		self.uLength = data[1]
 
-		self.cDel = data[3]
-		self.uDel = data[4]
-		self.cIns = data[5]
-		self.uIns = data[6]
-		self.cSub = data[7]
-		self.uSub = data[8]
+		self.cDel = data[2]
+		self.uDel = data[3]
+		self.cIns = data[4]
+		self.uIns = data[5]
+		self.cSub = data[6]
+		self.uSub = data[7]
 
 	def getCorrLength(self):
 		'''
@@ -53,7 +54,11 @@ class ReadDatum(object):
 		which is defined as the number of mutations divided by
 		the length of the read.
 		'''
-		return (self.uDel + self.uIns + self.uSub)/self.uLength
+		try:
+			return (self.uDel + self.uIns + self.uSub)/self.uLength
+		except:
+			print "uLength is 0"
+			sys.exit(2)
 
 	def getUncorrErrors(self):
 		'''
@@ -107,12 +112,11 @@ class UntrimmedReadDatum(ReadDatum):
 		directly from the STATS file outputted by lrcstats
 		'''
 		ReadDatum.__init__(self, data)
-		data = [int(datum) in datum in data[1:]]
 
-		self.correctedTruePos = data[9]
-		self.correctedFalsePos = data[10]
-		self.uncorrectedTruePos = data[11]
-		self.uncorrectedFalsePos = data[12]
+		self.correctedTruePos = data[8]
+		self.correctedFalsePos = data[9]
+		self.uncorrectedTruePos = data[10]
+		self.uncorrectedFalsePos = data[11]
 
 	def getCorrTruePositives(self):
 		'''
@@ -241,7 +245,7 @@ def findMeanAndStdev(errorRates):
 	g_readLengthInterval. 
 	'''
 	length = len(errorRates)
-	errorRates = array(corrErrorRates).reshape( cLength, 2 )
+	errorRates = np.array(errorRates).reshape( length, 2 )
 	bins = np.linspace(0, g_maxReadLength, g_readLengthInterval) 
 
 	# Digitize returns the indices of the elements that belong to bin i
@@ -286,7 +290,8 @@ def makeErrorRateBarGraph(data, testPrefix):
 	fig, (corrAxes, uncorrAxes) = plt.subplots(1, 2, sharey=True)
 
 	# Independent variable range
-	bins = linspace(0, g_maxReadLength, g_readLengthInterval)
+	corrInd = np.linspace(0, g_maxReadLength, g_readLengthInterval)
+	uncorrInd = np.linspace(0, g_maxReadLength, g_readLengthInterval)
 	
 	# Create the corrected long read bar graph
 	corrAxes.bar(corrInd, corrMean, yerr=corrStdev)
@@ -397,7 +402,7 @@ def makeMutationProportionsBarGraphs(data, testPrefix):
 	''' 
 	return
 
-def untrimmedTest():
+def test():
 	testPath = "test.stats"
 
 	with open(testPath, 'w') as file:
@@ -407,21 +412,20 @@ def untrimmedTest():
 		for i in range(N):
 			cLength = randint(1,60000)
 			uLength = cLength
-			cLength = uLength 
 
-			cDel = math.ceil( (9/2000)*cLength )
+			cDel = ceil( (9/2000)*cLength )
 			cIns = cDel
-			cSub = math.ceil( (1/1000)*cLength )
+			cSub = ceil( (1/1000)*cLength )
 
-			uDel = math.ceil( (9/2000)*uLength )
+			uDel = ceil( (9/200)*uLength )
 			uIns = uDel
-			uSub = math.ceil( (1/1000)*uLength )
+			uSub = ceil( (1/100)*uLength )
 
 			cFalsePos = cDel + cIns + cSub
 			cTruePos = cLength - cFalsePos 
 			uFalsePos = uDel + uIns + uSub
 			uTruePos = uLength - uFalsePos
-			line = "%s %d %d %d %d %d %d %d %d %d %d %d %d\n" % ('t', cLength, uLength, cDel, cIns, cSub, uDel, uIns, uSub, cFalsePos, cTruePos, uFalsePos, uTruePos)
+			line = "%s %d %d %d %d %d %d %d %d %d %d %d %d\n" % ('t', cLength, uLength, cDel, cIns, cSub, uDel, uIns, uSub, cTruePos, cFalsePos, uTruePos, uFalsePos)
 			file.write(line)
 
 	data = retrieveRawData(testPath)[0]
@@ -463,7 +467,7 @@ for opt, arg in opts:
 	elif opt == '-o':
 		outputPrefix = arg
 	elif opt == '-t':
-		untrimmedTest()
+		test()
 		sys.exit()
 	else:
 		print "Error: unrecognized command line option."
