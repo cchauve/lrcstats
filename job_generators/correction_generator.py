@@ -24,7 +24,7 @@ def writeJob(program, species, shortCov, longCov):
 	outputdir = "%s/corrections/%s/%s/%s/%s" % (prefix, now.month, now.day, program, test)
 	###############################################################
 	
-	filename = "/home/seanla/Jobs/lrcstats/corrections/%s.pbs" % (test)
+	filename = "/home/seanla/Jobs/lrcstats/ecoli_and_yeast/corrections/%s.pbs" % (test)
 	file = open(filename, 'w')
 	
 	################### Write the resources #######################
@@ -115,17 +115,15 @@ def writeJob(program, species, shortCov, longCov):
 		short1path = "short1=%s\n" % (short1)
 		short2path = "short2=%s\n" % (short2)
 		output = "outputDir=%s\n" % (outputdir)
-		outputPrefix = "outputPrefix=%s/%s\n" % (outputdir, test)
 		mergedShortPath = "mergedShort=%s\n" % (mergedShort)
 		longPath = "long=%s\n" % (long)
 		cdCommand = "cd $outputDir\n"
-		colormap = "$colormap $long $mergedShort $outputPrefix ${PBS_NUM_PPN}\n" 
+		colormap = "$colormap $long $mergedShort $outputDir ${PBS_NUM_PPN}\n" 
 
 		file.write(colormapPath)
 		file.write(short1path)
 		file.write(short2path)
 		file.write(output)
-		file.write(outputPrefix)
 		file.write(mergedShortPath)
 		file.write(longPath)
 		file.write('\n')
@@ -251,9 +249,9 @@ if __name__ == "__main__":
 					writeJob(program, specie, shortCov, longCov)	
 
 	if allCov:	
-		submitFile = "/home/seanla/Jobs/lrcstats/corrections/submitjobs-%s%s%s%s-all.sh" % (colormap, lordec, jabba, proovread)
+		submitFile = "/home/seanla/Jobs/lrcstats/ecoli_and_yeast/corrections/submitjobs-%s%s%s%s-all.sh" % (colormap, lordec, jabba, proovread)
 	else:
-		submitFile = "/home/seanla/Jobs/lrcstats/corrections/submitjobs-%s%s%s%s-%sSx%sL.sh" % (colormap, lordec, jabba, proovread, shortCov, longCov)
+		submitFile = "/home/seanla/Jobs/lrcstats/ecoli_and_yeast/corrections/submitjobs-%s%s%s%s-%sSx%sL.sh" % (colormap, lordec, jabba, proovread, shortCov, longCov)
 
 	# Create the shell script to execute all jobs
 	with open(submitFile, 'w') as file:
