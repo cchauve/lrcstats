@@ -101,7 +101,7 @@ class TrimmedDatum(ReadDatum):
 		return self.cSub/self.uSub
 
 
-class UntrimmedReadDatum(ReadDatum):
+class UntrimmedDatum(ReadDatum):
 	'''
 	Similar to ReadDatum object, but also outputs statistics related
 	specifically for trimmed reads.
@@ -112,6 +112,7 @@ class UntrimmedReadDatum(ReadDatum):
 		directly from the STATS file outputted by lrcstats
 		'''
 		ReadDatum.__init__(self, data)
+		data = [int(data[i]) for i in range(len(data)) if i != 0]
 
 		self.correctedTruePos = data[8]
 		self.correctedFalsePos = data[9]
@@ -172,7 +173,7 @@ class UntrimmedReadDatum(ReadDatum):
 def retrieveRawData(dataPath):
 	'''
 	Accepts the path to the STATS file outputted by lrcstats.
-	Returns two lists of UntrimmedReadDatum and ReadDatum objects,
+	Returns two lists of UntrimmedDatum and ReadDatum objects,
 	respectively.
 	'''
 	rawData = []
@@ -187,7 +188,7 @@ def retrieveRawData(dataPath):
 		datum = datum.split()
 
 		if datum[0] == 'u':
-			datum = UntrimmedReadDatum(datum)
+			datum = UntrimmedDatum(datum)
 			UntrimmedData.append(datum)
 		elif datum[0] == 't':
 			datum = ReadDatum(datum)
@@ -199,7 +200,7 @@ def makeErrorRateBoxPlot(data, testPrefix):
 	'''
 	Creates an error rate frequency box plot and saves on disk.
 
-	Accepts a list of either ReadDatum or UntrimmedReadDatum objects and
+	Accepts a list of either ReadDatum or UntrimmedDatum objects and
 	a prefix designating the name of file and save location.
 	Returns nothing.
 	'''
@@ -242,18 +243,20 @@ def findMeanAndStdev(errorRates):
 
 	Returns a list of means and standard deviations of the error rates of the reads
 	whose lengths fall between intervals starting from 0 to g_maxReadLength of size
-	g_readLengthInterval. 
+	g_binNumber. 
 	'''
 	length = len(errorRates)
 	errorRates = np.array(errorRates).reshape( length, 2 )
-	bins = np.linspace(0, g_maxReadLength, g_readLengthInterval) 
+	bins = np.linspace(0, g_maxReadLength, g_binNumber) 
 
 	# Digitize returns the indices of the elements that belong to bin i
-	digitized = np.digitize(errorRates[:,1], bins)
-	means = [ errorRates[digitized == i, 0].mean() for i in range( 1, len(bins) ) ]
+	# i.e. implicitly describes which length/error rate tuple falls in which bin
+	digitized = np.digitize(errorRates[:,0], bins)
+	# For each bin, find the mean error rate
+	means = [ np.mean( errorRates[digitized == i, 1], dtype=np.float64 ) for i in range( 1, len(bins) ) ]
 
-	# Find the standard deviations
-	stdevs = [ np.std( errorRates[digitized == i, 0], dtype=np.float64 ) for i in range( 1, len(bins) ) ]
+	# For each bn, find the standard deviation of the error rates
+	stdevs = [ np.std( errorRates[digitized == i, 1], dtype=np.float64 ) for i in range( 1, len(bins) ) ]
 
 	return means, stdevs
 
@@ -264,7 +267,7 @@ def makeErrorRateBarGraph(data, testPrefix):
 	Standard deviations are represented by error bars.
 	The extension of the file is .png
 
-	Accepts a list of either ReadDatum or UntrimmedReadDatum objects and
+	Accepts a list of either ReadDatum or UntrimmedDatum objects and
 	a prefix designating the name of file and save location.
 	Returns nothing.
 	'''
@@ -287,20 +290,44 @@ def makeErrorRateBarGraph(data, testPrefix):
 	corrMean, corrStdev = findMeanAndStdev(corrErrorRates)
 	uncorrMean, uncorrStdev = findMeanAndStdev(uncorrErrorRates)
 
-	fig, (corrAxes, uncorrAxes) = plt.subplots(1, 2, sharey=True)
+	# Remove last element in ind so that its length matches the length of the means
+	ind = np.linspace(0, g_maxReadLength, g_binNumber)
+	ind = np.delete(ind, -1)
 
-	# Independent variable range
-	corrInd = np.linspace(0, g_maxReadLength, g_readLengthInterval)
-	uncorrInd = np.linspace(0, g_maxReadLength, g_readLengthInterval)
+	fig, axes = plt.subplots()
+
+	# Set size of graph
+	length = 40
+	height = 20
+	fig.set_size_inches(length, height)	
+
+	# Bar width specification
+	width = (1/2)*ceil( g_maxReadLength / g_binNumber ) 
 	
 	# Create the corrected long read bar graph
-	corrAxes.bar(corrInd, corrMean, yerr=corrStdev)
+	corrGraph = axes.bar(ind, corrMean, width, color='r', yerr=corrStdev, align='edge')
 
 	# Create the uncorrected long read bar graph
-	uncorrAxes.bar(uncorrInd, uncorrMean, yerr=uncorrStdev)
+	uncorrGraph = axes.bar(ind+width, uncorrMean, width, color='y', yerr=uncorrStdev)
+
+	# Add labels to graph
+	axes.set_ylabel("Mean error rates of reads")
+	axes.set_xlabel("Length of read")
+	axes.set_title("Mean Error Rates of Corrected and Uncorrected Reads by Length")
+
+	# The lengths that fall in each bin
+	lengthBins = np.linspace(0, g_maxReadLength, g_binNumber)
+	
+	# Create x-tick labels
+	axes.set_xticks(lengthBins + width)
+	binSize = len(lengthBins)
+	xticklabels = ["%d" % (lengthBins[i+1]) for i in range(binSize) if i < binSize - 1]
+	axes.set_xticklabels(xticklabels)
+
+	axes.legend( (corrGraph[0], uncorrGraph[0]), ('Corrected Reads', 'Uncorrected Reads') )
 
 	savePath = "%s_error_rates_bargraph.png" % (testPrefix)
-	fig.savefig(savePath, bbox_inches='tight')
+	fig.savefig(savePath, dpi=100, bbox_inches='tight')
 
 def getUncorrThroughput(data):
 	'''
@@ -316,18 +343,20 @@ def getUncorrThroughput(data):
 
 def getTrueAndFalsePositives(data):
 	'''
-	Accepts as input a list of UntrimmedReadDatum objects.
+	Accepts as input a list of UntrimmedDatum objects.
 
 	Returns the total number of true positives and false positives in
 	corrected and uncorrected regions of the corrected long reads.
 	'''
-	corrTruePos, corrFalsePos, uncorrTruePos, uncorrFalsePos = 0
+	corrTruePos, corrFalsePos, uncorrTruePos, uncorrFalsePos = (0, 0, 0, 0)
 
 	for datum in data:
-		corrTruePos += datum.getCorrectedTruePositives()
-		corrFalsePOs += datum.getCorrectedFalsePositives()
-		uncorrTruePos += datum.getUncorrectedTruePositives()
-		uncorrFalsePos += datum.getUncorrectedFalsePositives()
+		corrTruePos = corrTruePos + datum.getCorrTruePositives()
+		corrFalsePos = corrFalsePos + datum.getCorrFalsePositives()
+		uncorrTruePos = uncorrTruePos + datum.getUncorrTruePositives()
+		uncorrFalsePos = uncorrFalsePos + datum.getUncorrFalsePositives()
+
+	assert corrTruePos != 0
 
 	return (corrTruePos, corrFalsePos, uncorrTruePos, uncorrFalsePos)
 
@@ -362,21 +391,26 @@ def makeThroughputBarGraph(data, testPrefix):
 	
 	# Make two subplots, one for corrected long reads and the other for
 	# corrected long reads. The subplots share the y-axis.
-	fig, (corrAxes, uncorrAxes) = plt.subplots(2, sharey=True)
+	fig, axes = plt.subplots()
+
+	# Set size of graph
+	length = 40
+	height = 20
+	fig.set_size_inches(length, height)	
 
 	# Since we only have one bar, the number of independent variables is 1
 	ind = 1
-	width = 0.35
+	width = 0.1 
 
 	# Plot the corrected bar graph
-	corrAxes.bar(ind, uncorrFalse, width)
-	corrAxes.bar(ind, uncorrTrue, width, bottom=uncorrFalse)
-	corrAxes.bar(ind, corrFalse, width, bottom=uncorrTrue)
-	corrAxes.bar(ind, corrTrue, width, bottom=corrFalse) 
+	uncorrFalsePosBar = axes.bar(ind, uncorrFalse, width, color='r')
+	uncorrTruePosBar = axes.bar(ind, uncorrTrue, width, bottom=uncorrFalse, color='r')
+	corrFalsePosBar = axes.bar(ind, corrFalse, width, bottom=uncorrTrue, color='y')
+	corrTruePosBar = axes.bar(ind, corrTrue, width, bottom=corrFalse, color='y') 
 
 	# Plot the uncorrected bar graph
-	uncorrAxes.bar(ind, uncorrErrors, width)
-	uncorrAxes.bar(ind, uncorrCorrect, width, bottom=uncorrErrors)
+	# uncorrErrorsBar = axes.bar(ind, uncorrErrors, width='b')
+	# uncorrCorrectBar = axes.bar(ind, uncorrCorrect, width, bottom=uncorrErrors, color='b')
 
 	savePath = "%s_throughput_bar_graph.png" % (testPrefix)
 	fig.savefig(savePath, bbox_inches='tight')
@@ -410,7 +444,7 @@ def test():
 		data = []
 
 		for i in range(N):
-			cLength = randint(1,60000)
+			cLength = randint(1,g_maxReadLength)
 			uLength = cLength
 
 			cDel = ceil( (9/2000)*cLength )
@@ -425,19 +459,20 @@ def test():
 			cTruePos = cLength - cFalsePos 
 			uFalsePos = uDel + uIns + uSub
 			uTruePos = uLength - uFalsePos
-			line = "%s %d %d %d %d %d %d %d %d %d %d %d %d\n" % ('t', cLength, uLength, cDel, cIns, cSub, uDel, uIns, uSub, cTruePos, cFalsePos, uTruePos, uFalsePos)
+			line = "%s %d %d %d %d %d %d %d %d %d %d %d %d\n" % ('u', cLength, uLength, cDel, cIns, cSub, uDel, uIns, uSub, cTruePos, cFalsePos, uTruePos, uFalsePos)
 			file.write(line)
 
-	data = retrieveRawData(testPath)[0]
+	untrimmedData = retrieveRawData(testPath)[1]
 
-	testPrefix = "test"
-	makeErrorRateBarGraph(data, testPrefix)	
+	testPrefix = "/Users/laseanl/Documents/test"
+	# makeErrorRateBarGraph(trimmedData, testPrefix)	
+	makeThroughputBarGraph(untrimmedData, testPrefix)
 
 # global variables
 # Maximum expected read length
-g_maxReadLength = 15000
-# Interval of read length bins
-g_readLengthInterval = 100
+g_maxReadLength = 60000
+# Number of read length bins
+g_binNumber = 50
 
 helpMessage = "Visual long read correction data statistics."
 #usageMessage = "Usage: %s [-h help and usage] [-i directory]" % (sys.argv[0])
