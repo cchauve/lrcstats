@@ -297,18 +297,18 @@ def makeErrorRateBarGraph(data, testPrefix):
 	fig, axes = plt.subplots()
 
 	# Set size of graph
-	length = 40
-	height = 20
+	length = 35
+	height = 17.5
 	fig.set_size_inches(length, height)	
 
 	# Bar width specification
-	width = (1/2)*ceil( g_maxReadLength / g_binNumber ) 
+	barWidth = (1/2)*ceil( g_maxReadLength / g_binNumber ) 
 	
 	# Create the corrected long read bar graph
-	corrGraph = axes.bar(ind, corrMean, width, color='r', yerr=corrStdev, align='edge')
+	corrGraph = axes.bar(ind, corrMean, barWidth, color='r', yerr=corrStdev)
 
 	# Create the uncorrected long read bar graph
-	uncorrGraph = axes.bar(ind+width, uncorrMean, width, color='y', yerr=uncorrStdev)
+	uncorrGraph = axes.bar(ind+barWidth, uncorrMean, barWidth, color='y', yerr=uncorrStdev)
 
 	# Add labels to graph
 	axes.set_ylabel("Mean error rates of reads")
@@ -319,10 +319,7 @@ def makeErrorRateBarGraph(data, testPrefix):
 	lengthBins = np.linspace(0, g_maxReadLength, g_binNumber)
 	
 	# Create x-tick labels
-	axes.set_xticks(lengthBins + width)
-	binSize = len(lengthBins)
-	xticklabels = ["%d" % (lengthBins[i+1]) for i in range(binSize) if i < binSize - 1]
-	axes.set_xticklabels(xticklabels)
+	axes.set_xticks(lengthBins)
 
 	axes.legend( (corrGraph[0], uncorrGraph[0]), ('Corrected Reads', 'Uncorrected Reads') )
 
@@ -465,8 +462,8 @@ def test():
 	untrimmedData = retrieveRawData(testPath)[1]
 
 	testPrefix = "/Users/laseanl/Documents/test"
-	# makeErrorRateBarGraph(trimmedData, testPrefix)	
-	makeThroughputBarGraph(untrimmedData, testPrefix)
+	makeErrorRateBarGraph(untrimmedData, testPrefix)	
+	#makeThroughputBarGraph(untrimmedData, testPrefix)
 
 # global variables
 # Maximum expected read length
