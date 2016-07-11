@@ -46,9 +46,7 @@ if __name__ == "__main__":
 	with open(output, 'w') as outfile:
 		for input in inputs:
 			print "Merging %s..." % (input)
-			'''
 			with open(input) as infile:
 				for line in infile:
 					outfile.write(line)
-			'''
 	print "Done merging."

@@ -1,3 +1,4 @@
+#!/global/software/python/python272/bin/python
 import sys, os, getopt
 
 if __name__ == "__main__":
@@ -48,7 +49,7 @@ if __name__ == "__main__":
 		print usageMessage
 		sys.exit(2)
 
-	inputs = inputs.split()
+	inputs = inputs.split(" ")
 
 	print "Writing output to %s" % (output)
 
