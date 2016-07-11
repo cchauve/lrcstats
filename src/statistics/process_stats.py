@@ -329,6 +329,8 @@ def makeErrorRateBarGraph(data, testPrefix):
 	
 	# Create x-tick labels
 	axes.set_xticks(lengthBins)
+
+	# Set the legend
 	axes.legend( (corrGraph[0], uncorrGraph[0]), ('Corrected Reads', 'Uncorrected Reads') )
 
 	savePath = "%s_error_rates_bargraph.png" % (testPrefix)
@@ -393,29 +395,72 @@ def makeThroughputBarGraph(data, testPrefix):
 	# Since the number of correct bases is equivalent to the total
 	# number of bases less the erroneous
 	uncorrCorrect = uncorrThroughput - uncorrErrors
-	
-	# Make two subplots, one for corrected long reads and the other for
-	# corrected long reads. The subplots share the y-axis.
-	fig, axes = plt.subplots()
+
+	fig, (corrAxes, uncorrAxes) = plt.subplots(1, 2, sharey=True)
+	fig.subplots_adjust(hspace=0.001)
+
+	numItems = 1
 
 	# Set size of graph
-	length = 40
-	height = 20
+	length = 5
+	height = 15
 	fig.set_size_inches(length, height)	
 
-	# Since we only have one bar, the number of independent variables is 1
-	ind = 1
-	width = 0.1 
+	ind = np.arange(numItems)
+
+	margin = 0.30
+
+	# Set the bar width
+	width = (1. - 2.*margin)/numItems
 
 	# Plot the corrected bar graph
-	uncorrFalsePosBar = axes.bar(ind, uncorrFalse, width, color='r')
-	uncorrTruePosBar = axes.bar(ind, uncorrTrue, width, bottom=uncorrFalse, color='r')
-	corrFalsePosBar = axes.bar(ind, corrFalse, width, bottom=uncorrTrue, color='y')
-	corrTruePosBar = axes.bar(ind, corrTrue, width, bottom=corrFalse, color='y') 
+	xdata = ind + margin + width
 
-	# Plot the uncorrected bar graph
-	# uncorrErrorsBar = axes.bar(ind, uncorrErrors, width='b')
-	# uncorrCorrectBar = axes.bar(ind, uncorrCorrect, width, bottom=uncorrErrors, color='b')
+	corrAxes.bar(
+		xdata,
+		uncorrFalse,
+		width,
+		align='center',
+		color='r')
+
+	corrAxes.bar(
+		xdata,
+		corrFalse,
+		width,
+		align='center',
+		bottom=uncorrFalse,
+		color='y')
+
+	corrAxes.bar(
+		xdata,
+		uncorrTrue,
+		width,
+		align='center',
+		bottom=corrFalse+uncorrFalse,
+		color='g')
+
+	corrAxes.bar(
+		xdata,
+		corrTrue,
+		width,
+		align='center',
+		bottom=uncorrTrue+corrFalse+uncorrFalse,
+		color='b')
+
+	uncorrAxes.bar(
+		xdata,
+		uncorrErrors,
+		width,
+		align='center',
+		color='r')
+
+	uncorrAxes.bar(
+		xdata,
+		uncorrCorrect,
+		width,
+		align='center',
+		bottom=uncorrErrors,
+		color='g')
 
 	savePath = "%s_throughput_bar_graph.png" % (testPrefix)
 	fig.savefig(savePath, bbox_inches='tight')
@@ -470,9 +515,9 @@ def test():
 	untrimmedData = retrieveRawData(testPath)[1]
 
 	testPrefix = "/Users/laseanl/Documents/test"
-	#makeErrorRateBarGraph(untrimmedData, testPrefix)	
-	makeErrorRateBoxPlot(untrimmedData, testPrefix)
-	#makeThroughputBarGraph(untrimmedData, testPrefix)
+	# makeErrorRateBarGraph(untrimmedData, testPrefix)	
+	# makeErrorRateBoxPlot(untrimmedData, testPrefix)
+	makeThroughputBarGraph(untrimmedData, testPrefix)
 
 # global variables
 # Maximum expected read length
