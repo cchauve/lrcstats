@@ -1,9 +1,9 @@
 import sys, os, getopt
 
 if __name__ == "__main__":
-        helpMessage = "Merge input files 1 and 2 into output."
-        usageMessage = "Usage: %s [-h help and usage] [-1 input file 1] [-2 input file 2] [-o output file]" % (sys.argv[0])
-        options = "h1:2:o:"
+        helpMessage = "Merge input files into output in the order it is given in the command line argument string. Separate file names with space."
+        usageMessage = "Usage: %s [-h help and usage] [-i input files] [-o output file]" % (sys.argv[0])
+        options = "hi:o:"
 
         try:
                 opts, args = getopt.getopt(sys.argv[1:], options)
@@ -15,8 +15,7 @@ if __name__ == "__main__":
                 print usageMessage
                 sys.exit(2)
 
-	input1 = ""
-	input2 = ""
+	inputs = ""
 	output = ""
 
         for opt, arg in opts:
@@ -25,37 +24,31 @@ if __name__ == "__main__":
                         print helpMessage
                         print usageMessage
                         sys.exit()
-                elif opt == '-1':
-                        input1 = arg
-                elif opt == '-2':
-                        input2 = arg
+                elif opt == '-i':
+                        inputs = arg
                 elif opt == '-o':
                         output = arg
-		else:
-			print "Error: unknown argument"
-			sys.exit(2)
 
 	optsIncomplete = False
 
-	if input1 == "":
+	if inputs == "":
 		print "Error: please provide input1."
-		optsIncomplete = True
-	if input2 == "":
-		print "Error: please provide input2."
 		optsIncomplete = True
 
 	if optsIncomplete:
 		print usageMessage
 		sys.exit(2)
 
-	inputs = [input1, input2]
+	inputs = inputs.split()
 
 	print "Writing output to %s" % (output)
 
 	with open(output, 'w') as outfile:
 		for input in inputs:
+			print "Merging %s..." % (input)
+			'''
 			with open(input) as infile:
-				print "Merging %s..." % (input)
 				for line in infile:
 					outfile.write(line)
+			'''
 	print "Done merging."
