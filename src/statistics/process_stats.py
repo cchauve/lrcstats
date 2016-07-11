@@ -216,11 +216,12 @@ def makeErrorRateBoxPlot(data, testPrefix):
 
 	data = [corrErrorRates, uncorrErrorRates]
 
-	# Create a figure instance
-	fig = plt.figure(1, figsize=(9,6))
+	fig, axes = plt.subplots()
 
-	# Create an axes instance
-	axes = fig.add_subplot(111)
+	# Set size of graph
+	length = 9
+	height = 9
+	fig.set_size_inches(length, height)	
 
 	# Custom x-axis labels
 	labels = ['Corrected Reads', 'Uncorrected Read']
@@ -229,6 +230,10 @@ def makeErrorRateBoxPlot(data, testPrefix):
 	# Keep only the bottom and left axes
 	axes.get_xaxis().tick_bottom()
 	axes.get_yaxis().tick_left()
+
+	# Set the labels of the graph
+	axes.set_ylabel("Error Rate")
+	axes.set_title("Frequency of error rates in corrected and uncorrected long reads.")
 
 	# Create the boxplot	
 	bp = axes.boxplot(data) 
@@ -296,9 +301,13 @@ def makeErrorRateBarGraph(data, testPrefix):
 
 	fig, axes = plt.subplots()
 
+	# Show left and bottom spines
+	axes.yaxis.set_ticks_position('left')
+	axes.xaxis.set_ticks_position('bottom')
+
 	# Set size of graph
-	length = 35
-	height = 17.5
+	length = 20
+	height = 10
 	fig.set_size_inches(length, height)	
 
 	# Bar width specification
@@ -316,11 +325,10 @@ def makeErrorRateBarGraph(data, testPrefix):
 	axes.set_title("Mean Error Rates of Corrected and Uncorrected Reads by Length")
 
 	# The lengths that fall in each bin
-	lengthBins = np.linspace(0, g_maxReadLength, g_binNumber)
+	lengthBins = np.linspace(0, g_maxReadLength, g_binNumber/5)
 	
 	# Create x-tick labels
 	axes.set_xticks(lengthBins)
-
 	axes.legend( (corrGraph[0], uncorrGraph[0]), ('Corrected Reads', 'Uncorrected Reads') )
 
 	savePath = "%s_error_rates_bargraph.png" % (testPrefix)
@@ -462,7 +470,8 @@ def test():
 	untrimmedData = retrieveRawData(testPath)[1]
 
 	testPrefix = "/Users/laseanl/Documents/test"
-	makeErrorRateBarGraph(untrimmedData, testPrefix)	
+	#makeErrorRateBarGraph(untrimmedData, testPrefix)	
+	makeErrorRateBoxPlot(untrimmedData, testPrefix)
 	#makeThroughputBarGraph(untrimmedData, testPrefix)
 
 # global variables
