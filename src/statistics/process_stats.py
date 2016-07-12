@@ -1,12 +1,15 @@
 from __future__ import division
 import sys, os, getopt
+from random import randint
+from math import ceil
 import numpy as np
+
 import matplotlib as mpl
 # agg backend is used to create plot as a .png file
 mpl.use('agg')
+
 import matplotlib.pyplot as plt
-from random import randint
-from math import ceil
+import matplotlib.patches as mpatches
 
 class ReadDatum(object):
 	'''
@@ -397,7 +400,9 @@ def makeThroughputBarGraph(data, testPrefix):
 	uncorrCorrect = uncorrThroughput - uncorrErrors
 
 	fig, (corrAxes, uncorrAxes) = plt.subplots(1, 2, sharey=True)
-	fig.subplots_adjust(hspace=0.001)
+
+	# Move subplots closer together
+	fig.subplots_adjust(hspace=1.0)
 
 	numItems = 1
 
@@ -411,56 +416,80 @@ def makeThroughputBarGraph(data, testPrefix):
 	margin = 0.30
 
 	# Set the bar width
-	width = (1. - 2.*margin)/numItems
+	width = 0.15
 
 	# Plot the corrected bar graph
-	xdata = ind + margin + width
-
 	corrAxes.bar(
-		xdata,
+		ind,
 		uncorrFalse,
 		width,
-		align='center',
 		color='r')
 
 	corrAxes.bar(
-		xdata,
+		ind,
 		corrFalse,
 		width,
-		align='center',
 		bottom=uncorrFalse,
 		color='y')
 
 	corrAxes.bar(
-		xdata,
+		ind,
 		uncorrTrue,
 		width,
-		align='center',
 		bottom=corrFalse+uncorrFalse,
 		color='g')
 
 	corrAxes.bar(
-		xdata,
+		ind,
 		corrTrue,
 		width,
-		align='center',
 		bottom=uncorrTrue+corrFalse+uncorrFalse,
 		color='b')
 
+	# Plot the uncorrected read bar graph
 	uncorrAxes.bar(
-		xdata,
+		ind,
 		uncorrErrors,
 		width,
-		align='center',
 		color='r')
 
 	uncorrAxes.bar(
-		xdata,
+		ind,
 		uncorrCorrect,
 		width,
-		align='center',
 		bottom=uncorrErrors,
 		color='g')
+
+	# Add labels to graph
+	corrAxes.set_ylabel("Number of bases")
+	corrAxes.set_xlabel("Corrected")
+	uncorrAxes.set_xlabel("Uncorrected")
+
+	# Remove xtick labels
+	for axes in (corrAxes, uncorrAxes):
+		for label in axes.get_xticklabels():
+			label.set_visible(False)
+
+	# Add the legend
+	corrBlueStack = mpatches.Patch(color='blue', label='Corrected True Positives')
+	corrGreenStack = mpatches.Patch(color='green', label='Uncorrected True Positives')
+	corrYellowStack = mpatches.Patch(color='yellow', label='Corrected False Positives')
+	corrRedStack = mpatches.Patch(color='red', label='Uncorrected False Positives')
+
+	corrAxes.legend( 
+		handles = [corrBlueStack, corrGreenStack, corrYellowStack, corrRedStack],
+		bbox_to_anchor=[4.3,1], 
+		borderaxespad=0.)
+	
+	uncorrGreenStack = mpatches.Patch(color='green', label='Correct bases')
+	uncorrRedStack = mpatches.Patch(color='red', label='Incorrect bases')	
+
+	uncorrAxes.legend( 
+		handles = [uncorrGreenStack, uncorrRedStack], 
+		bbox_to_anchor=[2.5,0.85],
+		borderaxespad=0.)
+
+	fig.suptitle("Composition of Throughput of Corrected and Uncorrected Reads")
 
 	savePath = "%s_throughput_bar_graph.png" % (testPrefix)
 	fig.savefig(savePath, bbox_inches='tight')
@@ -486,7 +515,7 @@ def makeMutationProportionsBarGraphs(data, testPrefix):
 	''' 
 	return
 
-def test():
+def test(testPrefix):
 	testPath = "test.stats"
 
 	with open(testPath, 'w') as file:
@@ -514,7 +543,6 @@ def test():
 
 	untrimmedData = retrieveRawData(testPath)[1]
 
-	testPrefix = "/Users/laseanl/Documents/test"
 	# makeErrorRateBarGraph(untrimmedData, testPrefix)	
 	# makeErrorRateBoxPlot(untrimmedData, testPrefix)
 	makeThroughputBarGraph(untrimmedData, testPrefix)
@@ -526,8 +554,7 @@ g_maxReadLength = 60000
 g_binNumber = 50
 
 helpMessage = "Visual long read correction data statistics."
-#usageMessage = "Usage: %s [-h help and usage] [-i directory]" % (sys.argv[0])
-usageMessage = "Usage: %s [-h help and usage] [-t test functions]" % (sys.argv[0])
+usageMessage = "Usage: %s [-h help and usage] [-i directory] [-o output prefix]" % (sys.argv[0])
 options = "hi:o:t"
 
 try:
@@ -542,6 +569,7 @@ if len(sys.argv) == 1:
 
 inputPath = ""
 outputPrefix = ""
+testRun = False
 
 for opt, arg in opts:
 	if opt == '-h':
@@ -553,22 +581,18 @@ for opt, arg in opts:
 	elif opt == '-o':
 		outputPrefix = arg
 	elif opt == '-t':
-		test()
-		sys.exit()
-	else:
-		print "Error: unrecognized command line option."
-		print helpMessage
-		print usageMessage
-		sys.exit(2)
+		testRun = True
 
 optsIncomplete = False
 
-if inputPath == "":
+if inputPath == "" and not testRun:
 	print "Please provide an input path."
 	optsIncomplete = True
-if outputPath == "":
+if outputPrefix == "":
 	print "Please provide an output prefix."
 	optsIncomplete = True
 if optsIncomplete:
 	print usageMessage
 	sys.exit(2)
+
+test(outputPrefix)
