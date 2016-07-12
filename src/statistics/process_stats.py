@@ -1,12 +1,15 @@
 from __future__ import division
 import sys, os, getopt
+from random import randint
+from math import ceil
 import numpy as np
+
 import matplotlib as mpl
 # agg backend is used to create plot as a .png file
 mpl.use('agg')
+
 import matplotlib.pyplot as plt
-from random import randint
-from math import ceil
+import matplotlib.patches as mpatches
 
 class ReadDatum(object):
 	'''
@@ -216,11 +219,12 @@ def makeErrorRateBoxPlot(data, testPrefix):
 
 	data = [corrErrorRates, uncorrErrorRates]
 
-	# Create a figure instance
-	fig = plt.figure(1, figsize=(9,6))
+	fig, axes = plt.subplots()
 
-	# Create an axes instance
-	axes = fig.add_subplot(111)
+	# Set size of graph
+	length = 9
+	height = 9
+	fig.set_size_inches(length, height)	
 
 	# Custom x-axis labels
 	labels = ['Corrected Reads', 'Uncorrected Read']
@@ -229,6 +233,10 @@ def makeErrorRateBoxPlot(data, testPrefix):
 	# Keep only the bottom and left axes
 	axes.get_xaxis().tick_bottom()
 	axes.get_yaxis().tick_left()
+
+	# Set the labels of the graph
+	axes.set_ylabel("Error Rate")
+	axes.set_title("Frequency of error rates in corrected and uncorrected long reads.")
 
 	# Create the boxplot	
 	bp = axes.boxplot(data) 
@@ -296,19 +304,23 @@ def makeErrorRateBarGraph(data, testPrefix):
 
 	fig, axes = plt.subplots()
 
+	# Show left and bottom spines
+	axes.yaxis.set_ticks_position('left')
+	axes.xaxis.set_ticks_position('bottom')
+
 	# Set size of graph
-	length = 40
-	height = 20
+	length = 20
+	height = 10
 	fig.set_size_inches(length, height)	
 
 	# Bar width specification
-	width = (1/2)*ceil( g_maxReadLength / g_binNumber ) 
+	barWidth = (1/2)*ceil( g_maxReadLength / g_binNumber ) 
 	
 	# Create the corrected long read bar graph
-	corrGraph = axes.bar(ind, corrMean, width, color='r', yerr=corrStdev, align='edge')
+	corrGraph = axes.bar(ind, corrMean, barWidth, color='r', yerr=corrStdev)
 
 	# Create the uncorrected long read bar graph
-	uncorrGraph = axes.bar(ind+width, uncorrMean, width, color='y', yerr=uncorrStdev)
+	uncorrGraph = axes.bar(ind+barWidth, uncorrMean, barWidth, color='y', yerr=uncorrStdev)
 
 	# Add labels to graph
 	axes.set_ylabel("Mean error rates of reads")
@@ -316,14 +328,12 @@ def makeErrorRateBarGraph(data, testPrefix):
 	axes.set_title("Mean Error Rates of Corrected and Uncorrected Reads by Length")
 
 	# The lengths that fall in each bin
-	lengthBins = np.linspace(0, g_maxReadLength, g_binNumber)
+	lengthBins = np.linspace(0, g_maxReadLength, g_binNumber/5)
 	
 	# Create x-tick labels
-	axes.set_xticks(lengthBins + width)
-	binSize = len(lengthBins)
-	xticklabels = ["%d" % (lengthBins[i+1]) for i in range(binSize) if i < binSize - 1]
-	axes.set_xticklabels(xticklabels)
+	axes.set_xticks(lengthBins)
 
+	# Set the legend
 	axes.legend( (corrGraph[0], uncorrGraph[0]), ('Corrected Reads', 'Uncorrected Reads') )
 
 	savePath = "%s_error_rates_bargraph.png" % (testPrefix)
@@ -388,29 +398,98 @@ def makeThroughputBarGraph(data, testPrefix):
 	# Since the number of correct bases is equivalent to the total
 	# number of bases less the erroneous
 	uncorrCorrect = uncorrThroughput - uncorrErrors
-	
-	# Make two subplots, one for corrected long reads and the other for
-	# corrected long reads. The subplots share the y-axis.
-	fig, axes = plt.subplots()
+
+	fig, (corrAxes, uncorrAxes) = plt.subplots(1, 2, sharey=True)
+
+	# Move subplots closer together
+	fig.subplots_adjust(hspace=1.0)
+
+	numItems = 1
 
 	# Set size of graph
-	length = 40
-	height = 20
+	length = 5
+	height = 15
 	fig.set_size_inches(length, height)	
 
-	# Since we only have one bar, the number of independent variables is 1
-	ind = 1
-	width = 0.1 
+	ind = np.arange(numItems)
+
+	margin = 0.30
+
+	# Set the bar width
+	width = 0.15
 
 	# Plot the corrected bar graph
-	uncorrFalsePosBar = axes.bar(ind, uncorrFalse, width, color='r')
-	uncorrTruePosBar = axes.bar(ind, uncorrTrue, width, bottom=uncorrFalse, color='r')
-	corrFalsePosBar = axes.bar(ind, corrFalse, width, bottom=uncorrTrue, color='y')
-	corrTruePosBar = axes.bar(ind, corrTrue, width, bottom=corrFalse, color='y') 
+	corrAxes.bar(
+		ind,
+		uncorrFalse,
+		width,
+		color='r')
 
-	# Plot the uncorrected bar graph
-	# uncorrErrorsBar = axes.bar(ind, uncorrErrors, width='b')
-	# uncorrCorrectBar = axes.bar(ind, uncorrCorrect, width, bottom=uncorrErrors, color='b')
+	corrAxes.bar(
+		ind,
+		corrFalse,
+		width,
+		bottom=uncorrFalse,
+		color='y')
+
+	corrAxes.bar(
+		ind,
+		uncorrTrue,
+		width,
+		bottom=corrFalse+uncorrFalse,
+		color='g')
+
+	corrAxes.bar(
+		ind,
+		corrTrue,
+		width,
+		bottom=uncorrTrue+corrFalse+uncorrFalse,
+		color='b')
+
+	# Plot the uncorrected read bar graph
+	uncorrAxes.bar(
+		ind,
+		uncorrErrors,
+		width,
+		color='r')
+
+	uncorrAxes.bar(
+		ind,
+		uncorrCorrect,
+		width,
+		bottom=uncorrErrors,
+		color='g')
+
+	# Add labels to graph
+	corrAxes.set_ylabel("Number of bases")
+	corrAxes.set_xlabel("Corrected")
+	uncorrAxes.set_xlabel("Uncorrected")
+
+	# Remove xtick labels
+	for axes in (corrAxes, uncorrAxes):
+		for label in axes.get_xticklabels():
+			label.set_visible(False)
+
+	# Add the legend
+	corrBlueStack = mpatches.Patch(color='blue', label='Corrected True Positives')
+	corrGreenStack = mpatches.Patch(color='green', label='Uncorrected True Positives')
+	corrYellowStack = mpatches.Patch(color='yellow', label='Corrected False Positives')
+	corrRedStack = mpatches.Patch(color='red', label='Uncorrected False Positives')
+
+	corrAxes.legend( 
+		handles = [corrBlueStack, corrGreenStack, corrYellowStack, corrRedStack],
+		bbox_to_anchor=[4.3,1], 
+		borderaxespad=0.)
+	
+	uncorrGreenStack = mpatches.Patch(color='green', label='Correct bases')
+	uncorrRedStack = mpatches.Patch(color='red', label='Incorrect bases')	
+
+	uncorrAxes.legend( 
+		handles = [uncorrGreenStack, uncorrRedStack], 
+		bbox_to_anchor=[2.5,0.85],
+		borderaxespad=0.)
+
+	fig.suptitle("Composition of Throughput of Corrected and Uncorrected Reads")
 
 	savePath = "%s_throughput_bar_graph.png" % (testPrefix)
 	fig.savefig(savePath, bbox_inches='tight')
@@ -436,7 +515,7 @@ def makeMutationProportionsBarGraphs(data, testPrefix):
 	''' 
 	return
 
-def test():
+def test(testPrefix):
 	testPath = "test.stats"
 
 	with open(testPath, 'w') as file:
@@ -464,8 +543,8 @@ def test():
 
 	untrimmedData = retrieveRawData(testPath)[1]
 
-	testPrefix = "/Users/laseanl/Documents/test"
-	# makeErrorRateBarGraph(trimmedData, testPrefix)	
+	# makeErrorRateBarGraph(untrimmedData, testPrefix)	
+	# makeErrorRateBoxPlot(untrimmedData, testPrefix)
 	makeThroughputBarGraph(untrimmedData, testPrefix)
 
 # global variables
@@ -475,8 +554,7 @@ g_maxReadLength = 60000
 g_binNumber = 50
 
 helpMessage = "Visual long read correction data statistics."
-#usageMessage = "Usage: %s [-h help and usage] [-i directory]" % (sys.argv[0])
-usageMessage = "Usage: %s [-h help and usage] [-t test functions]" % (sys.argv[0])
+usageMessage = "Usage: %s [-h help and usage] [-i directory] [-o output prefix]" % (sys.argv[0])
 options = "hi:o:t"
 
 try:
@@ -491,6 +569,7 @@ if len(sys.argv) == 1:
 
 inputPath = ""
 outputPrefix = ""
+testRun = False
 
 for opt, arg in opts:
 	if opt == '-h':
@@ -502,22 +581,18 @@ for opt, arg in opts:
 	elif opt == '-o':
 		outputPrefix = arg
 	elif opt == '-t':
-		test()
-		sys.exit()
-	else:
-		print "Error: unrecognized command line option."
-		print helpMessage
-		print usageMessage
-		sys.exit(2)
+		testRun = True
 
 optsIncomplete = False
 
-if inputPath == "":
+if inputPath == "" and not testRun:
 	print "Please provide an input path."
 	optsIncomplete = True
-if outputPath == "":
+if outputPrefix == "":
 	print "Please provide an output prefix."
 	optsIncomplete = True
 if optsIncomplete:
 	print usageMessage
 	sys.exit(2)
+
+test(outputPrefix)
