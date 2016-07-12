@@ -494,26 +494,37 @@ def makeThroughputBarGraph(data, testPrefix):
 	savePath = "%s_throughput_bar_graph.png" % (testPrefix)
 	fig.savefig(savePath, bbox_inches='tight')
 
-def findMutationProportions(data):
-	'''
-	Accepts as input a list of ReadDatum objects.
+def findLengths(data):
+	corrLengths = []	
+	uncorrLengths = []
 
-	Returns three lists of pairs, one for deletion, insertion and substitution, 
-	where the first object in the pair is the length of the read and the second 
-	is the mutation proportion. 
-	'''
-	return []
-	
+	for datum in data:
+		corrLengths.append( datum.getCorrLength() )
+		uncorrLengths.append( datum.getCorrLength() )
 
-def makeMutationProportionsBarGraphs(data, testPrefix):
-	'''
-	Accepts as input list of ReadDatum objects and a string
-	testPrefix.
+	return corrLengths, uncorrLengths
 
-	Saves to disk a 3 bar-graph diagram comparing the the deletion, insertion
-	and substitution proportions of the corrected and uncorrected long reads.
-	''' 
-	return
+def makeLengthHistograms(data, savePrefix):
+	corrLengths, uncorrLengths = findLengths(data)
+
+	assert len(corrLengths) > 0
+	assert len(uncorrLengths) > 0
+
+	fig, axes = plt.subplots()
+	bins = np.linspace(0, g_maxReadLength, 50)
+
+	axes.hist(corrLengths, bins, alpha=0.5, label="Corrected")
+	axes.hist(uncorrLengths, bins, alpha=0.5, label="Uncorrected")
+
+	axes.legend(loc='upper right')
+
+	# Add labels
+	axes.set_ylabel("Number of reads")
+	axes.set_xlabel("Length of read")
+	axes.set_title("Histogram of lengths of corrected and uncorrected long reads")
+
+	savePath = "%s_length_histograms.png" % (savePrefix)
+	fig.savefig(savePath, bbox_inches='tight')
 
 def test(testPrefix):
 	testPath = "test.stats"
@@ -545,7 +556,8 @@ def test(testPrefix):
 
 	# makeErrorRateBarGraph(untrimmedData, testPrefix)	
 	# makeErrorRateBoxPlot(untrimmedData, testPrefix)
-	makeThroughputBarGraph(untrimmedData, testPrefix)
+	# makeThroughputBarGraph(untrimmedData, testPrefix)
+	makeLengthHistograms(untrimmedData, testPrefix)
 
 # global variables
 # Maximum expected read length
