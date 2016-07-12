@@ -553,7 +553,7 @@ g_maxReadLength = 60000
 # Number of read length bins
 g_binNumber = 50
 
-helpMessage = "Visual long read correction data statistics."
+helpMessage = "Visualize long read correction data statistics."
 usageMessage = "Usage: %s [-h help and usage] [-i directory] [-o output prefix]" % (sys.argv[0])
 options = "hi:o:t"
 
@@ -595,4 +595,5 @@ if optsIncomplete:
 	print usageMessage
 	sys.exit(2)
 
-test(outputPrefix)
+if testRun:
+	test(outputPrefix)
