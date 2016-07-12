@@ -55,3 +55,4 @@ if __name__ == "__main__":
 				else:
 					line = line.rstrip('\n')
 					sequence = sequence + line
+			outputFile.write(sequence)
