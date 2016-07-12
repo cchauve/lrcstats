@@ -317,10 +317,9 @@ def makeErrorRateBarGraph(data, testPrefix):
 	barWidth = (1/2)*ceil( g_maxReadLength / g_binNumber ) 
 	
 	# Create the corrected long read bar graph
-	corrGraph = axes.bar(ind, corrMean, barWidth, color='r', yerr=corrStdev)
-
+	corrGraph = axes.bar(ind, corrMean, barWidth, color='#17B12B', yerr=corrStdev)
 	# Create the uncorrected long read bar graph
-	uncorrGraph = axes.bar(ind+barWidth, uncorrMean, barWidth, color='y', yerr=uncorrStdev)
+	uncorrGraph = axes.bar(ind+barWidth, uncorrMean, barWidth, color='#F45F5B', yerr=uncorrStdev)
 
 	# Add labels to graph
 	axes.set_ylabel("Mean error rates of reads")
@@ -394,6 +393,7 @@ def makeThroughputBarGraph(data, testPrefix):
 	(corrTrue, corrFalse, uncorrTrue, uncorrFalse) = getTrueAndFalsePositives(data)
 
 	uncorrThroughput = getUncorrThroughput(data)	
+
 	uncorrErrors = getTotalUncorrErrors(data)
 	# Since the number of correct bases is equivalent to the total
 	# number of bases less the erroneous
@@ -419,46 +419,60 @@ def makeThroughputBarGraph(data, testPrefix):
 	width = 0.15
 
 	# Plot the corrected bar graph
-	corrAxes.bar(
-		ind,
-		uncorrFalse,
-		width,
-		color='r')
+	uncorrFalsePos = corrAxes.bar(
+				ind,
+				uncorrFalse,
+				width,
+				color='#C25B46')
 
-	corrAxes.bar(
-		ind,
-		corrFalse,
-		width,
-		bottom=uncorrFalse,
-		color='y')
+	corrFalsePos = corrAxes.bar(
+				ind,
+				corrFalse,
+				width,
+				bottom=uncorrFalse,
+				color='#F6954A')
 
-	corrAxes.bar(
-		ind,
-		uncorrTrue,
-		width,
-		bottom=corrFalse+uncorrFalse,
-		color='g')
+	uncorrTruePos = corrAxes.bar(
+				ind,
+				uncorrTrue,
+				width,
+				bottom=corrFalse+uncorrFalse,
+				color='#4A87CA')
 
-	corrAxes.bar(
-		ind,
-		corrTrue,
-		width,
-		bottom=uncorrTrue+corrFalse+uncorrFalse,
-		color='b')
+	corrTruePos = corrAxes.bar(
+				ind,
+				corrTrue,
+				width,
+				bottom=uncorrTrue+corrFalse+uncorrFalse,
+				color='#69B957') 
 
 	# Plot the uncorrected read bar graph
-	uncorrAxes.bar(
-		ind,
-		uncorrErrors,
-		width,
-		color='r')
+	uncorrIncorrect = uncorrAxes.bar(
+				ind,
+				uncorrErrors,
+				width,
+				color='#F45F5B')
 
-	uncorrAxes.bar(
-		ind,
-		uncorrCorrect,
-		width,
-		bottom=uncorrErrors,
-		color='g')
+	uncorrCorrect = uncorrAxes.bar(
+				ind,
+				uncorrCorrect,
+				width,
+				bottom=uncorrErrors,
+				color='#17B12B')
+
+	# Add the legend
+	corrAxes.legend( 
+		[corrTruePos, uncorrTruePos, corrFalsePos, uncorrFalsePos],
+		["Corrected True Positives", "Uncorrected True Positives",
+		"Corrected False Positives", "Uncorrected False Positives"], 
+		bbox_to_anchor=[4.3,1], 
+		borderaxespad=0.)
+
+	uncorrAxes.legend( 
+		[uncorrCorrect, uncorrIncorrect],
+		["Correct Bases","Incorrect Bases"],
+		bbox_to_anchor=[2.5,0.85],
+		borderaxespad=0.)
 
 	# Add labels to graph
 	corrAxes.set_ylabel("Number of bases")
@@ -469,25 +483,6 @@ def makeThroughputBarGraph(data, testPrefix):
 	for axes in (corrAxes, uncorrAxes):
 		for label in axes.get_xticklabels():
 			label.set_visible(False)
-
-	# Add the legend
-	corrBlueStack = mpatches.Patch(color='blue', label='Corrected True Positives')
-	corrGreenStack = mpatches.Patch(color='green', label='Uncorrected True Positives')
-	corrYellowStack = mpatches.Patch(color='yellow', label='Corrected False Positives')
-	corrRedStack = mpatches.Patch(color='red', label='Uncorrected False Positives')
-
-	corrAxes.legend( 
-		handles = [corrBlueStack, corrGreenStack, corrYellowStack, corrRedStack],
-		bbox_to_anchor=[4.3,1], 
-		borderaxespad=0.)
-	
-	uncorrGreenStack = mpatches.Patch(color='green', label='Correct bases')
-	uncorrRedStack = mpatches.Patch(color='red', label='Incorrect bases')	
-
-	uncorrAxes.legend( 
-		handles = [uncorrGreenStack, uncorrRedStack], 
-		bbox_to_anchor=[2.5,0.85],
-		borderaxespad=0.)
 
 	fig.suptitle("Composition of Throughput of Corrected and Uncorrected Reads")
 
@@ -526,6 +521,32 @@ def makeLengthHistograms(data, savePrefix):
 	savePath = "%s_length_histograms.png" % (savePrefix)
 	fig.savefig(savePath, bbox_inches='tight')
 
+def getErrorRates(data):
+	corrErrorRates = []
+	uncorrErrorRates = []
+	
+	for datum in data:
+		uncorrErrorRates.append( datum.getUncorrErrorRate() )
+		corrErrorRates.append( datum.getCorrErrorRate() )
+	
+	return corrErrorRates, uncorrErrorRates
+
+def makeErrorRateScatterPlot(data, savePrefix):
+	corrErrorRates, uncorrErrorRates = getErrorRates( data )	
+
+	assert len( corrErrorRates ) == 10000
+
+	fig, axes = plt.subplots()
+	axes.scatter(uncorrErrorRates, corrErrorRates)
+
+	# Add labels
+	axes.set_ylabel("Error Rate of Corrected Read")
+	axes.set_xlabel("Error Rate of Uncorrected Read")
+	axes.set_title("Error Rate of Corresponding Corrected and Uncorrected Reads")
+
+	savePath = "%s_error_rate_scatter.png" % (savePrefix)
+	fig.savefig(savePath, bbox_icnhes='tight')
+
 def test(testPrefix):
 	testPath = "test.stats"
 
@@ -556,8 +577,9 @@ def test(testPrefix):
 
 	# makeErrorRateBarGraph(untrimmedData, testPrefix)	
 	# makeErrorRateBoxPlot(untrimmedData, testPrefix)
-	# makeThroughputBarGraph(untrimmedData, testPrefix)
-	makeLengthHistograms(untrimmedData, testPrefix)
+	makeThroughputBarGraph(untrimmedData, testPrefix)
+	# makeLengthHistograms(untrimmedData, testPrefix)
+	# makeErrorRateScatterPlot(untrimmedData, testPrefix)
 
 # global variables
 # Maximum expected read length
