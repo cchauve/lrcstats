@@ -1,7 +1,7 @@
 import sys, getopt, datetime
 
 def writeJob(species, coverage):
-	filename = "%s-d%s_sam2maf.pbs" % (species, coverage)
+	filename = "/home/seanla/Jobs/lrcstats/sam2maf/%s-d%s_sam2maf.pbs" % (species, coverage)
 
 	with open(filename, 'w') as file:
 		resources = ["walltime=24:00:00", "mem=16gb", "nodes=1:ppn=1"]
@@ -22,25 +22,26 @@ def writeJob(species, coverage):
        		outlog = "#PBS -o %s/%s-d%s_sam2maf.out\n" %(dir, species, coverage)
         	file.write(outlog)
 
-        	jobName = "#PBS -N %s\n\n" % (test)
+        	jobName = "#PBS -N %s-d%s_sam2maf\n\n" % (species, coverage)
        	 	file.write(jobName)
 
 		if species is "ecoli":
-			ref = "ref=%s/escherichia-coli_reference.fasta\n" % (species)
+			ref = "ref=%s/escherichia-coli_reference.fasta\n" % (folder)
 		elif species is "yeast":
-			ref = "ref=%s/saccharomyces-cerevisiae-chromosome1_sequence.fasta\n" % (species)
+			ref = "ref=%s/saccharomyces-cerevisiae-chromosome1_sequence.fasta\n" % (folder)
 		else:
-			ref = "ref=%s/%s_reference.fasta\n" % (species, species)
+			ref = "ref=%s/%s_reference.fasta\n" % (folder, species)
 
 		file.write(ref)
 
-		sam = "sam=%s/%s-long-d%s.fastq.sam\n" % (dir, species, coverage)
-		file.write(sam)
+		sam = "%s/%s-long-d%s.fastq.sam" % (dir, species, coverage)
+		samLine = "sam=%s\n" % (sam)
+		file.write(samLine)
 
 		maf = "maf=%s.maf\n" % (sam)	
 		file.write(maf)
 
-		sam2maf = "sam2maf=/home/seanla/Projects/lrcstats/src/preprocessing/sam2maf\n"
+		sam2maf = "sam2maf=/home/seanla/Projects/lrcstats/src/preprocessing/sam2maf/sam2maf\n"
 		file.write(sam2maf)
 
 		command = "$sam2maf -r $ref -s $sam -o $maf\n"
@@ -94,11 +95,20 @@ if __name__ == "__main__":
 		optsIncomplete = True
 		print "Please indicate which coverages you would like to do."
 
+	species = []
+
+	if doYeast:
+		species.append('yeast')
+	if doEcoli:
+		species.append('ecoli')
+	if doFly:
+		species.append('fly')
+
 	# Do all long coverages
 	if allCov:
 		coverages = ['10', '20', '50', '75']
 	else:
-		coverages.append(coverage)
+		coverages = [coverage]
 
 	# yes, specie is not the proper singular form of species, but im lazy
 	for coverage in coverages:
