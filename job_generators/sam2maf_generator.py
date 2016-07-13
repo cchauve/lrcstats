@@ -4,7 +4,7 @@ def writeJob(species, coverage):
 	filename = "/home/seanla/Jobs/lrcstats/sam2maf/%s-d%s_sam2maf.pbs" % (species, coverage)
 
 	with open(filename, 'w') as file:
-		resources = ["walltime=24:00:00", "mem=16gb", "nodes=1:ppn=1"]
+		resources = ["walltime=01:00:00", "mem=8gb", "nodes=1:ppn=1"]
 		folder="/global/scratch/seanla/Data/%s" % (species)
 		dir = "%s/simlord/long-d%s" % (folder, coverage)
 
@@ -41,10 +41,10 @@ def writeJob(species, coverage):
 		maf = "maf=%s\n" % (sam)	
 		file.write(maf)
 
-		sam2maf = "sam2maf=/home/seanla/Projects/lrcstats/src/preprocessing/sam2maf/sam2maf\n"
+		sam2maf = "sam2maf=/home/seanla/Projects/lrcstats/src/preprocessing/sam2maf/sam2maf.py\n"
 		file.write(sam2maf)
 
-		command = "$sam2maf -r $ref -s $sam -o $maf\n"
+		command = "python $sam2maf -r $ref -s $sam -o $maf\n"
 		file.write(command)
 	
 

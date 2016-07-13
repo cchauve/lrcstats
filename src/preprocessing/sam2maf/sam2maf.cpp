@@ -299,7 +299,9 @@ void convertSam2Maf(std::string ref, std::string samPath, std::string mafPath)
 
 		// Find the reference and read alignments
 		std::string refAlignment = getRefAlignment(ref, start, cigarQueue, flag);
+		std::cout << "Ref Alignment found successfully\n";
 		std::string readAlignment = getReadAlignment(read, cigarQueue);
+		std::cout << "Read Alignment found successfully\n\n";
 
 		assert(refAlignment.length() > 0);
 		assert(readAlignment.length() > 0);
@@ -314,10 +316,12 @@ void convertSam2Maf(std::string ref, std::string samPath, std::string mafPath)
 		assert(readSize > 0);
 		assert(refSize > 0);
 
+		std::string strand;
+
 		if (flag == 16) {
-			std::string strand = "-";
+			strand = "-";
 		} else {
-			std::string strand = "+";
+			strand = "+";
 		}
 
 		// Write data into MAF file

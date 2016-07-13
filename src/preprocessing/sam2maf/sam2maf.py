@@ -125,6 +125,7 @@ def convert(ref, samPath, mafPath):
 
 					refAlignment = getRefAlignment(refSeq, start, cigarList, flag)
 					readAlignment = getReadAlignment(read, cigarList)
+					assert len(refAlignment) == len(readAlignment)
 
 					readSize = getGaplessLength(readAlignment)
 					refSize = getGaplessLength(refAlignment) 
