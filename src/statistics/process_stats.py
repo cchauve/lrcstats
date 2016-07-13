@@ -2,6 +2,7 @@ from __future__ import division
 import sys, os, getopt
 from random import randint
 from math import ceil
+from math import floor
 import numpy as np
 
 import matplotlib as mpl
@@ -20,22 +21,19 @@ class ReadDatum(object):
 		Accepts as input list of trimmed read data points obtained
 		directly from the STATS file outputted by lrcstats
 		'''
-		data = [int(data[i]) for i in range(len(data)) if i != 0]
-		self.cLength = data[0]
-		self.uLength = data[1]
-
-		self.cDel = data[2]
-		self.uDel = data[3]
-		self.cIns = data[4]
-		self.uIns = data[5]
-		self.cSub = data[6]
-		self.uSub = data[7]
+		self.data = {}
+		# KEYS_g is a global variable and contains the keys
+		# for the data dictionary in ReadDatum objects.
+		# These keys can be found initialized in the main body of the
+		# program.
+		for i in range(1, len(data)):
+			self.data[ KEYS_g[i-1] ] = int(data[i])
 
 	def getCorrLength(self):
 		'''
 		Returns the length of the corrected long read.
 		'''
-		return self.cLength
+		return self.data[corrLength_k]
 
 	def getCorrErrorRate(self):
 		'''
@@ -43,13 +41,18 @@ class ReadDatum(object):
 		which is defined as the number of mutations divided by
 		the length of the read.
 		'''
-		return (self.cDel + self.cIns + self.cSub)/self.cLength
+		cDel = self.data[corrDel_k]
+		cIns = self.data[corrIns_k]
+		cSub = self.data[corrSub_k]
+		cLength = self.data[corrLength_k]	
+		return (cDel + cIns + cSub)/cLength
 
 	def getUncorrLength(self):
 		'''
 		Returns the length of the corresponding uncorrected long read.
 		'''
-		return self.uLength
+		uLength = self.data[uncorrLength_k]
+		return uLength
 
 	def getUncorrErrorRate(self):
 		'''
@@ -57,18 +60,21 @@ class ReadDatum(object):
 		which is defined as the number of mutations divided by
 		the length of the read.
 		'''
-		try:
-			return (self.uDel + self.uIns + self.uSub)/self.uLength
-		except:
-			print "uLength is 0"
-			sys.exit(2)
+		uDel = self.data[uncorrDel_k]
+		uIns = self.data[uncorrIns_k]
+		uSub = self.data[uncorrSub_k]
+		uLength = self.data[uncorrLength_k]	
+		return (uDel + uIns + uSub)/uLength
 
 	def getUncorrErrors(self):
 		'''
 		Returns the number of erroreneous bases in the uncorrected
 		long read.
 		'''
-		return self.uDel + self.uIns + self.uSub
+		uDel = self.data[uncorrDel_k]
+		uIns = self.data[uncorrIns_k]
+		uSub = self.data[uncorrSub_k]
+		return uDel + uIns + uSub
 
 class TrimmedDatum(ReadDatum):
 	'''
@@ -82,27 +88,32 @@ class TrimmedDatum(ReadDatum):
 		'''
 		ReadDatum.__init__(self,data)
 
-	def getDelProportion(self):
-		'''
-		Returns the proportion between the number of deletions
-		in corrected reads.	
-		'''
-		return self.cDel/self.uDel
+	# Get the corresponding number of mutations of the corrected long read
+	# and its corresponding uncorrected read
 
-	def getInsProportion(self):
-		'''
-		Returns the proportion between the number of insertions
-		in corrected trimmed reads.	
-		'''
-		return self.cIns/self.uIns
+	def getCorrDel(self):
+		cDel = self.data[corrDel_k]
+		return cDel
 
-	def getSubProportion(self):
-		'''
-		Returns the proportion between the number of substitutions
-		in corrected trimmed reads.	
-		'''
-		return self.cSub/self.uSub
+	def getCorrIns(self):
+		cIns = self.data[corrIns_k]
+		return cIns
 
+	def getCorrSub(self):
+		cSub = self.data[corrSub_k]
+		return cSub
+
+	def getUncorrDel(self):
+		uDel = self.data[uncorrDel_k]
+		return uDel
+
+	def getUncorrIns(self):
+		uIns = self.data[uncorrIns_k]
+		return uIns
+
+	def getUncorrSub(self):
+		uSub = self.data[uncorrSub_k]
+		return uSub
 
 class UntrimmedDatum(ReadDatum):
 	'''
@@ -115,12 +126,6 @@ class UntrimmedDatum(ReadDatum):
 		directly from the STATS file outputted by lrcstats
 		'''
 		ReadDatum.__init__(self, data)
-		data = [int(data[i]) for i in range(len(data)) if i != 0]
-
-		self.correctedTruePos = data[8]
-		self.correctedFalsePos = data[9]
-		self.uncorrectedTruePos = data[10]
-		self.uncorrectedFalsePos = data[11]
 
 	def getCorrTruePositives(self):
 		'''
@@ -128,7 +133,8 @@ class UntrimmedDatum(ReadDatum):
 		have been corrected and are equivalent to its respective
 		base in the referene alignment (not reference sequence)
 		'''
-		return self.correctedTruePos
+		correctedTruePos = self.data[cTruePos_k]
+		return correctedTruePos
 
 	def getCorrFalsePositives(self):
 		'''
@@ -137,7 +143,8 @@ class UntrimmedDatum(ReadDatum):
 		respective base in the reference alignment (not reference
 		sequence)
 		'''
-		return self.uncorrectedTruePos
+		correctedFalsePos = self.data[cFalsePos_k]
+		return correctedFalsePos
 
 	def getCorrSegmentErrorRate(self):
 		'''
@@ -145,7 +152,9 @@ class UntrimmedDatum(ReadDatum):
 		in the corrected long read which have been
 		corrected. 
 		'''
-		return (self.correctedFalsePos)/(self.correctedTruePos + self.correctedFalsePos)
+		correctedTruePos = self.data[cTruePos_k]
+		correctedFalsePos = self.data[cFalsePos_k]
+		return (correctedFalsePos)/(correctedTruePos + correctedFalsePos)
 	
 	# These methods apply to the uncorrected segments of corrected long reads
 
@@ -155,7 +164,8 @@ class UntrimmedDatum(ReadDatum):
 		that have NOT been corrected and are equivalent
 		to its respective base in the reference alignment.
 		'''
-		return self.uncorrectedTruePos
+		uncorrectedTruePos = self.data[uTruePos_k]
+		return uncorrectedTruePos
 
 	def getUncorrFalsePositives(self):
 		'''
@@ -163,7 +173,8 @@ class UntrimmedDatum(ReadDatum):
 		have NOT been corrected and are NOT equivalent to its
 		respective base in the reference alignment.
 		'''
-		return self.uncorrectedFalsePos
+		uncorrectedFalsePos = self.data[uFalsePos_k]
+		return uncorrectedFalsePos
 
 	def getUncorrSegmentErrorRate(self):
 		'''
@@ -171,7 +182,9 @@ class UntrimmedDatum(ReadDatum):
 		the corrected long read which have not been
 		corrected.
 		'''
-		return (self.uncorrectedFalsePos)/(self.uncorrectedTruePos + self.uncorrectedFalsePos)
+		uncorrectedTruePos = self.data[uTruePos_k]
+		uncorrectedFalsePos = self.data[uFalsePos_k]
+		return (uncorrectedFalsePos)/(uncorrectedTruePos + uncorrectedFalsePos)
 
 def retrieveRawData(dataPath):
 	'''
@@ -194,7 +207,7 @@ def retrieveRawData(dataPath):
 			datum = UntrimmedDatum(datum)
 			UntrimmedData.append(datum)
 		elif datum[0] == 't':
-			datum = ReadDatum(datum)
+			datum = TrimmedDatum(datum)
 			TrimmedData.append(datum)
 
 	return (TrimmedData, UntrimmedData)
@@ -250,12 +263,12 @@ def findMeanAndStdev(errorRates):
 	Accepts a list of tuples of read length and error rate. 
 
 	Returns a list of means and standard deviations of the error rates of the reads
-	whose lengths fall between intervals starting from 0 to g_maxReadLength of size
-	g_binNumber. 
+	whose lengths fall between intervals starting from 0 to maxReadLength_g of size
+	binNumber_g. 
 	'''
 	length = len(errorRates)
 	errorRates = np.array(errorRates).reshape( length, 2 )
-	bins = np.linspace(0, g_maxReadLength, g_binNumber) 
+	bins = np.linspace(0, maxReadLength_g, binNumber_g) 
 
 	# Digitize returns the indices of the elements that belong to bin i
 	# i.e. implicitly describes which length/error rate tuple falls in which bin
@@ -299,7 +312,7 @@ def makeErrorRateBarGraph(data, testPrefix):
 	uncorrMean, uncorrStdev = findMeanAndStdev(uncorrErrorRates)
 
 	# Remove last element in ind so that its length matches the length of the means
-	ind = np.linspace(0, g_maxReadLength, g_binNumber)
+	ind = np.linspace(0, maxReadLength_g, binNumber_g)
 	ind = np.delete(ind, -1)
 
 	fig, axes = plt.subplots()
@@ -314,7 +327,7 @@ def makeErrorRateBarGraph(data, testPrefix):
 	fig.set_size_inches(length, height)	
 
 	# Bar width specification
-	barWidth = (1/2)*ceil( g_maxReadLength / g_binNumber ) 
+	barWidth = (1/2)*ceil( maxReadLength_g / binNumber_g ) 
 	
 	# Create the corrected long read bar graph
 	corrGraph = axes.bar(ind, corrMean, barWidth, color='#17B12B', yerr=corrStdev)
@@ -327,7 +340,7 @@ def makeErrorRateBarGraph(data, testPrefix):
 	axes.set_title("Mean Error Rates of Corrected and Uncorrected Reads by Length")
 
 	# The lengths that fall in each bin
-	lengthBins = np.linspace(0, g_maxReadLength, g_binNumber/5)
+	lengthBins = np.linspace(0, maxReadLength_g, binNumber_g/5)
 	
 	# Create x-tick labels
 	axes.set_xticks(lengthBins)
@@ -490,6 +503,11 @@ def makeThroughputBarGraph(data, testPrefix):
 	fig.savefig(savePath, bbox_inches='tight')
 
 def findLengths(data):
+	'''
+	Accepts as input a list of ReadDatum objects.
+	Returns two lists containing the lengths of all the corrected
+	and uncorrected reads.
+	'''
 	corrLengths = []	
 	uncorrLengths = []
 
@@ -500,14 +518,21 @@ def findLengths(data):
 	return corrLengths, uncorrLengths
 
 def makeLengthHistograms(data, savePrefix):
+	'''
+	Accepts as input a list of ReadDatum objects and
+	a string for the save location.
+	Creates and saves a histogram of the lengths of corrected
+	and uncorrected reads.
+	'''
 	corrLengths, uncorrLengths = findLengths(data)
 
 	assert len(corrLengths) > 0
 	assert len(uncorrLengths) > 0
 
 	fig, axes = plt.subplots()
-	bins = np.linspace(0, g_maxReadLength, 50)
+	bins = np.linspace(0, maxReadLength_g, 50)
 
+	# Create the actual histograms.
 	axes.hist(corrLengths, bins, alpha=0.5, label="Corrected")
 	axes.hist(uncorrLengths, bins, alpha=0.5, label="Uncorrected")
 
@@ -522,6 +547,11 @@ def makeLengthHistograms(data, savePrefix):
 	fig.savefig(savePath, bbox_inches='tight')
 
 def getErrorRates(data):
+	'''
+	Accepts as input a list of ReadDatum objects.
+	Returns two lists containing all error rates of the
+	corrected and uncorrected long reads.
+	'''
 	corrErrorRates = []
 	uncorrErrorRates = []
 	
@@ -532,9 +562,13 @@ def getErrorRates(data):
 	return corrErrorRates, uncorrErrorRates
 
 def makeErrorRateScatterPlot(data, savePrefix):
+	'''
+	Accepts as input a list of ReadDatum objects and a string
+	indicating the file prefix and save location.
+	Creates and saves an error rate scatter plot of the
+	corrected and uncorrected reads.
+	'''
 	corrErrorRates, uncorrErrorRates = getErrorRates( data )	
-
-	assert len( corrErrorRates ) == 10000
 
 	fig, axes = plt.subplots()
 	axes.scatter(uncorrErrorRates, corrErrorRates)
@@ -545,47 +579,128 @@ def makeErrorRateScatterPlot(data, savePrefix):
 	axes.set_title("Error Rate of Corresponding Corrected and Uncorrected Reads")
 
 	savePath = "%s_error_rate_scatter.png" % (savePrefix)
-	fig.savefig(savePath, bbox_icnhes='tight')
+	fig.savefig(savePath, bbox_inches='tight')
+
+def getTotalMutations(data):
+	'''
+	Accepts as input a list of TrimmedDatum objects.
+	Returns the total number of mutations for the corrected long read and the
+	corresponding uncorrected long read.
+	'''
+	corrDel = 0
+	uncorrDel = 0
+
+	corrIns = 0
+	uncorrIns = 0
+
+	corrSub = 0
+	uncorrSub = 0
+
+	for datum in data:
+		corrDel += datum.getCorrDel()
+		uncorrDel += datum.getUncorrDel()
+
+		corrIns += datum.getCorrIns()
+		uncorrIns += datum.getUncorrIns()
+
+		corrSub += datum.getCorrSub()
+		uncorrSub += datum.getUncorrSub()
+
+	return corrDel, uncorrDel, corrIns, uncorrIns, corrSub, uncorrSub
+
+def makeMutationsBarGraph(data, savePrefix):
+	'''
+	Accepts as input a list of TrimmedDatum objects and a string.
+	Create a bar graph displaying the amount of mutation errors in
+	corrected long reads and its corresponding uncorrected read. 
+	'''
+	corrDel, uncorrDel, corrIns, uncorrIns, corrSub, uncorrSub = getTotalMutations(data) 
+	corrData = [corrDel, corrIns, corrSub]
+	uncorrData = [uncorrDel, uncorrIns, uncorrSub]
+	
+	ind = np.arange(3)
+	width = 0.35
+	
+	fig, axes = plt.subplots()
+
+	corrPlot = axes.bar(ind, corrData, width, color="#17B12B")
+	uncorrPlot = axes.bar(ind+width, uncorrData, width, color="#F45F4B")
+
+	axes.set_title("Number of Mutations in Corrected and Uncorrected Long Reads")
+	axes.set_xticks(ind+width)
+	axes.set_xticklabels( ('Deletions', 'Insertions', 'Substitutions') )
+	axes.legend( (corrPlot[0], uncorrPlot[0]), ('Corrected', 'Uncorrected') )
+
+	savePath = "%s_mutations_bar_graph.png" % (savePrefix)
+	fig.savefig(savePath, bbox_inches='tight')
 
 def test(testPrefix):
 	testPath = "test.stats"
 
 	with open(testPath, 'w') as file:
-		N = 10000
+		N = 1000
 		data = []
 
 		for i in range(N):
-			cLength = randint(1,g_maxReadLength)
-			uLength = cLength
+			cLength = randint(1,maxReadLength_g)
+			uLength = randint(1,maxReadLength_g)
 
-			cDel = ceil( (9/2000)*cLength )
-			cIns = cDel
-			cSub = ceil( (1/1000)*cLength )
+			cDel = ceil( cLength * 0.01 )
+			cIns = ceil( cLength * 0.01 ) 
+			cSub = ceil( cLength * 0.01 ) 
 
-			uDel = ceil( (9/200)*uLength )
-			uIns = uDel
-			uSub = ceil( (1/100)*uLength )
+			uDel = ceil( uLength * 0.05 )			
+			uIns = ceil( uLength * 0.05 )
+			uSub = ceil( uLength * 0.1 )
 
-			cFalsePos = cDel + cIns + cSub
-			cTruePos = cLength - cFalsePos 
-			uFalsePos = uDel + uIns + uSub
-			uTruePos = uLength - uFalsePos
+			cFalsePos = ceil( 0.2*(cDel + cIns + cSub) )
+			uFalsePos = floor( 0.8*(cDel + cIns + cSub) ) 
+
+			cTruePos = floor( ceil(0.8*cLength) - cFalsePos )
+			uTruePos = ceil( floor(0.2*cLength) - uFalsePos )
+
+			line = "%s %d %d %d %d %d %d %d %d %d %d %d %d\n" % ('t', cLength, uLength, cDel, cIns, cSub, uDel, uIns, uSub, cTruePos, cFalsePos, uTruePos, uFalsePos)
+			file.write(line)
 			line = "%s %d %d %d %d %d %d %d %d %d %d %d %d\n" % ('u', cLength, uLength, cDel, cIns, cSub, uDel, uIns, uSub, cTruePos, cFalsePos, uTruePos, uFalsePos)
 			file.write(line)
 
-	untrimmedData = retrieveRawData(testPath)[1]
+	trimmedData, untrimmedData = retrieveRawData(testPath)
 
-	# makeErrorRateBarGraph(untrimmedData, testPrefix)	
-	# makeErrorRateBoxPlot(untrimmedData, testPrefix)
+	makeErrorRateBarGraph(untrimmedData, testPrefix)	
+	makeErrorRateBoxPlot(untrimmedData, testPrefix)
 	makeThroughputBarGraph(untrimmedData, testPrefix)
-	# makeLengthHistograms(untrimmedData, testPrefix)
-	# makeErrorRateScatterPlot(untrimmedData, testPrefix)
+	makeLengthHistograms(untrimmedData, testPrefix)
+	makeErrorRateScatterPlot(untrimmedData, testPrefix)
+	makeMutationsBarGraph(trimmedData, testPrefix)
 
 # global variables
+
 # Maximum expected read length
-g_maxReadLength = 60000
+maxReadLength_g = 60000
+
 # Number of read length bins
-g_binNumber = 50
+binNumber_g = 50
+
+# Keys for ReadDatum member variable dictionary
+corrLength_k = 0
+uncorrLength_k = 1
+
+corrDel_k = 2
+corrIns_k = 3
+corrSub_k = 4
+
+uncorrDel_k = 5
+uncorrIns_k = 6
+uncorrSub_k = 7
+
+cTruePos_k = 8
+cFalsePos_k = 9
+uTruePos_k = 10
+uFalsePos_k = 11
+
+KEYS_g=[corrLength_k, uncorrLength_k, corrDel_k, corrIns_k, corrSub_k,
+	uncorrDel_k, uncorrIns_k, uncorrSub_k, cTruePos_k, cFalsePos_k,
+	uTruePos_k, uFalsePos_k]	
 
 helpMessage = "Visualize long read correction data statistics."
 usageMessage = "Usage: %s [-h help and usage] [-i directory] [-o output prefix]" % (sys.argv[0])
