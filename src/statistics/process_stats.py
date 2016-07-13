@@ -35,6 +35,15 @@ class ReadDatum(object):
 		'''
 		return self.data[corrLength_k]
 
+	def getCorrErrors(self):
+		'''
+		Returns the number of errors in the read.
+		'''
+		cDel = self.data[corrDel_k]
+		cIns = self.data[corrIns_k]
+		cSub = self.data[corrSub_k]
+		return cDel + cIns + cSub
+
 	def getCorrErrorRate(self):
 		'''
 		Returns the error rate of the corrected trimmed long read,
@@ -212,13 +221,16 @@ def retrieveRawData(dataPath):
 
 	return (TrimmedData, UntrimmedData)
 
-def makeErrorRateBoxPlot(data, testPrefix):
+def makeErrorRateBoxPlot(data, testName, trimmedOrUntrimmed, saveDir):
 	'''
 	Creates an error rate frequency box plot and saves on disk.
 
 	Accepts a list of either ReadDatum or UntrimmedDatum objects and
-	a prefix designating the name of file and save location.
-	Returns nothing.
+	a prefix designating the name of file and save location, 
+	a string testName designating the name of the correction
+	algorithm used and the coverages, and a string trimmedOrUntrimmed
+	indicating whether the reads are trimmed or untrimmed.
+	Also accepts a string saveDir indicating the save directory.
 	'''
 	corrErrorRates = []
 	uncorrErrorRates = []
@@ -254,8 +266,10 @@ def makeErrorRateBoxPlot(data, testPrefix):
 	# Create the boxplot	
 	bp = axes.boxplot(data) 
 
+	fig.suptitle( "%s - %s" % (testName, trimmedOrUntrimmed), y=1.10 )
+
 	# Save the figure
-	savePath = "%s_error_rate_boxplot.png" % (testPrefix)
+	savePath = "%s/%s_%s_error_rate_boxplot.png" % (saveDir, testName, trimmedOrUntrimmed)
 	fig.savefig(savePath, bbox_inches='tight')
 
 def findMeanAndStdev(errorRates):
@@ -281,15 +295,18 @@ def findMeanAndStdev(errorRates):
 
 	return means, stdevs
 
-def makeErrorRateBarGraph(data, testPrefix):
+def makeErrorRateBarGraph(data, testName, trimmedOrUntrimmed, saveDir):
 	'''
 	Creates an error rate bar graph and saves at the location given
 	by testPrefix.
 	Standard deviations are represented by error bars.
 	The extension of the file is .png
 
-	Accepts a list of either ReadDatum or UntrimmedDatum objects and
-	a prefix designating the name of file and save location.
+	Accepts a list of ReadDatum objects.
+	testName indicates the program and coverage used.
+	trimmedOrUntrimmed indicates whether the reads or trimmed or not.
+	saveDir indicates the path to save the image in. 
+
 	Returns nothing.
 	'''
 	corrErrorRates = [] 
@@ -348,7 +365,9 @@ def makeErrorRateBarGraph(data, testPrefix):
 	# Set the legend
 	axes.legend( (corrGraph[0], uncorrGraph[0]), ('Corrected Reads', 'Uncorrected Reads') )
 
-	savePath = "%s_error_rates_bargraph.png" % (testPrefix)
+	fig.suptitle( "%s - %s" % (testName, trimmedOrUntrimmed), y=1.10 )
+
+	savePath = "%s/%s_%s_error_rates_bargraph.png" % (saveDir, testName, trimmedOrUntrimmed)
 	fig.savefig(savePath, dpi=100, bbox_inches='tight')
 
 def getUncorrThroughput(data):
@@ -393,10 +412,13 @@ def getTotalUncorrErrors(data):
 		uReadErrors += datum.getUncorrErrors()
 	return uReadErrors 
 
-def makeThroughputBarGraph(data, testPrefix):
+def makeUntrimmedThroughputBarGraph(data, testName, saveDir):
 	'''
 	Accepts as input either a list of ReadDatum objects.
 	and a string testPrefix.
+
+	testName indicates the program and coverage used.
+        saveDir indicates the path to save the image in.
 
 	Saves to disk a stacked bar graph comparing the throughputs of corrected and
 	uncorrected long reads, the two stacks that compose a bar are the total number
@@ -489,42 +511,129 @@ def makeThroughputBarGraph(data, testPrefix):
 
 	# Add labels to graph
 	corrAxes.set_ylabel("Number of bases")
-	corrAxes.set_xlabel("Corrected")
-	uncorrAxes.set_xlabel("Uncorrected")
+	corrAxes.set_xlabel("Corrected Reads")
+	uncorrAxes.set_xlabel("Uncorrected Reads")
 
 	# Remove xtick labels
 	for axes in (corrAxes, uncorrAxes):
 		for label in axes.get_xticklabels():
 			label.set_visible(False)
 
-	fig.suptitle("Composition of Throughput of Corrected and Uncorrected Reads")
+	fig.suptitle("Composition of Throughput of Untrimmed Corrected Reads and Uncorrected Reads", y=1.10)
 
-	savePath = "%s_throughput_bar_graph.png" % (testPrefix)
+	savePath = "%s/%s_untrimmed_throughput_bar_graph.png" % (saveDir, testName)
 	fig.savefig(savePath, bbox_inches='tight')
 
-def findLengths(data):
+def getCorrThroughputAndErrors(data):
 	'''
 	Accepts as input a list of ReadDatum objects.
-	Returns two lists containing the lengths of all the corrected
-	and uncorrected reads.
+	Returns the total throughput and the total number of errors.	
+	'''
+	throughput = 0
+	errors = 0
+	for datum in data:
+		throughput += datum.getCorrLength()
+		errors += datum.getCorrErrors()	
+	return throughput, errors
+
+def makeTrimmedThroughputBarGraph(data, testName, saveDir):
+	'''
+	Accepts as input either a list of ReadDatum objects.
+	and a string testPrefix.
+
+	testName indicates the program and coverage used.
+        saveDir indicates the path to save the image in.
+
+	Saves to disk a stacked bar graph of the throughput of corrected 
+	long reads, the stacks that composes the bar are the total number
+	of correct bases and the total number of incorrect bases, saved at the location and
+	with file name specified with testPrefix. 
+	'''
+	throughput, errors = getCorrThroughputAndErrors(data)
+	correct = throughput - errors
+	assert correct > 0
+
+	fig, axes = plt.subplots()
+
+	# Set size of graph
+	length = 20
+	height = 10
+	fig.set_size_inches(length, height)	
+
+	numItems = 1
+
+	# Set size of graph
+	length = 5
+	height = 15
+	fig.set_size_inches(length, height)	
+
+	ind = np.arange(numItems)
+
+	margin = 0.30
+
+	# Set the bar width
+	width = 0.15
+
+	# Plot the graph
+	# The color is red
+	errorPlot = axes.bar(ind,
+			errors,
+			width,
+			color='#C25B46')
+	
+	correctPlot = axes.bar(ind,
+			correct,
+			width,
+			bottom=errors,
+			color='#69B957') 
+
+	# Add the legend
+	axes.legend( 
+		[errorPlot, correctPlot],
+		["Erroneous bases", "Correct Bases"])
+
+	# Add labels to graph
+	axes.set_ylabel("Number of bases")
+	axes.set_xlabel("Corrected Long Reads")
+	axes.set_title("Throughput composition of Trimmed Portion of Corrected Long Reads", y=1.08)
+
+	# Remove xtick labels
+	for label in axes.get_xticklabels():
+		label.set_visible(False)
+
+	fig.suptitle( "%s" % (testName), y=1.10 )
+
+	savePath = "%s/%s_trimmed_throughput_bar_graph.png" % (saveDir, testName)
+	fig.savefig(savePath, bbox_inches='tight')
+
+def findLengths(trimmedData, untrimmedData):
+	'''
+	Accepts as input lists of TrimmedDatum and UntrimmedDatum objects.
+	Returns two lists containing the lengths of all the trimmed corrected
+	reads and uncorrected reads.
 	'''
 	corrLengths = []	
 	uncorrLengths = []
 
-	for datum in data:
+	for datum in trimmedData:
 		corrLengths.append( datum.getCorrLength() )
-		uncorrLengths.append( datum.getCorrLength() )
+
+	for datum in untrimmedData:
+		uncorrLengths.append( datum.getUncorrLength() )
 
 	return corrLengths, uncorrLengths
 
-def makeLengthHistograms(data, savePrefix):
+def makeLengthHistograms(trimmedData, untrimmedData, testName, saveDir):
 	'''
-	Accepts as input a list of ReadDatum objects and
-	a string for the save location.
+	Accepts as input list of TrimmedDatum and UntrimmeDatum objects.
+
+	testName indicates the program and coverage used.
+        saveDir indicates the path to save the image in.
+
 	Creates and saves a histogram of the lengths of corrected
 	and uncorrected reads.
 	'''
-	corrLengths, uncorrLengths = findLengths(data)
+	corrLengths, uncorrLengths = findLengths(trimmedData, untrimmedData)
 
 	assert len(corrLengths) > 0
 	assert len(uncorrLengths) > 0
@@ -541,9 +650,11 @@ def makeLengthHistograms(data, savePrefix):
 	# Add labels
 	axes.set_ylabel("Number of reads")
 	axes.set_xlabel("Length of read")
-	axes.set_title("Histogram of lengths of corrected and uncorrected long reads")
+	axes.set_title("Histogram of lengths of trimmed corrected long reads and uncorrected long reads", y=1.08)
 
-	savePath = "%s_length_histograms.png" % (savePrefix)
+	fig.suptitle( "%s" % (testName), y=1.10 )
+
+	savePath = "%s/%s_length_histograms.png" % (saveDir, testName)
 	fig.savefig(savePath, bbox_inches='tight')
 
 def getErrorRates(data):
@@ -561,10 +672,14 @@ def getErrorRates(data):
 	
 	return corrErrorRates, uncorrErrorRates
 
-def makeErrorRateScatterPlot(data, savePrefix):
+def makeErrorRateScatterPlot(data, testName, trimmedOrUntrimmed, saveDir):
 	'''
-	Accepts as input a list of ReadDatum objects and a string
-	indicating the file prefix and save location.
+	Accepts as input a list of ReadDatum objects.
+
+	testName indicates the program and coverage used.
+        trimmedOrUntrimmed indicates whether the reads or trimmed or not.
+        saveDir indicates the path to save the image in.
+ 
 	Creates and saves an error rate scatter plot of the
 	corrected and uncorrected reads.
 	'''
@@ -577,8 +692,9 @@ def makeErrorRateScatterPlot(data, savePrefix):
 	axes.set_ylabel("Error Rate of Corrected Read")
 	axes.set_xlabel("Error Rate of Uncorrected Read")
 	axes.set_title("Error Rate of Corresponding Corrected and Uncorrected Reads")
+	fig.suptitle( "%s - %s" % (testName, trimmedOrUntrimmed), y=1.10 )
 
-	savePath = "%s_error_rate_scatter.png" % (savePrefix)
+	savePath = "%s/%s_%s_error_rate_scatter.png" % (saveDir, testName, trimmedOrUntrimmed)
 	fig.savefig(savePath, bbox_inches='tight')
 
 def getTotalMutations(data):
@@ -608,9 +724,12 @@ def getTotalMutations(data):
 
 	return corrDel, uncorrDel, corrIns, uncorrIns, corrSub, uncorrSub
 
-def makeMutationsBarGraph(data, savePrefix):
+def makeMutationsBarGraph(data, testName, saveDir):
 	'''
-	Accepts as input a list of TrimmedDatum objects and a string.
+	Accepts as input a list of TrimmedDatum objects.
+	testName indicates the program and coverage used.
+        saveDir indicates the path to save the image in.
+
 	Create a bar graph displaying the amount of mutation errors in
 	corrected long reads and its corresponding uncorrected read. 
 	'''
@@ -631,10 +750,11 @@ def makeMutationsBarGraph(data, savePrefix):
 	axes.set_xticklabels( ('Deletions', 'Insertions', 'Substitutions') )
 	axes.legend( (corrPlot[0], uncorrPlot[0]), ('Corrected', 'Uncorrected') )
 
-	savePath = "%s_mutations_bar_graph.png" % (savePrefix)
+	fig.suptitle( "%s" % (testName) )
+	savePath = "%s/%s_mutations_bar_graph.png" % (saveDir, testName)
 	fig.savefig(savePath, bbox_inches='tight')
 
-def test(testPrefix):
+def test(saveDir):
 	testPath = "test.stats"
 
 	with open(testPath, 'w') as file:
@@ -666,12 +786,21 @@ def test(testPrefix):
 
 	trimmedData, untrimmedData = retrieveRawData(testPath)
 
-	makeErrorRateBarGraph(untrimmedData, testPrefix)	
-	makeErrorRateBoxPlot(untrimmedData, testPrefix)
-	makeThroughputBarGraph(untrimmedData, testPrefix)
-	makeLengthHistograms(untrimmedData, testPrefix)
-	makeErrorRateScatterPlot(untrimmedData, testPrefix)
-	makeMutationsBarGraph(trimmedData, testPrefix)
+	testName = "test"
+	
+	for data in (trimmedData, untrimmedData):
+		if data is trimmedData:
+			trimmedOrUntrimmed = "trimmed"
+		else:
+			trimmedOrUntrimmed = "untrimmed"
+		makeErrorRateBarGraph(data, testName, trimmedOrUntrimmed, saveDir) 
+		makeErrorRateBoxPlot(data, testName, trimmedOrUntrimmed, saveDir) 
+		makeErrorRateScatterPlot(data, testName, trimmedOrUntrimmed, saveDir) 
+
+	makeUntrimmedThroughputBarGraph(untrimmedData, testName, saveDir)
+	makeTrimmedThroughputBarGraph(trimmedData, testName, saveDir)
+	makeMutationsBarGraph(trimmedData, testName, saveDir)
+	makeLengthHistograms(trimmedData, untrimmedData, testName, saveDir)
 
 # global variables
 
@@ -703,8 +832,8 @@ KEYS_g=[corrLength_k, uncorrLength_k, corrDel_k, corrIns_k, corrSub_k,
 	uTruePos_k, uFalsePos_k]	
 
 helpMessage = "Visualize long read correction data statistics."
-usageMessage = "Usage: %s [-h help and usage] [-i directory] [-o output prefix]" % (sys.argv[0])
-options = "hi:o:t"
+usageMessage = "Usage: %s [-h help and usage] [-i directory] [-d output dir] [-n experiment name]" % (sys.argv[0])
+options = "hi:d:n:t"
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], options)
@@ -717,7 +846,8 @@ if len(sys.argv) == 1:
 	sys.exit(2)
 
 inputPath = ""
-outputPrefix = ""
+saveDir = ""
+testName = ""
 testRun = False
 
 for opt, arg in opts:
@@ -727,8 +857,10 @@ for opt, arg in opts:
 		sys.exit()
 	elif opt == '-i':
 		inputPath = arg
-	elif opt == '-o':
-		outputPrefix = arg
+	elif opt == '-d':
+		saveDir = arg
+	elif opt == '-n':
+		testName = arg
 	elif opt == '-t':
 		testRun = True
 
@@ -737,12 +869,53 @@ optsIncomplete = False
 if inputPath == "" and not testRun:
 	print "Please provide an input path."
 	optsIncomplete = True
-if outputPrefix == "":
-	print "Please provide an output prefix."
+if saveDir == "":
+	print "Please provide the output directory."
 	optsIncomplete = True
+if testName == "":
+	print "Please indicate the name of the experiment."
+	optsIncomplete = True 
+
 if optsIncomplete:
 	print usageMessage
 	sys.exit(2)
 
 if testRun:
-	test(outputPrefix)
+	test(saveDir)
+	sys.exit()
+
+print "The command used to run this program was: %s" % ( " ".join(sys.argv) )
+
+trimmedData, untrimmedData = retrieveRawData(inputPath)
+
+# Generate data. If the appropriate data list is empty, skip it.
+for data in (trimmedData, untrimmedData):
+	if data is trimmedData:
+		trimmedOrUntrimmed = "trimmed"
+	else:
+		trimmedOrUntrimmed = "untrimmed"
+
+	if len(data) > 0:
+		makeErrorRateBarGraph(data, testName, trimmedOrUntrimmed, saveDir) 
+		makeErrorRateBoxPlot(data, testName, trimmedOrUntrimmed, saveDir) 
+		makeErrorRateScatterPlot(data, testName, trimmedOrUntrimmed, saveDir) 
+	else:
+		print "No %s read data; skipping creation of trimmed error rate graphs." % (trimmedOrUntrimmed)
+
+if ( len(untrimmedData) > 0 ):
+	makeUntrimmedThroughputBarGraph(untrimmedData, testName, saveDir)
+else:
+	print "No untrimmed data; skipping creation of untrimmed throughput bar graph."
+
+if ( len(trimmedData) > 0 ):
+	makeTrimmedThroughputBarGraph(trimmedData, testName, saveDir)
+	makeMutationsBarGraph(trimmedData, testName, saveDir)
+else:
+	print "No trimmed data; skipping creation of trimmed read throughput graph and mutations bar graph."
+
+if ( len(trimmedData) > 0 and len(untrimmedData) > 0 ):
+	makeLengthHistograms(trimmedData, untrimmedData, testName, saveDir)
+else:
+	print "Either no trimmed read data or untrimmed read data; skipping creation of length histogram."
+
+print "Visualization completed."
