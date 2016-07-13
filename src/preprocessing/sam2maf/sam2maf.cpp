@@ -7,7 +7,7 @@
 #include <sstream> // for std::stringstream
 #include <cctype> // For isdigit and isalpha
 #include <queue>
-#include <algorithm> // For std::remove
+#include <algorithm> // For std::remove and std::reverse
 #include <cassert> // for assert
 
 void displayHelp()
@@ -21,7 +21,6 @@ void displayUsage()
 {
 	std::cout << "Usage: [-h help] [-r FASTA reference path] [-s SAM alignment file path] [-o MAF output prefix]\n";
 }
-
 
 std::string addSpaces(std::string cigar)
 /* Add spaces before every number and letter in CIGAR string
@@ -124,6 +123,7 @@ std::queue< std::string > getCigarQueue( std::vector< std::string > cigarOps )
 	for (int64_t opsIndex = 0; opsIndex < numOps.size(); opsIndex++) {
 		// The number of the current operation at opsIndex in ops
 		int64_t numOp = numOps.at(opsIndex);
+
 		// If there are x ops, then add x ops to the queue e.g.
 		// if the cigar string is 3D, then the queue will be
 		// ['D', 'D', 'D']
@@ -176,28 +176,52 @@ char nextBase(char base, int64_t flag)
 	}
 }
 
+std::string getRefSeq(std::string ref, int64_t refPos, std::queue< std::string > cigarQueue)
+/* Find the reference subsequence that aligns with the read from the reference and cigar queue */
+{
+	std::string refSeq = "";
+
+	while( !cigarQueue.empty() ) {
+		std::string currentOp = cigarQueue.front();
+		if (currentOp != "I") {
+			refSeq = refSeq + ref[refPos]; 
+			refPos++;
+		}
+	}
+
+	return refSeq;
+}
+
+std::string reverseSeq(std::string sequence)
+/* Reverse the inputted sequence. */
+{
+	std::reverse(sequence.begin(), sequence.end());
+	return sequence;	
+}
+
 std::string getRefAlignment(std::string ref, int64_t refPos, std::queue< std::string > cigarQueue, int64_t flag)
 /* Find the reference sequence alignment */
 {
-	assert( !cigarQueue.empty() );
-	assert( ref.length() > 0 );
-	assert( refPos < ref.length() );
+	std::string refSeq = getRefSeq(ref, refPos, cigarQueue);
+
+	// This may change; reverse the reference sequence
+	refSeq = reverseSeq(refSeq);
 
 	// The leftmost position in the reference where the read aligns to 
+	int index = 0;
+
 	std::string refAlignment = "";
 
-	while ( !cigarQueue.empty() and refPos < ref.length() ) {
+	while ( !cigarQueue.empty() ) {
 		std::string currentOp = cigarQueue.front();
 		if (currentOp == "I") {
 			refAlignment = refAlignment + "-";			
 		} else {
-			refAlignment = refAlignment + nextBase( ref[ refPos ], flag );
-			refPos++;
+			refAlignment = refAlignment + nextBase( refSeq[index], flag );
+			index++;
 		}
 		cigarQueue.pop();
 	}	
-
-	assert( refAlignment.length() > 0 );
 
 	return refAlignment;
 }
@@ -290,10 +314,16 @@ void convertSam2Maf(std::string ref, std::string samPath, std::string mafPath)
 		assert(readSize > 0);
 		assert(refSize > 0);
 
+		if (flag == 16) {
+			std::string strand = "-";
+		} else {
+			std::string strand = "+";
+		}
+
 		// Write data into MAF file
 		maf << "a\n";
-		maf << "s ref " << start <<  " " << refSize << " + " << srcSize << " " << refAlignment << "\n";
-		maf << "s read" << readNumberString << " 0 " << refSize << " + " << srcSize << " " 
+		maf << "s ref " << start <<  " " << refSize << " " << strand << " " << srcSize << " " << refAlignment << "\n";
+		maf << "s read" << readNumberString << " 0 " << refSize << " " << strand << " " << srcSize << " " 
 			<< readAlignment << "\n";
 		maf << "\n";
 
