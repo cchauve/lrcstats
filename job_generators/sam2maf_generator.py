@@ -38,7 +38,7 @@ def writeJob(species, coverage):
 		samLine = "sam=%s\n" % (sam)
 		file.write(samLine)
 
-		maf = "maf=%s.maf\n" % (sam)	
+		maf = "maf=%s\n" % (sam)	
 		file.write(maf)
 
 		sam2maf = "sam2maf=/home/seanla/Projects/lrcstats/src/preprocessing/sam2maf/sam2maf\n"

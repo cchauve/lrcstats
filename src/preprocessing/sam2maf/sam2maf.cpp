@@ -13,7 +13,6 @@
 void displayHelp()
 {
 	std::cout << "Converts SAM (Sequence Alignment/Map) format outputted by SimLoRD to MAF (multiple alignment format), given the original reference sequence in FASTA format.\n";
-	std::cout << "The FASTA file must contain the entire reference sequence on a single line.\n";
 	std::cout << "This program stores the entire reference sequence in a std::string object. Thus, the maximum reference size"
 			<< " this program accepts is the return value of std::string::max_size, which is system dependent.\n";
 }
@@ -159,7 +158,25 @@ std::string getRef(std::string refPath)
 	return reference;
 } 
 
-std::string getRefAlignment(std::string ref, int64_t refPos, std::queue< std::string > cigarQueue)
+char nextBase(char base, int64_t flag)
+/* Returns the appropriate base depending on if the flag indicates reverse complemented */
+{
+	if (flag == 16) {
+		if (base == 'A') {
+			return 'T';
+		} else if (base == 'T') {
+			return 'A';
+		} else if (base == 'G') {
+			return 'C';
+		} else if (base == 'C') {
+			return 'G';
+		}
+	} else {
+		return base;
+	}
+}
+
+std::string getRefAlignment(std::string ref, int64_t refPos, std::queue< std::string > cigarQueue, int64_t flag)
 /* Find the reference sequence alignment */
 {
 	assert( !cigarQueue.empty() );
@@ -174,7 +191,7 @@ std::string getRefAlignment(std::string ref, int64_t refPos, std::queue< std::st
 		if (currentOp == "I") {
 			refAlignment = refAlignment + "-";			
 		} else {
-			refAlignment = refAlignment + ref[ refPos ];
+			refAlignment = refAlignment + nextBase( ref[ refPos ], flag );
 			refPos++;
 		}
 		cigarQueue.pop();
@@ -234,7 +251,9 @@ void convertSam2Maf(std::string ref, std::string samPath, std::string mafPath)
 		// use tabs to separate columns
 		std::vector< std::string > tokens = split(line, '	');
 
-		// Get MAF column data
+		// A flag of 16 indicates the sequence is reverse complemented;
+		// 0 indicates that it is regular
+		int64_t flag = atoi( tokens.at(1).c_str() );
 		std::string refPos = tokens.at(3);
 		std::string unprocessedCigar = tokens.at(5);
 		std::string read = tokens.at(9);
@@ -255,14 +274,14 @@ void convertSam2Maf(std::string ref, std::string samPath, std::string mafPath)
 		assert( !cigarQueue.empty() );
 
 		// Find the reference and read alignments
-		std::string refAlignment = getRefAlignment(ref, start, cigarQueue);
+		std::string refAlignment = getRefAlignment(ref, start, cigarQueue, flag);
 		std::string readAlignment = getReadAlignment(read, cigarQueue);
 
 		assert(refAlignment.length() > 0);
 		assert(readAlignment.length() > 0);
 
 		// More column data
-		int64_t readSize = read.length();	
+		int64_t readSize = gaplessLength(readAlignment);	
 		int64_t refSize = gaplessLength(refAlignment);
 		// Writing int datatypes to files doesn't seem to work, so 
 		// instead we convert to string beforehand
