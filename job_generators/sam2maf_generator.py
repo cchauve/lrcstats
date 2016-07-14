@@ -4,7 +4,7 @@ def writeJob(species, coverage):
 	filename = "/home/seanla/Jobs/lrcstats/sam2maf/%s-d%s_sam2maf.pbs" % (species, coverage)
 
 	with open(filename, 'w') as file:
-		resources = ["walltime=01:00:00", "mem=8gb", "nodes=1:ppn=1"]
+		resources = ["walltime=01:00:00", "mem=4gb", "nodes=1:ppn=1"]
 		folder="/global/scratch/seanla/Data/%s" % (species)
 		dir = "%s/simlord/long-d%s" % (folder, coverage)
 
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         helpMessage = "Generate PBS job scripts to convert sam files to maf files."
         usageMessage = "Usage: %s [-h help and usage] [-a do all coverages] [-e ecoli] [-y yeast] [-f fly] [-l long read coverage]" % (sys.argv[0])
 
-        options = "heyfl:"
+        options = "haeyfl:"
 
         try:
                 opts, args = getopt.getopt(sys.argv[1:], options)
@@ -85,6 +85,8 @@ if __name__ == "__main__":
 			doFly = True
 		elif opt == '-l':
 			coverage = str(arg)
+		elif opt == "-a":
+			allCov = True
 
 	optsIncomplete = False
 

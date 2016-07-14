@@ -134,9 +134,9 @@ def writeJob(program, species, shortCov, longCov):
 
 if __name__ == "__main__":
         helpMessage = "Generate  PBS job scripts."
-        usageMessage = "Usage: %s [-h help and usage] [-a do all coverages] [-e ecoli] [-y yeast] [-c CoLoRMap] [-d LoRDeC] [-j Jabba] [-p proovread] [-s short read coverage] [-l long read coverage]" % (sys.argv[0])
+        usageMessage = "Usage: %s [-h help and usage] [-a do all coverages] [-f fly] [-e ecoli] [-y yeast] [-c CoLoRMap] [-d LoRDeC] [-j Jabba] [-p proovread] [-s short read coverage] [-l long read coverage]" % (sys.argv[0])
 
-        options = "haeycdjps:l:"
+        options = "hafeycdjps:l:"
 
         try:
                 opts, args = getopt.getopt(sys.argv[1:], options)
@@ -150,12 +150,16 @@ if __name__ == "__main__":
 
 	shortCov = None
 	longCov = None
+
 	doYeast = False
 	doEcoli = False
+	doFly = False
+
 	doLordec = False
 	doJabba = False
 	doProovread = False
 	doColormap = False
+
 	allCov = False
 
         for opt, arg in opts:
@@ -168,6 +172,8 @@ if __name__ == "__main__":
                         doEcoli = True
                 elif opt == '-y':
                         doYeast = True
+		elif opt == '-f':
+			doFly = True
 		elif opt == '-s':
 			shortCov = str(arg)
 		elif opt == '-l':
@@ -182,10 +188,6 @@ if __name__ == "__main__":
 			allCov = True
 		elif opt == '-c':
 			doColormap = True
-		else:
-			print "Error: unknown argument!"
-			print usageMessage
-			sys.exit(2)
 
 	optsIncomplete = False
 
@@ -195,7 +197,7 @@ if __name__ == "__main__":
 	if longCov is None and allCov is False:
 		print "Please input the required long coverage."
 		optsIncomplete = True
-	if not doYeast and not doEcoli:
+	if not doYeast and not doEcoli and not doFly:
 		print "Please indicate which species you would like to test."
 		optsIncomplete = True
 	if not doColormap and not doLordec and not doJabba and not doProovread:
@@ -220,6 +222,9 @@ if __name__ == "__main__":
 		species.append("yeast")
 	if doEcoli:
 		species.append("ecoli")
+	if doFly:
+		species.append("fly")
+
 	if doLordec:
 		programs.append("lordec")
 		lordec = "l"	

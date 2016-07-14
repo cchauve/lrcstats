@@ -92,6 +92,7 @@ def getReference(refPath):
 			if len(line) > 0 and line[0] != ">":
 				reference += line.strip('\n')		
 	assert '\n' not in reference
+	assert '>' not in reference
 	return reference
 
 def getGaplessLength(seq):

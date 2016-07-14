@@ -226,12 +226,11 @@ std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int6
 	statistics.push_back(uSize);
 
 	statistics.push_back( getDeletions(ref,cRead) );
-	statistics.push_back( getDeletions(ref,uRead) );
-
 	statistics.push_back( getInsertions(ref,cRead) );
-	statistics.push_back( getInsertions(ref,uRead) );
-
 	statistics.push_back( getSubstitutions(ref,cRead) );
+
+	statistics.push_back( getDeletions(ref,uRead) );
+	statistics.push_back( getInsertions(ref,uRead) );
 	statistics.push_back( getSubstitutions(ref,uRead) );
 
 	// True and false positive numbers in the corrected long read
@@ -240,11 +239,6 @@ std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int6
 
 	statistics.push_back( uncorrectedTruePositives(ref,cRead) );
 	statistics.push_back( uncorrectedFalsePositives(ref,cRead) );
-
-	// Number of corrected and uncorrected bases in the corrected
-	// long read
-	statistics.push_back( correctedBases(cRead) );
-	statistics.push_back( uncorrectedBases(uRead) );
 
 	return statistics;
 }
@@ -266,15 +260,15 @@ std::vector<int64_t> trimmedReadStats(CorrespondingSegments segments)
 	// corresponding segment in the uncorrected long read
 
 	DeletionProportion delProp = getDeletionProportion( segments );
-	statistics.push_back(delProp.cRead);
-	statistics.push_back(delProp.uRead);
-
 	InsertionProportion insProp = getInsertionProportion( segments ); 
-	statistics.push_back(insProp.cRead);
-	statistics.push_back(insProp.uRead);
-
 	SubstitutionProportion subProp = getSubstitutionProportion( segments );
+
+	statistics.push_back(delProp.cRead);
+	statistics.push_back(insProp.cRead);
 	statistics.push_back(subProp.cRead);
+
+	statistics.push_back(delProp.uRead);
+	statistics.push_back(insProp.uRead);
 	statistics.push_back(subProp.uRead);
 
 	return statistics;
@@ -331,7 +325,6 @@ void createUntrimmedStat(std::string mafName, std::string outputPath)
 
 		// Write whole read statistics
 		std::vector<int64_t> statistics = untrimmedReadStats(ref,clr,clrSize,ulr,ulrSize);
-		assert( statistics.size() == 14 );
 
 		output << "u ";
 		for (int index = 0; index < statistics.size(); index++) {
@@ -345,7 +338,6 @@ void createUntrimmedStat(std::string mafName, std::string outputPath)
 		for (int index = 0; index < correspondingSegmentsList.size(); index++) {
 			CorrespondingSegments segments = correspondingSegmentsList.at(index);
 			std::vector<int64_t> statistics = trimmedReadStats(segments);
-			assert( statistics.size() == 7 );
 
 			output << "t ";
 			for (int i = 0; i < 7; i++) {
