@@ -28,7 +28,6 @@ def writeJob(program, species, shortCov, longCov):
 	file.write(jobName)
 	###############################################################
 
-	# LoRDeC uses more memory than other programs
 	################## Data paths #################################
 	prefix = "/global/scratch/seanla/Data/%s" % (species)
 	prefixLine = "prefix=%s\n" % (prefix)
@@ -42,6 +41,9 @@ def writeJob(program, species, shortCov, longCov):
 	mafLine = "maf=%s\n\n" % (maf)
 	file.write(mafLine)
 	###############################################################
+
+	# Script ends immediately if error
+	file.write("set -e\n")
 
 	mkdir = "mkdir -p %s\n\n" % (outputdir)
 	file.write(mkdir)
@@ -58,11 +60,11 @@ def writeJob(program, species, shortCov, longCov):
 	if program is "jabba":
 		inputfasta="input=$inputdir/jabba/jabba-%s-long-d%s.fastq\n" % (species, longCov)
 	if program is "proovread":
-		inputfasta="input=$inputdir/proovread/%s/%s/proovread-%s.trimmed.fa\n" % (test, test, test)
+		inputfasta="input=$inputdir/%s/proovread-%s.trimmed.fa\n" % (test, test)
 	if program is "colormap":
-		inputOea="inputOea=$inputdir/colormap/%s/%s_oea.fa\n" % (test, test)
+		inputOea="inputOea=$inputdir/%s_oea.fa\n" % (test)
 		file.write(inputOea)
-		inputfasta="input=$inputdir/colormap/%s/%s_corr.fa\n" % (test, test)
+		inputfasta="input=$inputdir/%s_corr.fa\n" % (test)
 	file.write(inputfasta)
 	file.write('\n')
 
@@ -85,13 +87,13 @@ def writeJob(program, species, shortCov, longCov):
 	file.write("############### Sort FASTA ###########\n")
 	file.write("echo 'Sorting FASTA'\n\n")
 
-	sortPath = "sortfasta=$preprocesspath/sortfasta/sortfasta\n"
+	sortPath = "sortfasta=$preprocesspath/sortfasta/sortfasta.py\n"
 	file.write(sortPath)
 
 	sortOutputLine = "sortoutput=$outputdir/sorted.fasta\n\n" 	
 	file.write(sortOutputLine)
 
-	sortCommand = "$sortfasta -i $input -o $sortoutput\n\n"
+	sortCommand = "python $sortfasta -i $input -o $sortoutput\n\n"
 	file.write(sortCommand)
 	
 	inputLine = "input=$sortoutput\n\n"
@@ -102,7 +104,7 @@ def writeJob(program, species, shortCov, longCov):
 		sortOutputLineOea = "sortoutputoea=$outputdir/sorted_oea.fasta\n"
 		file.write(sortOutputLineOea)
 
-		sortCommand = "$sortfasta -i $inputOea -o $sortoutputoea\n\n"
+		sortCommand = "python $sortfasta -i $inputOea -o $sortoutputoea\n\n"
 		file.write(sortCommand)
 
 		inputOea = "inputOea=$sortoutputoea\n\n"
@@ -130,17 +132,17 @@ def writeJob(program, species, shortCov, longCov):
 	prunePath = "prunemaf=$preprocesspath/prunemaf.py\n"
 	file.write(prunePath)
 
-	pruneOutput = "pruneOutput=$outputdir/pruned.maf\n\n"
+	pruneOutput = "pruneOutput=$outputdir/pruned\n\n"
 	file.write(pruneOutput)
 
 	pruneCommand = "python $prunemaf -f $input -m $maf -o $pruneOutput\n\n"
 	file.write(pruneCommand)
 
-	mafLine = "maf=$pruneOutput\n\n"
-	file.write(mafLine)
+	newMafPath = "maf=${pruneOutput}.maf\n"
+	file.write(newMafPath)
 
 	if program is "colormap":
-		pruneOutput = "pruneOutputOea=$outputdir/prunedOea.maf\n\n"
+		pruneOutput = "pruneOutputOea=$outputdir/prunedOea\n\n"
 		file.write(pruneOutput)
 
 		pruneCommand = "python $prunemaf -f $inputOea -m $maf -o $pruneOutputOea\n\n"
