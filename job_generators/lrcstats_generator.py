@@ -173,7 +173,7 @@ def writeJob(program, species, shortCov, longCov):
 		mafOutputOea = "mafOutputOea=$outputdir/%s_oea.maf\n\n" % (test)
 		file.write(mafOutputOea)
 	
-		command = "$lrcstats maf -m $maf -c $inputOea -o $mafOutputOea\n\n"
+		command = "$lrcstats maf -m $mafOea -c $inputOea -o $mafOutputOea\n\n"
 		file.write(command)
 
 	file.write("############### Collecting data ###########\n")
