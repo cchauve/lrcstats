@@ -56,11 +56,11 @@ def writeJob(program, species, shortCov, longCov):
 	file.write(inputdir)
 
 	if program is "lordec":
-		inputfasta="input=$inputdir/lordec-%s.fasta\n" % (test)
+		inputfasta="input=$inputdir/%s.fasta\n" % (test)
 	if program is "jabba":
-		inputfasta="input=$inputdir/jabba/jabba-%s-long-d%s.fastq\n" % (species, longCov)
+		inputfasta="input=$inputdir/jabba/Jabba-%s-long-d%s.fastq\n" % (species, longCov)
 	if program is "proovread":
-		inputfasta="input=$inputdir/%s/proovread-%s.trimmed.fa\n" % (test, test)
+		inputfasta="input=$inputdir/%s/%s.trimmed.fa\n" % (test, test)
 	if program is "colormap":
 		inputOea="inputOea=$inputdir/%s_oea.fa\n" % (test)
 		file.write(inputOea)
@@ -99,7 +99,6 @@ def writeJob(program, species, shortCov, longCov):
 	inputLine = "input=$sortoutput\n\n"
 	file.write(inputLine)
 	
-
 	if program is "colormap":
 		sortOutputLineOea = "sortoutputoea=$outputdir/sorted_oea.fasta\n"
 		file.write(sortOutputLineOea)
@@ -148,7 +147,7 @@ def writeJob(program, species, shortCov, longCov):
 		pruneCommand = "python $prunemaf -f $inputOea -m $maf -o $pruneOutputOea\n\n"
 		file.write(pruneCommand)
 
-		mafLine = "mafOea=$pruneOutputOea\n\n"
+		mafLine = "mafOea=${pruneOutputOea}.maf\n\n"
 		file.write(mafLine)
 
 	file.write("############### Generate three-way alignment ###########\n")
@@ -182,14 +181,14 @@ def writeJob(program, species, shortCov, longCov):
 	statsOutput = "$statsOutput=$outputdir/%s.stats\n\n" % (test)
 	file.write(statsOutput)
 
-	command = "$lrcstats stats -m $maf -o $statsOutput\n\n"
+	command = "$lrcstats stats -m $mafOutput -o $statsOutput\n\n"
 	file.write(command)
 
 	if program is "colormap":
 		statsOutput = "$statsOutputOea=$outputdir/%s_oea.stats\n\n" % (test)
 		file.write(statsOutput)
 
-		command = "$lrcstats stats -m $maf -o $statsOutputOea\n\n"
+		command = "$lrcstats stats -m $mafOutputOea -o $statsOutputOea\n\n"
 		file.write(command)
 
 	file.write("############### Visualizing statistics ###########\n")

@@ -51,6 +51,7 @@ if __name__ == "__main__":
 		sys.exit(2)
 
 	outputPath = "%s.maf" % (outputPrefix)
+	junkPath = "%s_junk.maf" % (outputPrefix)
 
 	reads = []
 	
@@ -62,42 +63,28 @@ if __name__ == "__main__":
 	with open(fastaPath, 'r') as fasta:
 		with open(mafPath, 'r') as maf:
 			with open(outputPath, 'w') as output:
-				for line in fasta:
-					if line is not '' and line[0] is '>':
-						# Find the read number from the FASTA header line
-						reads.append( int( re.findall('(\d+)', line)[readNumberIndex] ) )
-				for line in maf:
-					tokens = line.rstrip().split()
+				with open(junkPath, 'w') as junk:
+					for line in fasta:
+						if line is not '' and line[0] is '>':
+							# Find the read number from the FASTA header line
+							readNumber = int( line[1:] )
+							reads.append( readNumber )
+					for line in maf:
+						tokens = line.rstrip().split()
 
-					# Store the reference line
-					if len( tokens ) > 1 and tokens[1] == 'ref':
-						ref = line
-					elif len( tokens ) > 1:
-						readNumber = int( re.findall('(\d+)', tokens[1])[readNumberIndex] )
-						# If the current read has been corrected by the program
-						# then keep it
-						if readNumber in reads:
-							output.write('a\n')
-							output.write(ref)
-							output.write(line) 
-							output.write('\n')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+						# Store the reference line
+						# Checking if the number of tokens is greater than 1
+						# ensures we dont check the lines that start with "a",
+						# which indicates a new set of alignments
+						# or the blank lines that separate different alignments
+						if len( tokens ) > 1 and tokens[1] == 'ref':
+							ref = line
+						elif len( tokens ) > 1:
+							readNumber = int( re.findall('(\d+)', tokens[1])[readNumberIndex] )
+							inputLine = "a\n%s%s\n" % (ref, line)	
+							# If the current read has been corrected by the program
+							# then keep it
+							if readNumber in reads:
+								output.write(inputLine)
+							else:
+								junk.write(inputLine)

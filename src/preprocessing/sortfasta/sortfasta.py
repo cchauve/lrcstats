@@ -12,12 +12,12 @@ def getReads(inputPath):
 					reads.append( (readNum, sequence) )
 				line = line.split('_')
 				readNum = int(line[1])
+				sequence = ""
 			else:
 				sequence += line.rstrip('\n')
 	return reads
 
-def writeFasta(outputPrefix, reads):
-	outputPath = "%s.fasta" % (outputPrefix)
+def writeFasta(outputPath, reads):
 	with open(outputPath, 'w') as file:
 		for read in reads:
 			header = ">%d\n" % (read[0])
@@ -42,7 +42,7 @@ if len(sys.argv) == 1:
 	sys.exit()
 
 inputPath = None
-outputPrefix = None
+outputPath = None
 
 for opt, arg in opts:
 	if opt == '-h':
@@ -52,12 +52,17 @@ for opt, arg in opts:
 	elif opt == '-i':
 		inputPath = arg
 	elif opt == '-o':
-		outputPrefix = arg
+		outputPath = arg
 
-if inputPath is None and outputPrefix is None:
+if inputPath is None and outputPath is None:
 	print usageMessage
 
 
 reads = getReads(inputPath)
 reads = sorted(reads, key=itemgetter(0))
-writeFasta(outputPrefix, reads)
+
+numbers = []
+for read in reads:
+	numbers.append( read[0] )
+
+writeFasta(outputPath, reads)

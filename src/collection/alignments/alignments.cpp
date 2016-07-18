@@ -308,6 +308,9 @@ void UntrimmedAlignments::findAlignments()
 					columnIndex--;
 				} else {
 					std::cerr << "ERROR CODE 2: No paths found. Terminating backtracking.\n";
+					std::cout << clr << "\n";
+					std::cout << ulr << "\n";
+					std::cout << ref << "\n";
 					rowIndex = 0;
 					columnIndex = 0;
 				}

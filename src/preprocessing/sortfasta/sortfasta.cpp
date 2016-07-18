@@ -76,7 +76,7 @@ void writeSortedReads(std::vector< Read > reads, std::string outputPath)
 {
 	std::ofstream output (outputPath, std::ios::out);
 
-	for (int index = 0; index < reads.size(); index++) {
+	for (int64_t index = 0; index < reads.size(); index++) {
 		output << ">" << reads.at(index).number << "\n";
 		output << reads.at(index).sequence << "\n";
 	}

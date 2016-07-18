@@ -121,8 +121,9 @@ def convert(ref, samPath, mafPath):
 					cigarList = getCigarList(cigar)
 
 					refSeq = getRefSeq(ref, start, cigarList)
+
 					if flag == 16:
-						refSeq = getReverse(refSeq)
+						read = getReverse(read)
 
 					refAlignment = getRefAlignment(refSeq, start, cigarList, flag)
 					readAlignment = getReadAlignment(read, cigarList)
@@ -132,13 +133,15 @@ def convert(ref, samPath, mafPath):
 					refSize = getGaplessLength(refAlignment) 
 					
 					if flag == 16:
+						readAlignment = getReverse(readAlignment)
+						refAlignment = getReverse(refAlignment)		
 						strand = "-"
 					else:
 						strand = "+"
 					maf.write("a\n")
 					refLine = "s ref %s %s %s %s %s\n" % (start, refSize, strand, srcSize, refAlignment)
 					maf.write(refLine)
-					readLine = "s read%d %s %s %s %s %s\n" % (readNumber, start, readSize, strand, srcSize, readAlignment)
+					readLine = "s %d %s %s %s %s %s\n" % (readNumber, start, readSize, strand, srcSize, readAlignment)
 					maf.write(readLine)
 					maf.write("\n")
 					readNumber += 1
