@@ -16,13 +16,14 @@ class Alignments
 		std::string clr;
 		std::string ulr;
 		std::string ref;
-                int rows;
-                int columns;
+                int64_t rows;
+                int64_t columns;
                 int** matrix;
 		void createMatrix();
 		void deleteMatrix();
-                int cost(char refBase, char cBase);
+                int64_t cost(char refBase, char cBase);
 		void processAlignments();
+		void printMatrix();	
 };
 
 class UntrimmedAlignments : public Alignments
@@ -35,6 +36,7 @@ class UntrimmedAlignments : public Alignments
 		void reset(std::string reference, std::string uLongRead, std::string cLongRead);
 	private:
 		// Specs for matrix
+		bool checkIfEndingLowerCase(int64_t cIndex);
 		void initialize();
                 void findAlignments();
 };

@@ -5,6 +5,7 @@
 #include <limits>
 #include <cmath>
 #include <cassert>
+#include <cstdint>
 
 #include "alignments.hpp"
 #include "../data/data.hpp"
@@ -78,14 +79,14 @@ void Alignments::createMatrix()
 	try {
 		matrix = new int*[rows];
 	} catch( std::bad_alloc& ba ) {
-		std::cerr << "Memory allocation failed; unable to create DP matrix.\n";
+		std::cout << "Memory allocation failed; unable to create DP matrix.\n";
 	}
 	
-	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
+	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
 		try {
 			matrix[rowIndex] = new int[columns];
 		} catch( std::bad_alloc& ba ) {
-			std::cerr << "Memory allocation failed; unable to create DP matrix.\n";
+			std::cout << "Memory allocation failed; unable to create DP matrix.\n";
 		}
 	}
 }
@@ -93,7 +94,7 @@ void Alignments::createMatrix()
 void Alignments::deleteMatrix()
 /* Delete the matrix allocated in the heap */
 {
-	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
+	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
 		if (matrix[rowIndex] != NULL) {
 			delete matrix[rowIndex];
 		} 	
@@ -104,7 +105,7 @@ void Alignments::deleteMatrix()
 	}
 }
 
-int Alignments::cost(char refBase, char cBase)
+int64_t Alignments::cost(char refBase, char cBase)
 /* Cost function for dynamic programming algorithm */
 {
 	if ( islower(cBase) ) {
@@ -115,6 +116,23 @@ int Alignments::cost(char refBase, char cBase)
 		// Ideally, in an alignment between cLR and ref we want to minimize the number of discrepancies
 		// as much as possible, so if both bases are different, we assign a cost of 2.
 		return 2;
+	}
+}
+
+void Alignments::printMatrix()
+/* Print64_t the matrix */
+{
+	int64_t infinity = std::numeric_limits<int>::max();
+	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
+		for (int64_t columnIndex = 0; columnIndex < columns; columnIndex++) {
+			int64_t val = matrix[rowIndex][columnIndex];
+			if (val == infinity) {
+				std::cout << "- ";
+			} else {
+				std::cout << val << " ";
+			}
+		}
+		std::cout << "\n";
 	}
 }
 
@@ -132,41 +150,58 @@ void UntrimmedAlignments::reset(std::string reference, std::string uLongRead, st
 	initialize(); 
 }
 
+bool UntrimmedAlignments::checkIfEndingLowerCase(int64_t cIndex)
+/* Determine if we're at an ending lower case i.e. if the current base
+ * in cLR is lowercase and the following base is uppercase or the
+ * current base is lowercase and the last base in the sequene.
+ */
+{
+	if ( (cIndex < clr.length() - 1 && islower(clr[cIndex]) && isupper(clr[cIndex+1])) || 
+		(cIndex == clr.length() - 1 && islower(clr[cIndex])) ) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
 void UntrimmedAlignments::initialize()
 /* Given cLR, uLR and ref sequences, construct the DP matrix for the optimal alignments. 
  * Requires these member variables to be set before use. */
 {
-	int cIndex;
-	int urIndex;
-	bool isEndingLC;
-	int keep;
-	int substitute;
-	int insert;
-	int deletion;
-	int infinity = std::numeric_limits<int>::max();
+	int64_t cIndex;
+	int64_t urIndex;
+	int64_t keep;
+	int64_t substitute;
+	int64_t insert;
+	int64_t deletion;
+	int64_t infinity = std::numeric_limits<int>::max();
 
 	// Set the base cases for the DP matrix
-	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
+	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
 		matrix[rowIndex][0] = rowIndex;	
 	}
-	for (int columnIndex = 1; columnIndex < columns; columnIndex++) {
+	for (int64_t columnIndex = 1; columnIndex < columns; columnIndex++) {
 		matrix[0][columnIndex] = columnIndex;
 	}
 
 	// Find the optimal edit distance such that all uncorrected segments of clr are aligned with uncorrected
  	// portions of ulr. 
-	for (int rowIndex = 1; rowIndex < rows; rowIndex++) {
-		for (int columnIndex = 1; columnIndex < columns; columnIndex++) {
+	for (int64_t rowIndex = 1; rowIndex < rows; rowIndex++) {
+		for (int64_t columnIndex = 1; columnIndex < columns; columnIndex++) {
 			cIndex = rowIndex - 1;
 			urIndex = columnIndex -  1;
 
 			// Determine if the current letter in clr is lowercase and is followed by an upper case letter
 			// i.e. if the current letter in clr is an ending lowercase letter
-			if ( cIndex < clr.length() - 1 && islower(clr[cIndex]) && isupper(clr[cIndex+1]) ) {
+			/*
+			if ( (cIndex < clr.length() - 1 && islower(clr[cIndex]) && isupper(clr[cIndex+1])) || 
+				(cIndex == clr.length() - 1 && islower(clr[cIndex])) ) {
 				isEndingLC = true;	
 			} else {
 				isEndingLC = false;
 			}
+			*/
+			bool isEndingLC = checkIfEndingLowerCase(cIndex);
 
 			if (isEndingLC) {
 				// If both letters are the same, we can either keep both letters or deletion the one from
@@ -210,16 +245,16 @@ void UntrimmedAlignments::findAlignments()
 	std::string clrMaf = "";
 	std::string ulrMaf = "";
 	std::string refMaf = "";
-	int rowIndex = rows - 1;
-	int columnIndex = columns - 1;
-	int cIndex;
-	int urIndex;
-	int insert;
-	int deletion;
-	int substitute;
-	int currentCost;
+	int64_t rowIndex = rows - 1;
+	int64_t columnIndex = columns - 1;
+	int64_t cIndex;
+	int64_t urIndex;
+	int64_t insert;
+	int64_t deletion;
+	int64_t substitute;
+	int64_t currentCost;
 	bool isEndingLC;
-	int infinity = std::numeric_limits<int>::max();
+	int64_t infinity = std::numeric_limits<int>::max();
 
 	// Follow the best path from the bottom right to the top left of the matrix.
 	// This is equivalent to the optimal alignment between ulr and clr.
@@ -242,26 +277,32 @@ void UntrimmedAlignments::findAlignments()
 		// Set the costs of the different operations, 
 		// ensuring we don't go out of bounds of the matrix.
 		if (rowIndex > 0 && columnIndex > 0) {
-			deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
-			insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
-			substitute = matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]);	
+			deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
+			insert = std::abs( matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]) );
+			substitute = std::abs( matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]) );	
 		} else if (rowIndex <= 0 && columnIndex > 0) {
-			deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
+			deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
 			insert = infinity;
 			substitute = infinity;
 		} else if (rowIndex > 0 && columnIndex <= 0) {
 			deletion = infinity;
-			insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
+			insert = std::abs( matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]) );
 			substitute = infinity;
 		} 
 
 		// Make sure we follow the same path as dictated by the edit distance equations. 
+		// Determine if the current letter in clr is lowercase and is followed by an upper case letter
+		// i.e. if the current letter in clr is an ending lowercase letter
+		/*
 		if ( (cIndex < clr.length() - 1 && islower(clr[cIndex]) && isupper(clr[cIndex+1])) || 
 			(cIndex == clr.length() - 1 && islower(clr[cIndex])) ) {
 			isEndingLC = true;	
 		} else {
 			isEndingLC = false;
 		}
+		*/
+		bool isEndingLC = checkIfEndingLowerCase(cIndex);
+
 		if (rowIndex == 0 || columnIndex == 0) {
 				//std::cout << "Path 6\n";
 				if (rowIndex == 0) {
@@ -294,7 +335,9 @@ void UntrimmedAlignments::findAlignments()
 					rowIndex--;
 					columnIndex--;
 				} else {
-					std::cerr << "ERROR CODE 1: No paths found. Terminating backtracking.\n";	
+					std::cout << "ERROR CODE 1: No paths found. Terminating backtracking.\n";	
+					std::cout << "cIndex is " << cIndex << "\n";
+					std::cout << "urIndex is " << urIndex << "\n";
 					rowIndex = 0;
 					columnIndex = 0;
 				}
@@ -307,15 +350,14 @@ void UntrimmedAlignments::findAlignments()
 					refMaf = ref[urIndex] + refMaf;
 					columnIndex--;
 				} else {
-					std::cerr << "ERROR CODE 2: No paths found. Terminating backtracking.\n";
-					std::cout << clr << "\n";
-					std::cout << ulr << "\n";
-					std::cout << ref << "\n";
+					std::cout << "ERROR CODE 2: No paths found. Terminating backtracking.\n";
+					std::cout << "cIndex is " << cIndex << "\n";
+					std::cout << "urIndex is " << urIndex << "\n";
 					rowIndex = 0;
 					columnIndex = 0;
 				}
 			}
-		} else if (islower(clr[cIndex]) && rowIndex > 0 && columnIndex > 0) {
+		} else if (islower(clr[cIndex])) {
 			if ( toupper( ulr[urIndex] ) == toupper( clr[cIndex] ) ) {
 				//std::cout << "Path 3\n";
 				if (substitute == currentCost) {
@@ -326,7 +368,9 @@ void UntrimmedAlignments::findAlignments()
 					rowIndex--;
 					columnIndex--;
 				} else {
-					std::cerr << "ERROR CODE 3: No paths found. Terminating backtracking.\n";
+					std::cout << "ERROR CODE 3: No paths found. Terminating backtracking.\n";
+					std::cout << "cIndex is " << cIndex << "\n";
+					std::cout << "urIndex is " << urIndex << "\n";
 					rowIndex = 0;
 					columnIndex = 0;
 				}
@@ -340,12 +384,16 @@ void UntrimmedAlignments::findAlignments()
 					refMaf = ref[urIndex] + refMaf;
 					columnIndex--;
 				} else {
-					std::cerr << "ERROR CODE 4: No paths found. Terminating backtracking.\n";
+					std::cout << "ERROR CODE 4: No paths found. Terminating backtracking.\n";
+					std::cout << "cIndex is " << cIndex << "\n";
+					std::cout << "urIndex is " << urIndex << "\n";
 					rowIndex = 0;
 					columnIndex = 0;
 				}
 			} else {
-				std::cerr << "ERROR CODE 5: No paths found. Terminating backtracking.\n";
+				std::cout << "ERROR CODE 5: No paths found. Terminating backtracking.\n";
+				std::cout << "cIndex is " << cIndex << "\n";
+				std::cout << "urIndex is " << urIndex << "\n";
 				rowIndex = 0;
 				columnIndex = 0;
 			}
@@ -371,7 +419,9 @@ void UntrimmedAlignments::findAlignments()
 				rowIndex--;
 				columnIndex--;
 			} else {
-				std::cerr << "ERROR CODE 6: No paths found. Terminating backtracking.\n";
+				std::cout << "ERROR CODE 6: No paths found. Terminating backtracking.\n";
+				std::cout << "cIndex is " << cIndex << "\n";
+				std::cout << "urIndex is " << urIndex << "\n";
 				rowIndex = 0;
 				columnIndex = 0;
 			}
@@ -415,32 +465,32 @@ void TrimmedAlignments::initialize()
 	rows = clr.length() + 1;
 	columns = ref.length() + 1;
 
-	int cIndex;
-	int urIndex;
-	int substitute;
-	int insert;
-	int deletion;
+	int64_t cIndex;
+	int64_t urIndex;
+	int64_t substitute;
+	int64_t insert;
+	int64_t deletion;
 
-	int lastBaseIndex = -1;
+	int64_t lastBaseIndex = -1;
 	bool isLastBase;
 	
 	// Record the indices of the first bases of all the reads
-	for (int index = 0; index < trimmedClrs.size(); index++) {
+	for (int64_t index = 0; index < trimmedClrs.size(); index++) {
 		lastBaseIndex = lastBaseIndex + trimmedClrs.at(index).length();
 		lastBaseIndices.push_back(lastBaseIndex);	
 	}
 
 	// Set the base cases for the DP matrix
-	for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
+	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
 		matrix[rowIndex][0] = rowIndex;	
 	}
-	for (int columnIndex = 1; columnIndex < columns; columnIndex++) {
+	for (int64_t columnIndex = 1; columnIndex < columns; columnIndex++) {
 		matrix[0][columnIndex] = 0;
 	}
 
 	// Find the minimal edit distances
-	for (int rowIndex = 1; rowIndex < rows; rowIndex++) {
-		for (int columnIndex = 1; columnIndex < columns; columnIndex++) {
+	for (int64_t rowIndex = 1; rowIndex < rows; rowIndex++) {
+		for (int64_t columnIndex = 1; columnIndex < columns; columnIndex++) {
 			cIndex = rowIndex - 1;
 			urIndex = columnIndex - 1;
 
@@ -476,15 +526,15 @@ void TrimmedAlignments::findAlignments()
 	std::string clrMaf = "";
 	std::string ulrMaf = "";
 	std::string refMaf = "";
-	int rowIndex = rows - 1;
-	int columnIndex = columns - 1;
-	int cIndex;
-	int urIndex;
-	int insert;
-	int deletion;
-	int substitute;
-	int currentCost;
-	int infinity = std::numeric_limits<int>::max();
+	int64_t rowIndex = rows - 1;
+	int64_t columnIndex = columns - 1;
+	int64_t cIndex;
+	int64_t urIndex;
+	int64_t insert;
+	int64_t deletion;
+	int64_t substitute;
+	int64_t currentCost;
+	int64_t infinity = std::numeric_limits<int>::max();
 	bool isLastBase;
 	bool firstDeletion = false;
 
@@ -626,7 +676,9 @@ void TrimmedAlignments::findAlignments()
 			columnIndex--;
 			firstDeletion = true;
 		} else {
-			std::cerr << "ERROR CODE 6: No paths found. Terminating backtracking.\n";
+			std::cout << "ERROR: No paths found. Terminating backtracking.\n";
+			std::cout << "cIndex is " << cIndex << "\n";
+			std::cout << "urIndex is " << urIndex << "\n";
 			rowIndex = 0;
 			columnIndex = 0;
 		}
