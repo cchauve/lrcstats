@@ -416,7 +416,7 @@ void createTrimmedStat(std::string mafName, std::string outputPath)
 			assert( statistics.size() == 7 );
 
 			output << "t ";
-			for (int i = 0; i < 7; i++) {
+			for (int i = 0; i < statistics.size(); i++) {
 				output << statistics.at(i) << " ";
 			}
 			output << "\n";
