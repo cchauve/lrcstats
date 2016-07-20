@@ -5,7 +5,9 @@ def writeJob(program, species, shortCov, longCov):
 	now = datetime.datetime.now()
 	test = "%s-%s-%sSx%sL" % (program, species, shortCov, longCov)
 	# LoRDeC uses more memory than other programs
-	if program is "lordec":
+	if species is "fly":
+		mem = 128
+	elif program is "lordec":
 		if int(shortCov) >= 200:
 			mem = 64
 		else:
