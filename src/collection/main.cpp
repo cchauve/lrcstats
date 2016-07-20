@@ -86,17 +86,13 @@ void generateUntrimmedMaf(std::string mafInputName, std::string clrName, std::st
 		fastaHeader = clrLine.substr(1, clrLine.npos);
 		int64_t readFastaNum = atoi( fastaHeader.c_str() );
 
-		std::cout << "FASTA read num is " << readFastaNum << "\n";
-		std::cout << "MAF read num is " << readMafNum << "\n";
+		std::cout << "Analyzing read " << readFastaNum << "...\n";
 		assert( readFastaNum == readMafNum );
 
 		std::getline(clrInput, clrLine);
-		//std::cout << clrLine << "\n\n";
 		clr = clrLine;
 		
 		alignments.reset(ref, ulr, clr);
-
-		std::cout << "\n";
 
 		// Write info into maf file
 
