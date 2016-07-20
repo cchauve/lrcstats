@@ -33,9 +33,9 @@ class ReadDatum(object):
 	uTruePos_k = "UNCORRECTED TRUE POSITIVE"
 	uFalsePos_k = "UNCORRECTED FALSE POSITIVE"
 
-	KEYS_g = [corrReadLength_k, uncorrReadLength_k, corrDel_k, corrIns_k, corrSub_k,
-		uncorrDel_k, uncorrIns_k, uncorrSub_k, cTruePos_k, cFalsePos_k,
-		uTruePos_k, uFalsePos_k]	
+	keys = [corrReadLength_k, uncorrReadLength_k, corrAlignmentLength_k, uncorrAlignmentLength_k,
+		corrDel_k, corrIns_k, corrSub_k, uncorrDel_k, uncorrIns_k, uncorrSub_k, 
+		cTruePos_k, cFalsePos_k, uTruePos_k, uFalsePos_k]	
 	'''
 	Preprocesses and outputs general statistics for reads.
 	'''
@@ -45,14 +45,14 @@ class ReadDatum(object):
 		directly from the STATS file outputted by lrcstats
 		'''
 		self.data = {}
-		# KEYS_g is a global variable and contains the keys
+		# keys is a global variable and contains the keys
 		# for the data dictionary in ReadDatum objects.
 		# These keys can be found initialized in the main body of the
 		# program.
-		assert len(data) == 9 or len(data) == 13
+		assert len(data) == 11 or len(data) == 15
 
 		for i in range(1, len(data)):
-			self.data[ ReadDatum.KEYS_g[i-1] ] = int(data[i])
+			self.data[ ReadDatum.keys[i-1] ] = int(data[i])
 
 	def getCorrLength(self):
 		'''
@@ -80,14 +80,9 @@ class ReadDatum(object):
 		cSub = self.data[ReadDatum.corrSub_k]
 
 		mutations = cDel + cIns + cSub
-		length = self.data[ReadDatum.corrReadLength_k]	
+		length = self.data[ReadDatum.corrAlignmentLength_k]	
 
-		if length == 0 and mutations == 0:
-			return 0
-		elif length == 0 and mutations != 0:
-			return 1
-		else:
-			return (cDel + cIns + cSub)/cLength
+		return mutations/length
 
 	def getUncorrLength(self):
 		'''
@@ -105,8 +100,11 @@ class ReadDatum(object):
 		uDel = self.data[ReadDatum.uncorrDel_k]
 		uIns = self.data[ReadDatum.uncorrIns_k]
 		uSub = self.data[ReadDatum.uncorrSub_k]
-		uLength = self.data[ReadDatum.uncorrReadLength_k]	
-		return (uDel + uIns + uSub)/uLength
+
+		mutations = uDel + uIns + uSub
+		length = self.data[ReadDatum.uncorrAlignmentLength_k]	
+
+		return mutations/length
 
 	def getUncorrErrors(self):
 		'''
