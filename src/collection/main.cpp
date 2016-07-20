@@ -413,8 +413,6 @@ void createTrimmedStat(std::string mafName, std::string outputPath)
 			CorrespondingSegments segments = correspondingSegmentsList.at(index);
 			std::vector<int64_t> statistics = trimmedReadStats(segments);
 
-			assert( statistics.size() == 7 );
-
 			output << "t ";
 			for (int i = 0; i < statistics.size(); i++) {
 				output << statistics.at(i) << " ";
@@ -440,7 +438,7 @@ void displayHelp()
 void displayUsage()
 {
 		std::cerr << "Usage: lrcstats [mode] [-m MAF input path] [-c cLR input path] [-t cLR are trimmed] "
-		      	  << "[-o MAF output path]\n";
+		      	  << "[-o output path]\n";
 		std::cerr << "lrcstats maf to create 3-way MAF file\n";
 		std::cerr << "lrcstats stats to perform statistics on MAF file\n";
 }
@@ -471,7 +469,7 @@ int main(int argc, char *argv[])
 
 	std::string mafInputName = "";
 	std::string clrName = "";
-	std::string outputPath = "output.maf";
+	std::string outputPath = "";
 	bool trimmed = false;
 
 	while ((opt = getopt(argc, argv, "m:c:o:ht")) != -1) {
@@ -485,7 +483,7 @@ int main(int argc, char *argv[])
 				clrName = optarg;
 				break;
 			case 'o':
-				// maf output file name
+				// output file path
 				outputPath = optarg;
 				break;
 			case 't':
