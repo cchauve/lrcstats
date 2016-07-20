@@ -334,7 +334,7 @@ void createUntrimmedStat(std::string mafName, std::string outputPath)
 			std::vector<int64_t> statistics = trimmedReadStats(segments);
 
 			output << "t ";
-			for (int i = 0; i < 7; i++) {
+			for (int i = 0; i < statistics.size(); i++) {
 				output << statistics.at(i) << " ";
 			}
 			output << "\n";
