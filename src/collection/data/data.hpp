@@ -6,7 +6,7 @@
 std::vector<std::string> split(const std::string &str);
 /* Splits a string into its constituent tokens similar to the .split() function in python. */
 
-int gaplessLength(std::string read);
+int64_t gaplessLength(std::string read);
 /* Returns the length of a sequence without gaps. */
 
 class ReadInfo

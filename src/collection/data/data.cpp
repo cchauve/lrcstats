@@ -24,7 +24,7 @@ std::vector<std::string> split(const std::string &s)
 	return elems;
 }
 
-int gaplessLength(std::string read) 
+int64_t gaplessLength(std::string read) 
 /* Returns the gapless length of MAF formatted reads */
 {
 	read.erase(std::remove(read.begin(), read.end(), '-'), read.end());
@@ -112,19 +112,19 @@ void MafFile::addReads(TrimmedAlignments alignments, ReadInfo readInfo)
 	// The start position in PacBio reads are 0 since the the read is considered
 	// to be the "original" genome.
 	std::string refStart = readInfo.getStart();
-	int uStart = 0;
-	int cStart = 0;
+	int64_t uStart = 0;
+	int64_t cStart = 0;
  
 	// Read size, sans gaps
-	int refSize = gaplessLength(ref);
-	int uSize = gaplessLength(ulr);
-	int cSize = gaplessLength(clr);
+	int64_t refSize = gaplessLength(ref);
+	int64_t uSize = gaplessLength(ulr);
+	int64_t cSize = gaplessLength(clr);
 
 	// The original size of the source genome. Since PacBio reads are the
 	// "original" genome, the source size is simply the size of the read.
 	std::string refSrcSize = readInfo.getSrcSize();
-	int uSrcSize = uSize;
-	int cSrcSize = cSize;
+	int64_t uSrcSize = uSize;
+	int64_t cSrcSize = cSize;
 
 	std::string refOrient = readInfo.getRefOrient();
 	std::string readOrient = readInfo.getReadOrient();
@@ -160,19 +160,19 @@ void MafFile::addReads(UntrimmedAlignments alignments, ReadInfo readInfo)
 	// The start position in PacBio reads are 0 since the the read is considered
 	// to be the "original" genome.
 	std::string refStart = readInfo.getStart();
-	int uStart = 0;
-	int cStart = 0;
+	int64_t uStart = 0;
+	int64_t cStart = 0;
  
 	// Read size, sans gaps
-	int refSize = gaplessLength(ref);
-	int uSize = gaplessLength(ulr);
-	int cSize = gaplessLength(clr);
+	int64_t refSize = gaplessLength(ref);
+	int64_t uSize = gaplessLength(ulr);
+	int64_t cSize = gaplessLength(clr);
 
 	// The original size of the source genome. Since PacBio reads are the
 	// "original" genome, the source size is simply the size of the read.
 	std::string refSrcSize = readInfo.getSrcSize();
-	int uSrcSize = uSize;
-	int cSrcSize = cSize;
+	int64_t uSrcSize = uSize;
+	int64_t cSrcSize = cSize;
 
 	std::string refOrient = readInfo.getRefOrient();
 	std::string readOrient = readInfo.getReadOrient();

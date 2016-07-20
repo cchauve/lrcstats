@@ -20,7 +20,7 @@ std::vector< CorrespondingSegments > getUntrimmedCorrespondingSegmentsList(std::
 	CorrespondingSegments correspondingSegments;
 	std::vector< CorrespondingSegments > segmentList;
 
-	for (int index = 0; index < length; index++) {
+	for (int64_t index = 0; index < length; index++) {
 		// Check if we're at the beginning of a corrected segment
 		if ( not inCorrectedSegment and (isupper(cRead[index]) or cRead[index] == '-') ) {
 			inCorrectedSegment = true;
@@ -76,7 +76,7 @@ std::vector< CorrespondingSegments > getTrimmedCorrespondingSegmentsList(std::st
 	CorrespondingSegments correspondingSegments;
 	std::vector< CorrespondingSegments > segmentList;
 
-	for (int index = 0; index < length; index++) {
+	for (int64_t index = 0; index < length; index++) {
 		// Check if we've just entered a corrected segment
 		if ( not inCorrectedSegment and cRead[index] == 'X') {
 			inCorrectedSegment = true;
@@ -150,15 +150,15 @@ int64_t editScore(std::string ref, std::string lr)
  * using the same metric as when calculating the edit score between the ref and lr
  */
 {
-	int score = 0;
-	int del = 1;
-	int ins = 1;
-	int sub = 1;
-	int length = ref.length();
+	int64_t score = 0;
+	int64_t del = 1;
+	int64_t ins = 1;
+	int64_t sub = 1;
+	int64_t length = ref.length();
 	char refBase;
 	char base;
 
-	for (int seqIndex = 0; seqIndex < length; seqIndex++) {
+	for (int64_t seqIndex = 0; seqIndex < length; seqIndex++) {
 		refBase = ref[seqIndex];
 		base = lr[seqIndex];
 
