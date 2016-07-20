@@ -86,17 +86,13 @@ void generateUntrimmedMaf(std::string mafInputName, std::string clrName, std::st
 		fastaHeader = clrLine.substr(1, clrLine.npos);
 		int64_t readFastaNum = atoi( fastaHeader.c_str() );
 
-		std::cout << "FASTA read num is " << readFastaNum << "\n";
-		std::cout << "MAF read num is " << readMafNum << "\n";
+		std::cout << "Analyzing read " << readFastaNum << "...\n";
 		assert( readFastaNum == readMafNum );
 
 		std::getline(clrInput, clrLine);
-		//std::cout << clrLine << "\n\n";
 		clr = clrLine;
 		
 		alignments.reset(ref, ulr, clr);
-
-		std::cout << "\n";
 
 		// Write info into maf file
 
@@ -293,7 +289,7 @@ void createUntrimmedStat(std::string mafName, std::string outputPath)
 	std::string line = "";
 
 	// Indices where each respective information lies in the MAF file line
-	//int sizeIndex = 3; 
+	int sizeIndex = 3; 
 	int seqIndex = 6;
 	// Number of statistics we consider
 	int numStatistics = 10;
@@ -420,7 +416,7 @@ void createTrimmedStat(std::string mafName, std::string outputPath)
 			assert( statistics.size() == 7 );
 
 			output << "t ";
-			for (int i = 0; i < 7; i++) {
+			for (int i = 0; i < statistics.size(); i++) {
 				output << statistics.at(i) << " ";
 			}
 			output << "\n";

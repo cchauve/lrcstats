@@ -72,7 +72,7 @@ def writeJob(program, species, shortCov, longCov):
 		file.write("############### Convert FASTQ to FASTA ###########\n")
 		file.write("echo 'Converting FASTQ to FASTA'\n")
 
-		fastq2fasta = "fastq2fasta=$preprocesspath/fastq2fasta.py\n"
+		fastq2fasta = "fastq2fasta=$preprocesspath/fastq2fasta/fastq2fasta.py\n"
 		file.write(fastq2fasta)
 
 		q2aOutPrefix = "outputq2a=$outputdir/%s\n\n" % (test)
@@ -113,7 +113,7 @@ def writeJob(program, species, shortCov, longCov):
 		file.write("############### Process Trimmed Reads ###########\n")
 		file.write("echo 'Processing trimmed reads'\n")
 
-		processPath = "processtrimmed=$preprocesspath/processtrimmed.py\n"
+		processPath = "processtrimmed=$preprocesspath/processtrimmed/processtrimmed.py\n"
 		file.write(processPath)
 
 		processOutput = "processoutput=$outputdir/processed.fasta\n\n"
@@ -128,7 +128,7 @@ def writeJob(program, species, shortCov, longCov):
 	file.write("############### Prune the maf file(s) ###########\n")
 	file.write("echo 'Pruning MAF file(s)'\n")
 
-	prunePath = "prunemaf=$preprocesspath/prunemaf.py\n"
+	prunePath = "prunemaf=$preprocesspath/prunemaf/prunemaf.py\n"
 	file.write(prunePath)
 
 	pruneOutput = "pruneOutput=$outputdir/pruned\n\n"
