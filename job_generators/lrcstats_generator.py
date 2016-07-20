@@ -128,7 +128,7 @@ def writeJob(program, species, shortCov, longCov):
 	file.write("############### Prune the maf file(s) ###########\n")
 	file.write("echo 'Pruning MAF file(s)'\n")
 
-	prunePath = "prunemaf=$preprocesspath/prunemaf.py\n"
+	prunePath = "prunemaf=$preprocesspath/prunemaf/prunemaf.py\n"
 	file.write(prunePath)
 
 	pruneOutput = "pruneOutput=$outputdir/pruned\n\n"
