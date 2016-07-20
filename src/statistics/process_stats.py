@@ -14,8 +14,11 @@ import matplotlib.patches as mpatches
 
 class ReadDatum(object):
 	# Keys for ReadDatum member variable dictionary
-	corrLength_k = "CORRECTED LENGTH"
-	uncorrLength_k = "UNCORRECTED LENGTH"
+	corrReadLength_k = "CORRECTED READ LENGTH"
+	uncorrReadLength_k = "UNCORRECTED READ LENGTH"
+
+	corrAlignmentLength_k = "CORRECTED ALIGNMENT LENGTH"
+	uncorrAlignmentLength_k = "UNCORRECTED ALIGNMENT LENGTH"
 
 	corrDel_k = "CORRECTED DELETION"
 	corrIns_k = "CORRECTED INSERTION"
@@ -30,7 +33,7 @@ class ReadDatum(object):
 	uTruePos_k = "UNCORRECTED TRUE POSITIVE"
 	uFalsePos_k = "UNCORRECTED FALSE POSITIVE"
 
-	KEYS_g = [corrLength_k, uncorrLength_k, corrDel_k, corrIns_k, corrSub_k,
+	KEYS_g = [corrReadLength_k, uncorrReadLength_k, corrDel_k, corrIns_k, corrSub_k,
 		uncorrDel_k, uncorrIns_k, uncorrSub_k, cTruePos_k, cFalsePos_k,
 		uTruePos_k, uFalsePos_k]	
 	'''
@@ -55,7 +58,7 @@ class ReadDatum(object):
 		'''
 		Returns the length of the corrected long read.
 		'''
-		return self.data[ReadDatum.corrLength_k]
+		return self.data[ReadDatum.corrReadLength_k]
 
 	def getCorrErrors(self):
 		'''
@@ -75,14 +78,22 @@ class ReadDatum(object):
 		cDel = self.data[ReadDatum.corrDel_k]
 		cIns = self.data[ReadDatum.corrIns_k]
 		cSub = self.data[ReadDatum.corrSub_k]
-		cLength = self.data[ReadDatum.corrLength_k]	
-		return (cDel + cIns + cSub)/cLength
+
+		mutations = cDel + cIns + cSub
+		length = self.data[ReadDatum.corrReadLength_k]	
+
+		if length == 0 and mutations == 0:
+			return 0
+		elif length == 0 and mutations != 0:
+			return 1
+		else
+			return (cDel + cIns + cSub)/cLength
 
 	def getUncorrLength(self):
 		'''
 		Returns the length of the corresponding uncorrected long read.
 		'''
-		uLength = self.data[ReadDatum.uncorrLength_k]
+		uLength = self.data[ReadDatum.uncorrReadLength_k]
 		return uLength
 
 	def getUncorrErrorRate(self):
@@ -94,7 +105,7 @@ class ReadDatum(object):
 		uDel = self.data[ReadDatum.uncorrDel_k]
 		uIns = self.data[ReadDatum.uncorrIns_k]
 		uSub = self.data[ReadDatum.uncorrSub_k]
-		uLength = self.data[ReadDatum.uncorrLength_k]	
+		uLength = self.data[ReadDatum.uncorrReadLength_k]	
 		return (uDel + uIns + uSub)/uLength
 
 	def getUncorrErrors(self):
