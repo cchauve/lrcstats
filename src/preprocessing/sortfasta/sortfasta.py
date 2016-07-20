@@ -2,6 +2,13 @@ import sys, getopt
 from operator import itemgetter
 
 def getReads(inputPath):
+	'''
+	Inputs
+	- string inputPath: specifies the path to the input FASTA file
+	Returns
+	- list of tuples reads: first element in tuple is int read number,
+				second element is string DNA sequence
+	'''
 	with open(inputPath, 'r') as file:
 		reads = []
 		sequence = ""
@@ -18,6 +25,15 @@ def getReads(inputPath):
 	return reads
 
 def writeFasta(outputPath, reads):
+	'''
+	Inputs
+	- string outputPath: specifies the write path to the output
+			     FASTA file
+	- list of tuples reads: first element in tuple is int read number,
+				second element is string DNA sequence
+	Returns
+	- None
+	'''
 	with open(outputPath, 'w') as file:
 		for read in reads:
 			header = ">%d\n" % (read[0])
@@ -54,15 +70,20 @@ for opt, arg in opts:
 	elif opt == '-o':
 		outputPath = arg
 
-if inputPath is None and outputPath is None:
-	print usageMessage
+optsIncomplete = False
 
+if inputPath is None:
+	print "Please provide the path to the input FASTA file."
+	optsIncomplete = True
+if outputPath is None:
+	print "Please provide the path to the output FASTA file."
+	optsIncomplete = True
+
+if optsIncomplete:
+	print usageMessage
+	sys.exit(2)
 
 reads = getReads(inputPath)
+# Sort reads based on read number
 reads = sorted(reads, key=itemgetter(0))
-
-numbers = []
-for read in reads:
-	numbers.append( read[0] )
-
 writeFasta(outputPath, reads)
