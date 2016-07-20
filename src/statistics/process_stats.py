@@ -86,7 +86,7 @@ class ReadDatum(object):
 			return 0
 		elif length == 0 and mutations != 0:
 			return 1
-		else
+		else:
 			return (cDel + cIns + cSub)/cLength
 
 	def getUncorrLength(self):
