@@ -212,8 +212,16 @@ std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int6
 {
 	std::vector<int64_t> statistics;
 
+	// Length of the sequences only, sans gaps
 	statistics.push_back(cSize);
 	statistics.push_back(uSize);
+
+	// Length of the alignments (i.e. sequences including gaps)
+	int64_t cAlignmentLength = cRead.length();
+	statistics.push_back( cAlignmentLength );
+
+	int64_t uAlignmentLength = uRead.length();
+	statistics.push_back( uAlignmentLength );
 
 	statistics.push_back( getDeletions(ref,cRead) );
 	statistics.push_back( getInsertions(ref,cRead) );
@@ -240,11 +248,19 @@ std::vector<int64_t> trimmedReadStats(CorrespondingSegments segments)
 	std::string clr = segments.cReadSegment;
 	std::string ulr = segments.uReadSegment;
 
+	// Length of the sequences only, sans gaps
 	int64_t cLength = gaplessLength(clr);
 	statistics.push_back(cLength);
 
 	int64_t uLength = gaplessLength(ulr);
 	statistics.push_back(uLength);
+
+	// Length of the alignments (i.e. sequences including gaps)
+	int64_t cAlignmentLength = clr.length();
+	statistics.push_back( cAlignmentLength );
+
+	int64_t uAlignmentLength = ulr.length();
+	statistics.push_back( uAlignmentLength );
 
 	// Push the number of mutations in the corrected segments and its
 	// corresponding segment in the uncorrected long read
@@ -273,7 +289,7 @@ void createUntrimmedStat(std::string mafName, std::string outputPath)
 	std::string line = "";
 
 	// Indices where each respective information lies in the MAF file line
-	int sizeIndex = 3; 
+	//int sizeIndex = 3; 
 	int seqIndex = 6;
 	// Number of statistics we consider
 	int numStatistics = 10;
