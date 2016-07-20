@@ -178,7 +178,7 @@ def writeJob(program, species, shortCov, longCov):
 	file.write("############### Collecting data ###########\n")
 	file.write("echo 'Collecting data'\n")
 
-	statsOutput = "$statsOutput=$outputdir/%s.stats\n\n" % (test)
+	statsOutput = "statsOutput=$outputdir/%s.stats\n\n" % (test)
 	file.write(statsOutput)
 
 	command = "$lrcstats stats -m $mafOutput -o $statsOutput\n\n"
