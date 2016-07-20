@@ -289,7 +289,7 @@ void createUntrimmedStat(std::string mafName, std::string outputPath)
 	std::string line = "";
 
 	// Indices where each respective information lies in the MAF file line
-	//int sizeIndex = 3; 
+	int sizeIndex = 3; 
 	int seqIndex = 6;
 	// Number of statistics we consider
 	int numStatistics = 10;
