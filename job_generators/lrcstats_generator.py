@@ -9,7 +9,7 @@ def writeJob(program, species, shortCov, longCov):
 	
 	################### Write the resources #######################
 	file.write("#!/bin/bash\n")
-	resources = ["walltime=24:00:00", "mem=128gb", "nodes=1:ppn=1"]
+	resources = ["walltime=2:00:00", "mem=8gb", "nodes=1:ppn=1"]
 	for resource in resources:
 		line = "#PBS -l %s\n" %(resource)
 		file.write(line)
