@@ -13,6 +13,26 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 class ReadDatum(object):
+	# Keys for ReadDatum member variable dictionary
+	corrLength_k = "CORRECTED LENGTH"
+	uncorrLength_k = "UNCORRECTED LENGTH"
+
+	corrDel_k = "CORRECTED DELETION"
+	corrIns_k = "CORRECTED INSERTION"
+	corrSub_k = "CORRECTED SUBSTITUTION"
+
+	uncorrDel_k = "UNCORRECTED DELETION"
+	uncorrIns_k = "UNCORRECTED INSERTION"
+	uncorrSub_k = "UNCORRECTED SUBSTITUTION"
+
+	cTruePos_k = "CORRECTED TRUE POSITIVE"
+	cFalsePos_k = "CORRECTED FALSE POSITIVE"
+	uTruePos_k = "UNCORRECTED TRUE POSITIVE"
+	uFalsePos_k = "UNCORRECTED FALSE POSITIVE"
+
+	KEYS_g = [corrLength_k, uncorrLength_k, corrDel_k, corrIns_k, corrSub_k,
+		uncorrDel_k, uncorrIns_k, uncorrSub_k, cTruePos_k, cFalsePos_k,
+		uTruePos_k, uFalsePos_k]	
 	'''
 	Preprocesses and outputs general statistics for reads.
 	'''
@@ -26,22 +46,24 @@ class ReadDatum(object):
 		# for the data dictionary in ReadDatum objects.
 		# These keys can be found initialized in the main body of the
 		# program.
+		assert len(data) == 9 or len(data) == 13
+
 		for i in range(1, len(data)):
-			self.data[ KEYS_g[i-1] ] = int(data[i])
+			self.data[ ReadDatum.KEYS_g[i-1] ] = int(data[i])
 
 	def getCorrLength(self):
 		'''
 		Returns the length of the corrected long read.
 		'''
-		return self.data[corrLength_k]
+		return self.data[ReadDatum.corrLength_k]
 
 	def getCorrErrors(self):
 		'''
 		Returns the number of errors in the read.
 		'''
-		cDel = self.data[corrDel_k]
-		cIns = self.data[corrIns_k]
-		cSub = self.data[corrSub_k]
+		cDel = self.data[ReadDatum.corrDel_k]
+		cIns = self.data[ReadDatum.corrIns_k]
+		cSub = self.data[ReadDatum.corrSub_k]
 		return cDel + cIns + cSub
 
 	def getCorrErrorRate(self):
@@ -50,17 +72,17 @@ class ReadDatum(object):
 		which is defined as the number of mutations divided by
 		the length of the read.
 		'''
-		cDel = self.data[corrDel_k]
-		cIns = self.data[corrIns_k]
-		cSub = self.data[corrSub_k]
-		cLength = self.data[corrLength_k]	
+		cDel = self.data[ReadDatum.corrDel_k]
+		cIns = self.data[ReadDatum.corrIns_k]
+		cSub = self.data[ReadDatum.corrSub_k]
+		cLength = self.data[ReadDatum.corrLength_k]	
 		return (cDel + cIns + cSub)/cLength
 
 	def getUncorrLength(self):
 		'''
 		Returns the length of the corresponding uncorrected long read.
 		'''
-		uLength = self.data[uncorrLength_k]
+		uLength = self.data[ReadDatum.uncorrLength_k]
 		return uLength
 
 	def getUncorrErrorRate(self):
@@ -69,10 +91,10 @@ class ReadDatum(object):
 		which is defined as the number of mutations divided by
 		the length of the read.
 		'''
-		uDel = self.data[uncorrDel_k]
-		uIns = self.data[uncorrIns_k]
-		uSub = self.data[uncorrSub_k]
-		uLength = self.data[uncorrLength_k]	
+		uDel = self.data[ReadDatum.uncorrDel_k]
+		uIns = self.data[ReadDatum.uncorrIns_k]
+		uSub = self.data[ReadDatum.uncorrSub_k]
+		uLength = self.data[ReadDatum.uncorrLength_k]	
 		return (uDel + uIns + uSub)/uLength
 
 	def getUncorrErrors(self):
@@ -80,9 +102,9 @@ class ReadDatum(object):
 		Returns the number of erroreneous bases in the uncorrected
 		long read.
 		'''
-		uDel = self.data[uncorrDel_k]
-		uIns = self.data[uncorrIns_k]
-		uSub = self.data[uncorrSub_k]
+		uDel = self.data[ReadDatum.uncorrDel_k]
+		uIns = self.data[ReadDatum.uncorrIns_k]
+		uSub = self.data[ReadDatum.uncorrSub_k]
 		return uDel + uIns + uSub
 
 class TrimmedDatum(ReadDatum):
@@ -101,27 +123,27 @@ class TrimmedDatum(ReadDatum):
 	# and its corresponding uncorrected read
 
 	def getCorrDel(self):
-		cDel = self.data[corrDel_k]
+		cDel = self.data[ReadDatum.corrDel_k]
 		return cDel
 
 	def getCorrIns(self):
-		cIns = self.data[corrIns_k]
+		cIns = self.data[ReadDatum.corrIns_k]
 		return cIns
 
 	def getCorrSub(self):
-		cSub = self.data[corrSub_k]
+		cSub = self.data[ReadDatum.corrSub_k]
 		return cSub
 
 	def getUncorrDel(self):
-		uDel = self.data[uncorrDel_k]
+		uDel = self.data[ReadDatum.uncorrDel_k]
 		return uDel
 
 	def getUncorrIns(self):
-		uIns = self.data[uncorrIns_k]
+		uIns = self.data[ReadDatum.uncorrIns_k]
 		return uIns
 
 	def getUncorrSub(self):
-		uSub = self.data[uncorrSub_k]
+		uSub = self.data[ReadDatum.uncorrSub_k]
 		return uSub
 
 class UntrimmedDatum(ReadDatum):
@@ -142,7 +164,7 @@ class UntrimmedDatum(ReadDatum):
 		have been corrected and are equivalent to its respective
 		base in the referene alignment (not reference sequence)
 		'''
-		correctedTruePos = self.data[cTruePos_k]
+		correctedTruePos = self.data[ReadDatum.cTruePos_k]
 		return correctedTruePos
 
 	def getCorrFalsePositives(self):
@@ -152,7 +174,7 @@ class UntrimmedDatum(ReadDatum):
 		respective base in the reference alignment (not reference
 		sequence)
 		'''
-		correctedFalsePos = self.data[cFalsePos_k]
+		correctedFalsePos = self.data[ReadDatum.cFalsePos_k]
 		return correctedFalsePos
 
 	def getCorrSegmentErrorRate(self):
@@ -161,8 +183,8 @@ class UntrimmedDatum(ReadDatum):
 		in the corrected long read which have been
 		corrected. 
 		'''
-		correctedTruePos = self.data[cTruePos_k]
-		correctedFalsePos = self.data[cFalsePos_k]
+		correctedTruePos = self.data[ReadDatum.cTruePos_k]
+		correctedFalsePos = self.data[ReadDatum.cFalsePos_k]
 		return (correctedFalsePos)/(correctedTruePos + correctedFalsePos)
 	
 	# These methods apply to the uncorrected segments of corrected long reads
@@ -173,7 +195,7 @@ class UntrimmedDatum(ReadDatum):
 		that have NOT been corrected and are equivalent
 		to its respective base in the reference alignment.
 		'''
-		uncorrectedTruePos = self.data[uTruePos_k]
+		uncorrectedTruePos = self.data[ReadDatum.uTruePos_k]
 		return uncorrectedTruePos
 
 	def getUncorrFalsePositives(self):
@@ -182,7 +204,7 @@ class UntrimmedDatum(ReadDatum):
 		have NOT been corrected and are NOT equivalent to its
 		respective base in the reference alignment.
 		'''
-		uncorrectedFalsePos = self.data[uFalsePos_k]
+		uncorrectedFalsePos = self.data[ReadDatum.uFalsePos_k]
 		return uncorrectedFalsePos
 
 	def getUncorrSegmentErrorRate(self):
@@ -191,8 +213,8 @@ class UntrimmedDatum(ReadDatum):
 		the corrected long read which have not been
 		corrected.
 		'''
-		uncorrectedTruePos = self.data[uTruePos_k]
-		uncorrectedFalsePos = self.data[uFalsePos_k]
+		uncorrectedTruePos = self.data[ReadDatum.uTruePos_k]
+		uncorrectedFalsePos = self.data[ReadDatum.uFalsePos_k]
 		return (uncorrectedFalsePos)/(uncorrectedTruePos + uncorrectedFalsePos)
 
 def retrieveRawData(dataPath):
@@ -810,29 +832,9 @@ maxReadLength_g = 60000
 # Number of read length bins
 binNumber_g = 50
 
-# Keys for ReadDatum member variable dictionary
-corrLength_k = 0
-uncorrLength_k = 1
-
-corrDel_k = 2
-corrIns_k = 3
-corrSub_k = 4
-
-uncorrDel_k = 5
-uncorrIns_k = 6
-uncorrSub_k = 7
-
-cTruePos_k = 8
-cFalsePos_k = 9
-uTruePos_k = 10
-uFalsePos_k = 11
-
-KEYS_g=[corrLength_k, uncorrLength_k, corrDel_k, corrIns_k, corrSub_k,
-	uncorrDel_k, uncorrIns_k, uncorrSub_k, cTruePos_k, cFalsePos_k,
-	uTruePos_k, uFalsePos_k]	
 
 helpMessage = "Visualize long read correction data statistics."
-usageMessage = "Usage: %s [-h help and usage] [-i directory] [-d output dir] [-n experiment name]" % (sys.argv[0])
+usageMessage = "Usage: %s [-h help and usage] [-i stats file input path] [-d output directory] [-n experiment name]" % (sys.argv[0])
 options = "hi:d:n:t"
 
 try:
