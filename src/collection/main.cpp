@@ -116,6 +116,7 @@ void generateTrimmedMaf(std::string mafInputName, std::string clrName, std::stri
 	}	
 
 	std::string mafLine;
+	std::string clrLine;
 
 	std::vector<std::string> mafTokens;
 	std::vector<std::string> clrTokens;
@@ -136,72 +137,59 @@ void generateTrimmedMaf(std::string mafInputName, std::string clrName, std::stri
 	TrimmedAlignments alignments(ref, ulr, clr);
 	ReadInfo readInfo(readName, refOrient, readOrient, start, srcSize);	
 
-	while (!mafInput.eof() && !clrInput.eof()) {
-		// Read from maf file first
-	
-		// //Skip line
-		std::getline(mafInput, mafLine); 
+	// Skip first line in maf file
+	while (std::getline(mafInput, mafLine) && std::getline(clrInput, clrLine)) {
 		//std::cout << mafLine << "\n";
-
 		// Read ref line
 		std::getline(mafInput, mafLine);
 		//std::cout << mafLine << "\n";
 
-		if (mafLine != "") {
-			mafTokens = split(mafLine);	
+		mafTokens = split(mafLine);	
 
-			assert( mafTokens.size() > 5 );
+		assert( mafTokens.size() == 7 );
 
-			ref = mafTokens.at(6);			
-			refOrient = mafTokens.at(4);
-			start = mafTokens.at(2);
-			srcSize = mafTokens.at(5);
-			
-			refNonEmpty = true;
-		} else {
-			refNonEmpty = false;
-		}
+		ref = mafTokens.at(6);			
+		refOrient = mafTokens.at(4);
+		start = mafTokens.at(2);
+		srcSize = mafTokens.at(5);
 
 		// Read ulr line
 		std::getline(mafInput, mafLine);
 		//std::cout << mafLine << "\n";
 
-		if (mafLine != "") {
-			mafTokens = split(mafLine);	
+		mafTokens = split(mafLine);	
 
-			assert( mafTokens.size() > 5 );
+		assert( mafTokens.size() == 7 );
 
-			ulr = mafTokens.at(6);
-			readName = mafTokens.at(1);
-			readOrient = mafTokens.at(4);
-			ulrNonEmpty = true;
-		} else {
-			ulrNonEmpty = false;
-		}
+		ulr = mafTokens.at(6);
+		readName = mafTokens.at(1);
+		int64_t readMafNum = atoi( readName.c_str() );
+		readOrient = mafTokens.at(4);
 
 		//Skip line again
 		std::getline(mafInput, mafLine); 
 		//std::cout << mafLine << "\n\n";
 
-		if (refNonEmpty && ulrNonEmpty) {
-			// Reset readInfo object
-			readInfo.reset(readName, refOrient, readOrient, start, srcSize);
-			// Next, read from clr file
-		
-			// Skip first line
-			getline(clrInput, clr);
+		readInfo.reset(readName, refOrient, readOrient, start, srcSize);
 
-			// Read clr line
-			getline(clrInput, clr);
-		
-				if (clr != "") {
-				alignments.reset(ref, ulr, clr);
+		// Next, read from clr file
+		//std::cout << clrLine << "\n";
 
-				// Write info into maf file
-				mafOutput.addReads(alignments, readInfo);
-			}	
-		}
-		clr = "";
+		std::string fastaHeader;
+		fastaHeader = clrLine.substr(1, clrLine.npos);
+		int64_t readFastaNum = atoi( fastaHeader.c_str() );
+
+		std::cout << "Analyzing read " << readFastaNum << "...\n";
+		assert( readFastaNum == readMafNum );
+
+		std::getline(clrInput, clrLine);
+		clr = clrLine;
+		
+		alignments.reset(ref, ulr, clr);
+
+		// Write info into maf file
+
+		mafOutput.addReads(alignments, readInfo);
 	}
 
 	mafInput.close();

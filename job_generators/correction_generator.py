@@ -50,6 +50,8 @@ def writeJob(program, species, shortCov, longCov):
 	###############################################################
 
 	file.write("set -e\n")
+	outputDir = "outputDir=%s\n\n"
+	
 	mkdir = "mkdir -p %s\n" % (outputdir)
 
 	file.write(mkdir)
@@ -84,9 +86,15 @@ def writeJob(program, species, shortCov, longCov):
 		brownieCommand = "/home/seanla/Software/brownie/brownie graphCorrection -k 75 -p %s %s %s\n\n" % (brownieOutput, karectShort1, karectShort2)
 		file.write(brownieCommand)
 
+		removeKarect = "rm -r %s\n\n" % (karectOutput)
+		file.write(removeKarect)
+
 		dbgraph = "%s/DBGraph.fasta" % (brownieOutput)
-		jabbaCommand = "/home/seanla/Software/jabba/jabba -t ${PBS_NUM_PPN} -l 20 -k 75 -o %s -g %s -fastq %s" % (jabbaOutput, dbgraph, long) 
+		jabbaCommand = "/home/seanla/Software/jabba/jabba -t ${PBS_NUM_PPN} -l 20 -k 75 -o %s -g %s -fastq %s\n\n" % (jabbaOutput, dbgraph, long) 
 		file.write(jabbaCommand)
+
+		removeBrownie = "rm -r %s\n" % (brownieOutput)
+		file.write(removeBrownie)
 
 	if program is "proovread":
 		output = "%s/%s" % (outputdir, test)
@@ -108,9 +116,12 @@ def writeJob(program, species, shortCov, longCov):
 		file.write(samtools)
 			
 		dir = "cd /home/seanla/Software/proovread/bin\n\n"
-		command = "./proovread -t ${PBS_NUM_PPN} --lr-qv-offset 70 --bam %s -l %s -p %s" % (bam, long, output)
 		file.write(dir)
+
+		command = "./proovread -t ${PBS_NUM_PPN} --lr-qv-offset 70 --bam %s -l %s -p %s\n\n" % (bam, long, output)
 		file.write(command)
+
+		removeSam = "rm -r %s\n" % (samPath)
 
 	if program is "colormap":
 		colormapPath = "colormap=/home/seanla/Software/colormap/runBoth.sh\n"

@@ -33,9 +33,20 @@ class ReadDatum(object):
 	uTruePos_k = "UNCORRECTED TRUE POSITIVE"
 	uFalsePos_k = "UNCORRECTED FALSE POSITIVE"
 
-	keys = [corrReadLength_k, uncorrReadLength_k, corrAlignmentLength_k, uncorrAlignmentLength_k,
-		corrDel_k, corrIns_k, corrSub_k, uncorrDel_k, uncorrIns_k, uncorrSub_k, 
-		cTruePos_k, cFalsePos_k, uTruePos_k, uFalsePos_k]	
+	keys = [corrReadLength_k, 
+		uncorrReadLength_k, 
+		corrAlignmentLength_k, 
+		uncorrAlignmentLength_k,
+		corrDel_k, 
+		corrIns_k, 
+		corrSub_k, 
+		uncorrDel_k, 
+		uncorrIns_k, 
+		uncorrSub_k, 
+		cTruePos_k, 
+		cFalsePos_k, 
+		uTruePos_k, 
+		uFalsePos_k]	
 	'''
 	Preprocesses and outputs general statistics for reads.
 	'''
