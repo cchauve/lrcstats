@@ -32,12 +32,12 @@ def getCorrectedReads(cReadPath):
 				# Add the read to the dictionary; if it already exists, then append the
 				# trimmed read sequence and slice to the list
 				if number in cReads:
-					reads[number][sequence_k].append(sequence)
-					reads[number][slice_k].append(slice)
+					reads[number][trimmed_g].append(sequence)
+					reads[number][slices_g].append(slice)
 				else:
 					sequences = [ sequence ]
 					slices = [ slice ]
-					reads[number] = { sequence_k : sequences, slice_k : slices } 
+					reads[number] = { trimmed_g : sequences, slices_g : slices } 
 	return reads
 
 def getUncorrectedReads(uReadPath, reads):
@@ -62,9 +62,20 @@ def getUncorrectedReads(uReadPath, reads):
 				# To save space, only add the uncorrected sequence if the read
 				# exists in the dict
 				if number in reads:
-					reads[number][uncorrected_k] = sequence
+					reads[number][uncorrected_g] = sequence
 				justReadHeader = False
 	return reads
+
+def fillTrimmedGaps(read):
+	'''
+	Fill the gaps of the trimmed reads using slice information and the uncorrected sequence.
+	Input
+	- (dict) read: returns its trimmed sequence(s), uncorrected sequence and slice(s)
+	Returns
+	- (string) untrimmedSequence: the untrimmed sequence
+	'''
+	untrimmedSequence = ""
+	return untrimmedSequence
 
 def makeUntrimmed(reads)
 	'''
@@ -86,7 +97,7 @@ def writeUntrimmedFile(reads, outputPath):
 	'''
 	Write the new untrimmed reads into a FASTA file.
 	Input
-	- (dict) reads: given the read number, return the untrimmed sequence
+	- (dict) reads: given the read number, returns the untrimmed sequence
 	- (string) outputPath: Specifies the path to the FASTA file
 	Returns
 	- None
@@ -98,7 +109,6 @@ def writeUntrimmedFile(reads, outputPath):
 			file.write(header)
 			sequence = "%s\n" % (sequence)	
 			file.write(sequence)
-			
 
 helpMessage = "Convert proovread trimmed reads into untrimmed reads."
 usageMessage = "[-h help and usage] [-c corrected reads path] [-u uncorrected reads path] [-o output path] [-p simulator used was PBSim]"
@@ -141,7 +151,7 @@ if usedPbsim:
 else:
 	fastaReadNumberIndex_g = 0	
 
-# Global variables to index cRead dictionaries
+# Global variables to index the read dictionary
 trimmed_g = "TRIMMED SEQUENCES"
 slices_g = "SLICES" 
 uncorrected_g = "UNCORRECTED SEQUENCE"
@@ -153,7 +163,7 @@ reads = getCorrectedReads(cReadPath)
 reads = getUncorrectedReads(uReadPath, reads)
 
 # Convert trimmed reads into untrimmed reads
-cReads = makeUntrimmed(reads)
+reads = makeUntrimmed(reads)
 
 # Write the FASTA file
-writeUntrimmedFile(cReads, outputPath)
+writeUntrimmedFile(reads, outputPath)
