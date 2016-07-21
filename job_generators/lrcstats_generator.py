@@ -84,20 +84,21 @@ def writeJob(program, species, shortCov, longCov):
 		inputfasta = "input=${outputq2a}.fasta\n"
 		file.write(inputfasta)
 		
-	file.write("############### Sort FASTA ###########\n")
-	file.write("echo 'Sorting FASTA'\n\n")
+	if program in ["lordec", "colormap"]:
+		file.write("############### Sort FASTA ###########\n")
+		file.write("echo 'Sorting FASTA'\n\n")
 
-	sortPath = "sortfasta=$preprocesspath/sortfasta/sortfasta.py\n"
-	file.write(sortPath)
+		sortPath = "sortfasta=$preprocesspath/sortfasta/sortfasta.py\n"
+		file.write(sortPath)
 
-	sortOutputLine = "sortoutput=$outputdir/sorted.fasta\n\n" 	
-	file.write(sortOutputLine)
+		sortOutputLine = "sortoutput=$outputdir/sorted.fasta\n\n" 	
+		file.write(sortOutputLine)
 
-	sortCommand = "python $sortfasta -i $input -o $sortoutput\n\n"
-	file.write(sortCommand)
+		sortCommand = "python $sortfasta -i $input -o $sortoutput\n\n"
+		file.write(sortCommand)
 	
-	inputLine = "input=$sortoutput\n\n"
-	file.write(inputLine)
+		inputLine = "input=$sortoutput\n\n"
+		file.write(inputLine)
 	
 	if program is "colormap":
 		sortOutputLineOea = "sortoutputoea=$outputdir/sorted_oea.fasta\n"
@@ -110,13 +111,17 @@ def writeJob(program, species, shortCov, longCov):
 		file.write(inputOea)
 
 	if program in ["proovread", "jabba"]:
-		file.write("############### Process Trimmed Reads ###########\n")
-		file.write("echo 'Processing trimmed reads'\n")
+		file.write("############### Concatenating Trimmed Reads ###########\n")
+		file.write("echo 'Concatenating trimmed reads'\n")
+		
+		if program is "jabba":
+			processPath = "processtrimmed=$preprocesspath/concatenatejabba/concatenatejabba.py\n"
+		else:
+			processPath = "processtrimmed=$preprocesspath/concatenateproovread/concatenateproovread.py\n"
 
-		processPath = "processtrimmed=$preprocesspath/processtrimmed/processtrimmed.py\n"
 		file.write(processPath)
 
-		processOutput = "processoutput=$outputdir/processed.fasta\n\n"
+		processOutput = "processoutput=$outputdir/concatenated.fasta\n\n"
 		file.write(processOutput)
 
 		processCommand = "python $processtrimmed -i $input -o $processoutput\n\n"
