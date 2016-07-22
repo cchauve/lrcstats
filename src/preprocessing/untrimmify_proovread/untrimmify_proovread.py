@@ -14,6 +14,7 @@ def getCorrectedReads(cReadPath):
 			# ">" means we're reading the header line of a read
 			if line[0] == ">":
 				# The fastaReadNumberIndex_g'th group of integers in the header line is the read number
+				
 				number = int( re.findall('(\d+)', line)[fastaReadNumberIndex_g] )	
 
 				# If the number of space-separated elements in the header is more than
@@ -49,21 +50,22 @@ def getUncorrectedReads(uReadPath, reads):
 	Returns
 	- (dict) reads: given the read number, find its trimmed sequence(s), uncorrected sequence and slice(s)
 	'''
+	# Keeps track of which line we are at
+	i = 0
 	with open(uReadPath, 'r') as file:
 		for line in file:
-			# "@" indicates we're reading the header line of a read
-			if line[0] == "@":
+			# If the line number is a multiple of 4, then we are reading the header line
+			if i % 4 == 0:
 				# The fastaReadNumberIndex_g'th group of integers in the header line is the read number
 				number = int( re.findall('(\d+)', line)[fastaReadNumberIndex_g] )	
-				justReadHeader = True	
-			# The sequence line follows right after the header line in FASTQ files
-			elif justReadHeader:
+			# Otherwise, the line after the header line is the sequence line
+			elif i % 4 == 1:
 				sequence = line.rstrip()
 				# To save space, only add the uncorrected sequence if the read
 				# exists in the dict
 				if number in reads:
 					reads[number][uncorrected_g] = sequence
-				justReadHeader = False
+			i += 1
 	return reads
 
 def fillTrimmedGaps(read):
@@ -75,7 +77,12 @@ def fillTrimmedGaps(read):
 	- (string) untrimmedSequence: the untrimmed sequence
 	'''
 	slices = read[slices_g]
-	uncorrectedRead = read[uncorrected_g]
+
+	try:
+		uncorrectedRead = read[uncorrected_g]
+	except:
+		raise
+
 	trimmedReads = read[trimmed_g]
 
 	start = 0
@@ -123,7 +130,11 @@ def makeUntrimmed(reads):
 	untrimmedReads = {}
 	for number in reads:
 		read = reads[number]
-		untrimmedSequence = fillTrimmedGaps(read)
+		try:
+			untrimmedSequence = fillTrimmedGaps(read)
+		except:
+			print "Error: no uncorrected sequence available."
+			print "Read number is %d" % (number)
 		untrimmedReads[number] = untrimmedSequence
 	return untrimmedReads
 
