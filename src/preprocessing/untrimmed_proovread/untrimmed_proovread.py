@@ -31,7 +31,7 @@ def getCorrectedReads(cReadPath):
 				sequence = line.rstrip() 
 				# Add the read to the dictionary; if it already exists, then append the
 				# trimmed read sequence and slice to the list
-				if number in cReads:
+				if number in reads:
 					reads[number][trimmed_g].append(sequence)
 					reads[number][slices_g].append(slice)
 				else:
@@ -102,7 +102,7 @@ def fillTrimmedGaps(read):
 		slice = uncorrectedSegmentSlices[i]
 		start = slice[0]
 		stop = slice[1]
-		uncorrectedSegment = uncorrectedRead[start:stop]
+		uncorrectedSegment = uncorrectedRead[start:stop].lower()
 		if i != numberOfTrimmedReads:
 			trimmedRead = trimmedReads[i]
 			untrimmedSequence += uncorrectedSegment + trimmedRead
@@ -111,7 +111,7 @@ def fillTrimmedGaps(read):
 
 	return untrimmedSequence
 
-def makeUntrimmed(reads)
+def makeUntrimmed(reads):
 	'''
 	Using the substring information provided by the proovread files and the uncorrected reads,
 	fill in the gaps of the trimmed corrected reads to make them untrimmed.
@@ -144,10 +144,74 @@ def writeUntrimmedFile(reads, outputPath):
 			sequence = "%s\n" % (sequence)	
 			file.write(sequence)
 
+def writeTestFasta(reads, slices, path):
+	'''
+	Generate a test FASTA file given the reads at path.
+	'''
+	assert len(slices) == len(reads)
+	with open(path,'w') as file:
+		for i in range( len(reads) ):
+			slice = slices[i]
+			header = ">1.%d SUBSTR:%d,%d\n" % (i, slice[0], slice[1])
+			file.write(header)
+			seq = reads[i]
+			sequence = "%s\n" % (seq)
+			file.write(sequence)
+
+def writeTestFastq(read, path):
+	'''
+	Generate a test FASTQ file given the read at path.
+	'''
+	with open(path,'w') as file:
+		identifier = "@read1\n"
+		file.write(identifier)
+		readLine = "%s\n" % (read)
+		file.write(readLine)
+		file.write("+\n")
+		quality = ""
+		for i in range( len(read) ):
+			quality += "~"
+		quality += "\n"
+		file.write(quality)
+			
+def test():
+	'''
+	Generate test files and test the program.
+	'''
+	uncorrectedRead = "CGCTTAGGTACGCTAGTATGCGTTCTTCCTTCCAGAGGTATGT"
+	actualUntrimmedRead = "cgcttAGGTAcgctaGTATGcgttcttcctTCCAGAGGTAtgt"
+	trimmedReads = [ "AGGTA", "GTATG", "TCCAGAGGTA" ]
+	perlSlices = [ (5,5), (15,5), (30,10) ]
+	cReadPath = "test.fasta"
+	uReadPath = "test.fastq"
+
+	# Write the test files
+	writeTestFasta(trimmedReads, perlSlices, cReadPath)
+	writeTestFastq(uncorrectedRead, uReadPath)
+
+	# Collect the corrected reads from the proovread FASTA file
+	reads = getCorrectedReads(cReadPath)
+
+	# Collect the original uncorrected reads from the SimLoRD FASTQ file
+	reads = getUncorrectedReads(uReadPath, reads)
+
+	# Convert trimmed reads into untrimmed reads
+	reads = makeUntrimmed(reads)
+
+	for number in reads:
+		untrimmedRead = reads[number]
+
+	if untrimmedRead == actualUntrimmedRead:
+		print "Test passed."
+	else:
+		print "Test failed."
+		print "Actual: %s" % (actualUntrimmedRead)
+		print "Found:  %s" % (untrimmedRead)
+
 helpMessage = "Convert proovread trimmed reads into untrimmed reads."
 usageMessage = "[-h help and usage] [-c corrected reads path] [-u uncorrected reads path] [-o output path] [-p simulator used was PBSim]"
 
-options = "hc:u:o:"
+options = "hc:u:o:t"
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], options)
@@ -163,6 +227,7 @@ cReadPath = None
 uReadPath = None
 outputPath = None
 usedPbsim = False
+doTest = False
 
 for opt, arg in opts:
 	if opt == '-h':
@@ -177,6 +242,8 @@ for opt, arg in opts:
 		outputPath = arg
 	elif opt == '-p':
 		usedPbsim = True
+	elif opt == '-t':
+		doTest = True
 
 # Global variable to indicate which group of integers in the FASTA header files
 # indicates the read number
@@ -185,10 +252,15 @@ if not usedPbsim:
 else:
 	fastaReadNumberIndex_g = 1	
 
+
 # Global variables to index the read dictionary
 trimmed_g = "TRIMMED SEQUENCES"
 slices_g = "SLICES" 
 uncorrected_g = "UNCORRECTED SEQUENCE"
+
+if doTest:
+	test()
+	sys.exit()
 
 # Collect the corrected reads from the proovread FASTA file
 reads = getCorrectedReads(cReadPath)
