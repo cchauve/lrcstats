@@ -74,7 +74,41 @@ def fillTrimmedGaps(read):
 	Returns
 	- (string) untrimmedSequence: the untrimmed sequence
 	'''
+	slices = read[slices_g]
+	uncorrectedRead = read[uncorrected_g]
+	trimmedReads = read[trimmed_g]
+
+	start = 0
+	uncorrectedSegmentSlices = []	
+
+	# Find the slice info for the trimmed off, uncorrected segments from the uLR 
+	for i in range( len(slices) + 1 ):
+		if i != len(slices):
+			slice = slices[i]
+			stop = slice[0]
+			index = (start, stop)
+			start = stop + slice[1]
+		else:
+			index = (start, len(uncorrectedRead) )
+		uncorrectedSegmentSlices.append( index )
+
+	numberOfSlices = len(uncorrectedSegmentSlices)
+	numberOfTrimmedReads = len(trimmedReads)
+	assert numberOfSlices == numberOfTrimmedReads + 1
+
 	untrimmedSequence = ""
+	# Fill the gaps of the trimmed sequences with the uncorrected segments
+	for i in range( numberOfSlices ):
+		slice = uncorrectedSegmentSlices[i]
+		start = slice[0]
+		stop = slice[1]
+		uncorrectedSegment = uncorrectedRead[start:stop]
+		if i != numberOfTrimmedReads:
+			trimmedRead = trimmedReads[i]
+			untrimmedSequence += uncorrectedSegment + trimmedRead
+		else:
+			untrimmedSequence += uncorrectedSegment
+
 	return untrimmedSequence
 
 def makeUntrimmed(reads)
@@ -146,10 +180,10 @@ for opt, arg in opts:
 
 # Global variable to indicate which group of integers in the FASTA header files
 # indicates the read number
-if usedPbsim:
-	fastaReadNumberIndex_g = 1 
+if not usedPbsim:
+	fastaReadNumberIndex_g = 0 
 else:
-	fastaReadNumberIndex_g = 0	
+	fastaReadNumberIndex_g = 1	
 
 # Global variables to index the read dictionary
 trimmed_g = "TRIMMED SEQUENCES"
