@@ -116,12 +116,12 @@ def writeJob(program, species, shortCov, longCov):
 		
 		if program is "jabba":
 			processPath = "processtrimmed=$preprocesspath/concatenatejabba/concatenatejabba.py\n"
+			processOutput = "processoutput=$outputdir/concatenated.fasta\n\n"
 		else:
-			processPath = "processtrimmed=$preprocesspath/concatenateproovread/concatenateproovread.py\n"
+			processPath = "processtrimmed=$preprocesspath/untrimmify_proovread/untrimmify_proovread.py\n"
+			processOutput = "processoutput=$outputdir/untrimmified.fasta\n\n"
 
 		file.write(processPath)
-
-		processOutput = "processoutput=$outputdir/concatenated.fasta\n\n"
 		file.write(processOutput)
 
 		processCommand = "python $processtrimmed -i $input -o $processoutput\n\n"
@@ -164,8 +164,11 @@ def writeJob(program, species, shortCov, longCov):
 	mafOutput = "mafOutput=$outputdir/%s.maf\n\n" % (test)
 	file.write(mafOutput)
 
-	if program in ["proovread", "jabba"]:
+	if program is "jabba":
 		command = "$lrcstats maf -m $maf -c $input -t -o $mafOutput\n\n"
+		file.write(command)
+	elif program is "proovread":
+		command = "$lrcstats maf -m $maf -c $input  -o $mafOutput\n\n"
 		file.write(command)
 	elif program is "lordec":
 		command = "$lrcstats maf -m $maf -c $input -o $mafOutput\n\n"
@@ -186,7 +189,10 @@ def writeJob(program, species, shortCov, longCov):
 	statsOutput = "statsOutput=$outputdir/%s.stats\n\n" % (test)
 	file.write(statsOutput)
 
-	command = "$lrcstats stats -m $mafOutput -o $statsOutput\n\n"
+	if program is "jabba":
+		command = "$lrcstats stats -m $mafOutput -o $statsOutput -t\n\n"
+	else:
+		command = "$lrcstats stats -m $mafOutput -o $statsOutput\n\n"
 	file.write(command)
 
 	if program is "colormap":
