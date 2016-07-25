@@ -528,35 +528,27 @@ void TrimmedAlignments::findAlignments()
 	std::string refMaf = "";
 	int64_t rowIndex = rows - 1;
 	int64_t columnIndex = columns - 1;
-	int64_t cIndex;
-	int64_t urIndex;
 	int64_t insert;
 	int64_t deletion;
 	int64_t substitute;
-	int64_t currentCost;
 	int64_t infinity = std::numeric_limits<int>::max();
+	// If we're at the last base of a trimmed read and it's the first deletion,
+	// then we place an 'X' in the cLR alignment
 	bool isLastBase;
 	bool firstDeletion = false;
+	bool insertedFinalBoundary = false;
 
 	// Follow the best path from the bottom right to the top left of the matrix.
 	// This is equivalent to the optimal alignment between ulr and clr.
 	// The path we follow is restricted to the conditions set when computing the matrix,
 	// i.e. we can never follow a path that the edit distance equations do not allow.
 	while (rowIndex > 0 || columnIndex > 0) {
-		/*
-		std::cout << "rowIndex == " << rowIndex << "\n";
-		std::cout << "columnIndex == " << columnIndex << "\n";
-		std::cout << "Before\n";
-		std::cout << "clrMaf == " << clrMaf << "\n";
-		std::cout << "ulrMaf == " << ulrMaf << "\n";
-		std::cout << "refMaf == " << refMaf << "\n";
-		*/
+		int64_t urIndex = columnIndex - 1;
+		int64_t cIndex = rowIndex - 1;
+		int64_t currentCost = matrix[rowIndex][columnIndex];
 
-		urIndex = columnIndex - 1;
-		cIndex = rowIndex - 1;
-		currentCost = matrix[rowIndex][columnIndex];
-
-		// Check if cIndex is the first base of a read
+		// Check if cIndex is the first base of a read, if it is then that means
+		// we're either at the beginning or the end of a read
 		if (std::find(lastBaseIndices.begin(), lastBaseIndices.end(), cIndex) != lastBaseIndices.end()) {
 			isLastBase = true;
 		} else {
@@ -566,6 +558,7 @@ void TrimmedAlignments::findAlignments()
 		// Set the costs of the different operations, 
 		// ensuring we don't go out of bounds of the matrix.
 		if (rowIndex > 0 && columnIndex > 0) {
+			// Since if we're at the end of the read, zero cost deletion
 			if (isLastBase) {
 				deletion = matrix[rowIndex][columnIndex-1]; 
 			} else {
@@ -574,6 +567,7 @@ void TrimmedAlignments::findAlignments()
 			insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
 			substitute = matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]);	
 		} else if (rowIndex <= 0 && columnIndex > 0) {
+			// Since if we're at the end of the read, zero cost deletion
 			if (isLastBase) {
 				deletion = matrix[rowIndex][columnIndex-1];
 			} else {
@@ -585,92 +579,44 @@ void TrimmedAlignments::findAlignments()
 			deletion = infinity;
 			insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
 			substitute = infinity;
-		} 
+		}	
 
-		if (rowIndex == 0 || columnIndex == 0) {
-				//std::cout << "Path 6\n";
-				if (rowIndex == 0) {
-					// Mark the beginning of a trimmed long read
-					if (firstDeletion) { 
-						clrMaf = 'X' + clrMaf; 
-						ulrMaf = '-' + ulrMaf;
-						refMaf = '-' + refMaf;
-					}
-					firstDeletion = false;
-					clrMaf = '-' + clrMaf; 
-					ulrMaf = ulr[urIndex] + ulrMaf;
-					refMaf = ref[urIndex] + refMaf;
-					columnIndex--;
-				} else {
-					//std::cout << "Insertion\n";
-					clrMaf = clr[cIndex] + clrMaf;
-					ulrMaf = '-' + ulrMaf;
-					refMaf = '-' + refMaf;
-					rowIndex--;
-				}
-		} else if (deletion == currentCost) {
-			//std::cout << "Deletion\n";
-			// Marke the beginning of a trimmed long read
+		if (rowIndex == 0 or currentCost == deletion) {
+			// Mark the beginning of a trimmed long read
 			if (isLastBase and firstDeletion) {
 				clrMaf = 'X' + clrMaf;
 				ulrMaf = '-' + ulrMaf;
 				refMaf = '-' + refMaf;
 			}
-			clrMaf = '-' + clrMaf;
-			ulrMaf = ulr[urIndex] + ulrMaf;
 			refMaf = ref[urIndex] + refMaf;
-
-			// If we're at the first base of both sequences and we are in a corrected
-			// segment, add an X
-			if (cIndex == 0 and urIndex == 0) {
-				clrMaf = 'X' + clrMaf;
-				ulrMaf = '-' + ulrMaf;
-				refMaf = '-' + refMaf;
-			}
+			ulrMaf = ulr[urIndex] + ulrMaf;
+			clrMaf = '-' + clrMaf;
 
 			columnIndex--;
 			firstDeletion = false;
-		} else if (insert == currentCost) {
-			//std::cout << "Insertion\n";
+		} else if (columnIndex == 0 or currentCost == insert ) {
 			// Mark the end of a trimmed long read
 			if (isLastBase) {
 				clrMaf = 'X' + clrMaf;
 				ulrMaf = '-' + ulrMaf;
 				refMaf = '-' + refMaf;
 			}	
-			clrMaf = clr[cIndex] + clrMaf;
-			ulrMaf = '-' + ulrMaf;
 			refMaf = '-' + refMaf;
-
-			// If we're at the first base of both sequences and we are in a corrected
-			// segment, add an X
-			if (cIndex == 0 and urIndex == 0) {
-				clrMaf = 'X' + clrMaf;
-				ulrMaf = '-' + ulrMaf;
-				refMaf = '-' + refMaf;
-			}
+			ulrMaf = '-' + ulrMaf;
+			clrMaf = clr[cIndex] + clrMaf;
 
 			rowIndex--;
 			firstDeletion = true;
-		} else if (substitute == currentCost) {
+		} else if (currentCost == substitute) {
 			// Mark the end of a trimmed long read
 			if (isLastBase) {
 				clrMaf = 'X' + clrMaf;
 				ulrMaf = '-' + ulrMaf;
 				refMaf = '-' + refMaf;
 			}	
-			//std::cout << "Substitution\n";
-			clrMaf = clr[cIndex] + clrMaf;
-			ulrMaf = ulr[urIndex] + ulrMaf;
 			refMaf = ref[urIndex] + refMaf;
-
-			// If we're at the first base of both sequences and we are in a corrected
-			// segment, add an X
-			if (cIndex == 0 and urIndex == 0) {
-				clrMaf = 'X' + clrMaf;
-				ulrMaf = '-' + ulrMaf;
-				refMaf = '-' + refMaf;
-			}
+			ulrMaf = ulr[urIndex] + ulrMaf;
+			clrMaf = clr[cIndex] + clrMaf;
 
 			rowIndex--;
 			columnIndex--;
@@ -683,6 +629,15 @@ void TrimmedAlignments::findAlignments()
 			columnIndex = 0;
 		}
 	}
+
+	// If we leave the loop and the last operation was not a deletion, then we have to insert the
+	// last boundary into the alignment
+	if (firstDeletion) {
+		clrMaf = 'X' + clrMaf;
+		ulrMaf = '-' + ulrMaf;
+		refMaf = '-' + refMaf;
+	}
+
 	clr = clrMaf;
 	ulr = ulrMaf;
 	ref = refMaf;
