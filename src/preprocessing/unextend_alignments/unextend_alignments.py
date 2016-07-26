@@ -18,6 +18,8 @@ class Alignment(object):
 		ref = refLine[6]
 		
 		uReadLine = uReadLine.split()
+		readName = uReadLine[1]
+		self.readNumber = int( re.findall('(\d+)', uRead)[readNumberIndex_g] )
 		uRead = uReadLine[6]
 
 		cReadLine = cReadLine.split()
@@ -44,6 +46,12 @@ class Alignment(object):
 
 		# Remove extended suffix of ref, uRead and cRead and store result
 		self.ref, self.uRead, self.cRead = removeExtendedSuffix(ref, uRead, cRead)
+
+	def getReadNumber():
+		'''
+		Returns the read number of the alignments.
+		'''
+		return self.readNumber
 
 	def getStrand():
 		'''
@@ -157,8 +165,47 @@ def readInput(mafInputPath):
 					cReadLine = None
 	return alignments
 
+def writeUnextended(outputPath, alignments):
+	'''
+	Write the unextended alignments into new MAF file
+	Inputs
+	- (string) outputPath: absolute path to the output file
+	- (list of Alignment objects): contains the unextended alignments
+	'''	
+	with open(outputPath,'w') as file:
+		file.write("##maf version=1\n")
+		for alignment in alignments:
+			file.write("a\n")
+			
+			readNumber = alignment.getReadNumber()
+			start = alignment.getStart()	
+			strand = alignment.getStrand()
+			srcSize = alignment.getSrcSize()
+
+			refSrc = "%d.reference" % (readNumber)
+			refSize = alignment.getRefSize()
+			ref = alignment.getRef()
+
+			refLine = "s %s %d %d %s %d %s\n" % (refSrc, start, refSize, strand, srcSize, ref) 
+			file.write(refLine)
+			
+			uReadSrc = "%d.uncorrected" % (readNumber)
+			uReadSize = alignment.getUncorrectedSize()
+			uRead = alignment.getUncorrectedRead()
+
+			uReadLine = "s %s %d %d %s %d %s\n" % (uReadSrc, start, uReadSize, strand, srcSize, uRead) 
+			file.write(uReadLine)
+
+			cReadSrc = "%d.corrected" % (readNumber)
+			cReadSize = alignment.getCorrectedSize()
+			cRead = alignment.getCorrectedRead()
+
+			cReadLine = "s %s %d %d %s %d %s\n" % (cReadSrc, start, cReadSize, strand, srcSize, cRead) 
+			file.write(cReadLine)
+			file.write('\n')
+
 helpMessage = "Reads three-way alignment MAF files and outputs another three-way MAF file without extended segments on reads and a second MAF file with only alignment between the reference and the extended segment of the read."
-usageMessage = "[-h help and usage] [-i three-way MAF file] [-r reference FASTA] [-m unextended MAF output path] [-e extension segments MAF output path]"
+usageMessage = "[-h help and usage] [-i three-way MAF file] [-r reference FASTA] [-m unextended MAF output path] [-e extension segments MAF output path] [-p used PBSim]"
 
 options = "hi:r:m:e:"
 
@@ -176,6 +223,7 @@ mafInputPath = None
 refPath = None
 unextendedPath = None
 extensionPath = None
+usedPbsim = False
 
 for opt, arg in opts:
 	if opt == '-h':
@@ -190,6 +238,13 @@ for opt, arg in opts:
 		unextendedPath = arg
 	elif opt == '-e':
 		extensionPath = True
+	elif opt == '-p':
+		usedPbsim = True
+
+if not usedPbsim:
+	readNumberIndex_g = 1
+else:
+	readNumberIndex_g = 0
 
 if mafInputPath is None or refPath is None or unextendedPath is None or extensionPath is None:
 	print "Missing argument - please double check your command."
