@@ -59,8 +59,8 @@ def writeJob(program, species, shortCov, longCov):
 	############## Write program specific commands ###############
 	if program is "lordec":
 		output = "%s/%s.fasta" % (outputdir, test)
-		dir = "cd /home/seanla/Software/LoRDEC-0.6\n\n"
-		command = "./lordec-correct -T ${PBS_NUM_PPN} --trials 5 --branch 200 --errorrate 0.4 -2 %s %s -k 19 -s 3 -i %s -o %s" % (short1, short2, long, output)
+		dir = "cd $outputDir\n\n"
+		command = "/home/seanla/Software/LoRDEC-0.6/lordec-correct -T ${PBS_NUM_PPN} --trials 5 --branch 200 --errorrate 0.4 -2 %s %s -k 19 -s 3 -i %s -o %s" % (short1, short2, long, output)
 		file.write(dir)
 		file.write(command)
 
