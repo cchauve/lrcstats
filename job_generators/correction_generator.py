@@ -5,8 +5,8 @@ def writeJob(program, species, shortCov, longCov):
 	now = datetime.datetime.now()
 	test = "%s-%s-%sSx%sL" % (program, species, shortCov, longCov)
 	# LoRDeC uses more memory than other programs
-	if species is "fly":
-		mem = 128
+	if species == "fly":
+		mem = 200 
 	elif program is "lordec":
 		if int(shortCov) >= 200:
 			mem = 64
@@ -14,7 +14,7 @@ def writeJob(program, species, shortCov, longCov):
 			mem = 48
 	else:
 		mem = 32
-	resources = ["walltime=24:00:00", "mem=%dgb" % (mem), "nodes=1:ppn=8"]
+	resources = ["walltime=3:00:00:00", "mem=%dgb" % (mem), "nodes=1:ppn=8"]
 	################## Data paths #################################
 	prefix = "/global/scratch/seanla/Data/%s" % (species)
 	art = "%s/art" % (prefix)
@@ -45,7 +45,7 @@ def writeJob(program, species, shortCov, longCov):
 	outlog = "#PBS -o /global/scratch/seanla/Data/%s/corrections/%s/%s/%s/%s/%s.out\n" %(species, now.month, now.day, program, test, test) 
 	file.write(outlog)
 
-	jobName = "#PBS -N %s\n\n" % (test)
+	jobName = "#PBS -N %s-correction\n\n" % (test)
 	file.write(jobName)
 	###############################################################
 
