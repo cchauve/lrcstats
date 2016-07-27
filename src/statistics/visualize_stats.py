@@ -11,257 +11,7 @@ mpl.use('agg')
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-
-class ReadDatum(object):
-	# Keys for ReadDatum member variable dictionary
-	corrReadLength_k = "CORRECTED READ LENGTH"
-	uncorrReadLength_k = "UNCORRECTED READ LENGTH"
-
-	corrAlignmentLength_k = "CORRECTED ALIGNMENT LENGTH"
-	uncorrAlignmentLength_k = "UNCORRECTED ALIGNMENT LENGTH"
-
-	corrDel_k = "CORRECTED DELETION"
-	corrIns_k = "CORRECTED INSERTION"
-	corrSub_k = "CORRECTED SUBSTITUTION"
-
-	uncorrDel_k = "UNCORRECTED DELETION"
-	uncorrIns_k = "UNCORRECTED INSERTION"
-	uncorrSub_k = "UNCORRECTED SUBSTITUTION"
-
-	cTruePos_k = "CORRECTED TRUE POSITIVE"
-	cFalsePos_k = "CORRECTED FALSE POSITIVE"
-	uTruePos_k = "UNCORRECTED TRUE POSITIVE"
-	uFalsePos_k = "UNCORRECTED FALSE POSITIVE"
-
-	keys = [corrReadLength_k, 
-		uncorrReadLength_k, 
-		corrAlignmentLength_k, 
-		uncorrAlignmentLength_k,
-		corrDel_k, 
-		corrIns_k, 
-		corrSub_k, 
-		uncorrDel_k, 
-		uncorrIns_k, 
-		uncorrSub_k, 
-		cTruePos_k, 
-		cFalsePos_k, 
-		uTruePos_k, 
-		uFalsePos_k]	
-	'''
-	Preprocesses and outputs general statistics for reads.
-	'''
-	def __init__(self, data):
-		'''
-		Accepts as input list of trimmed read data points obtained
-		directly from the STATS file outputted by lrcstats
-		'''
-		self.data = {}
-		# keys is a global variable and contains the keys
-		# for the data dictionary in ReadDatum objects.
-		# These keys can be found initialized in the main body of the
-		# program.
-		assert len(data) == 11 or len(data) == 15
-
-		for i in range(1, len(data)):
-			self.data[ ReadDatum.keys[i-1] ] = int(data[i])
-
-	def getCorrLength(self):
-		'''
-		Returns the length of the corrected long read.
-		'''
-		return self.data[ReadDatum.corrReadLength_k]
-
-	def getCorrErrors(self):
-		'''
-		Returns the number of errors in the read.
-		'''
-		cDel = self.data[ReadDatum.corrDel_k]
-		cIns = self.data[ReadDatum.corrIns_k]
-		cSub = self.data[ReadDatum.corrSub_k]
-		return cDel + cIns + cSub
-
-	def getCorrErrorRate(self):
-		'''
-		Returns the error rate of the corrected trimmed long read,
-		which is defined as the number of mutations divided by
-		the length of the read.
-		'''
-		cDel = self.data[ReadDatum.corrDel_k]
-		cIns = self.data[ReadDatum.corrIns_k]
-		cSub = self.data[ReadDatum.corrSub_k]
-
-		mutations = cDel + cIns + cSub
-		length = self.data[ReadDatum.corrAlignmentLength_k]	
-
-		return mutations/length
-
-	def getUncorrLength(self):
-		'''
-		Returns the length of the corresponding uncorrected long read.
-		'''
-		uLength = self.data[ReadDatum.uncorrReadLength_k]
-		return uLength
-
-	def getUncorrErrorRate(self):
-		'''
-		Returns the error rate of the corresponding long read,
-		which is defined as the number of mutations divided by
-		the length of the read.
-		'''
-		uDel = self.data[ReadDatum.uncorrDel_k]
-		uIns = self.data[ReadDatum.uncorrIns_k]
-		uSub = self.data[ReadDatum.uncorrSub_k]
-
-		mutations = uDel + uIns + uSub
-		length = self.data[ReadDatum.uncorrAlignmentLength_k]	
-
-		return mutations/length
-
-	def getUncorrErrors(self):
-		'''
-		Returns the number of erroreneous bases in the uncorrected
-		long read.
-		'''
-		uDel = self.data[ReadDatum.uncorrDel_k]
-		uIns = self.data[ReadDatum.uncorrIns_k]
-		uSub = self.data[ReadDatum.uncorrSub_k]
-		return uDel + uIns + uSub
-
-class TrimmedDatum(ReadDatum):
-	'''
-	Similar to ReadDatum object, but also outputs statistics related
-	specifically for trimmed reads.
-	'''
-	def __init__(self,data):
-		'''
-		Accepts as input list of trimmed read data points obtained
-		directly from the STATS file outputted by lrcstats
-		'''
-		ReadDatum.__init__(self,data)
-
-	# Get the corresponding number of mutations of the corrected long read
-	# and its corresponding uncorrected read
-
-	def getCorrDel(self):
-		cDel = self.data[ReadDatum.corrDel_k]
-		return cDel
-
-	def getCorrIns(self):
-		cIns = self.data[ReadDatum.corrIns_k]
-		return cIns
-
-	def getCorrSub(self):
-		cSub = self.data[ReadDatum.corrSub_k]
-		return cSub
-
-	def getUncorrDel(self):
-		uDel = self.data[ReadDatum.uncorrDel_k]
-		return uDel
-
-	def getUncorrIns(self):
-		uIns = self.data[ReadDatum.uncorrIns_k]
-		return uIns
-
-	def getUncorrSub(self):
-		uSub = self.data[ReadDatum.uncorrSub_k]
-		return uSub
-
-class UntrimmedDatum(ReadDatum):
-	'''
-	Similar to ReadDatum object, but also outputs statistics related
-	specifically for trimmed reads.
-	'''
-	def __init__(self, data):
-		'''
-		Accepts as input list of untrimmed read data points obtained
-		directly from the STATS file outputted by lrcstats
-		'''
-		ReadDatum.__init__(self, data)
-
-	def getCorrTruePositives(self):
-		'''
-		Corrected true positives are defined as bases that
-		have been corrected and are equivalent to its respective
-		base in the referene alignment (not reference sequence)
-		'''
-		correctedTruePos = self.data[ReadDatum.cTruePos_k]
-		return correctedTruePos
-
-	def getCorrFalsePositives(self):
-		'''
-		Corrected false positives are defined as bases that
-		have been corrected and are NOT equivalent to its
-		respective base in the reference alignment (not reference
-		sequence)
-		'''
-		correctedFalsePos = self.data[ReadDatum.cFalsePos_k]
-		return correctedFalsePos
-
-	def getCorrSegmentErrorRate(self):
-		'''
-		Returns the error rate over only those segments
-		in the corrected long read which have been
-		corrected. 
-		'''
-		correctedTruePos = self.data[ReadDatum.cTruePos_k]
-		correctedFalsePos = self.data[ReadDatum.cFalsePos_k]
-		return (correctedFalsePos)/(correctedTruePos + correctedFalsePos)
-	
-	# These methods apply to the uncorrected segments of corrected long reads
-
-	def getUncorrTruePositives(self):
-		'''
-		Uncorrected true positives are defined as bases
-		that have NOT been corrected and are equivalent
-		to its respective base in the reference alignment.
-		'''
-		uncorrectedTruePos = self.data[ReadDatum.uTruePos_k]
-		return uncorrectedTruePos
-
-	def getUncorrFalsePositives(self):
-		'''
-		Uncorrected false positives are defined as bases that
-		have NOT been corrected and are NOT equivalent to its
-		respective base in the reference alignment.
-		'''
-		uncorrectedFalsePos = self.data[ReadDatum.uFalsePos_k]
-		return uncorrectedFalsePos
-
-	def getUncorrSegmentErrorRate(self):
-		'''
-		Returns the error rate over only those segments of
-		the corrected long read which have not been
-		corrected.
-		'''
-		uncorrectedTruePos = self.data[ReadDatum.uTruePos_k]
-		uncorrectedFalsePos = self.data[ReadDatum.uFalsePos_k]
-		return (uncorrectedFalsePos)/(uncorrectedTruePos + uncorrectedFalsePos)
-
-def retrieveRawData(dataPath):
-	'''
-	Accepts the path to the STATS file outputted by lrcstats.
-	Returns two lists of UntrimmedDatum and ReadDatum objects,
-	respectively.
-	'''
-	rawData = []
-	with open(dataPath, 'r') as file:
-		for line in file:
-			rawData.append(line)
-
-	TrimmedData = []
-	UntrimmedData = []
-
-	for datum in rawData:
-		datum = datum.split()
-
-		if datum[0] == 'u':
-			datum = UntrimmedDatum(datum)
-			UntrimmedData.append(datum)
-		elif datum[0] == 't':
-			datum = TrimmedDatum(datum)
-			TrimmedData.append(datum)
-
-	return (TrimmedData, UntrimmedData)
+import data
 
 def makeErrorRateBoxPlot(data, testName, trimmedOrUntrimmed, saveDir):
 	'''
@@ -826,7 +576,7 @@ def test(saveDir):
 			line = "%s %d %d %d %d %d %d %d %d %d %d %d %d\n" % ('u', cLength, uLength, cDel, cIns, cSub, uDel, uIns, uSub, cTruePos, cFalsePos, uTruePos, uFalsePos)
 			file.write(line)
 
-	trimmedData, untrimmedData = retrieveRawData(testPath)
+	trimmedData, untrimmedData = data.retrieveRawData(testPath)
 
 	testName = "test"
 	
@@ -852,10 +602,9 @@ maxReadLength_g = 60000
 # Number of read length bins
 binNumber_g = 50
 
-
 helpMessage = "Visualize long read correction data statistics."
 usageMessage = "Usage: %s [-h help and usage] [-i stats file input path] [-d output directory] [-n experiment name]" % (sys.argv[0])
-options = "hi:d:n:t"
+options = "hi:d:n:tg"
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], options)
@@ -871,6 +620,7 @@ inputPath = ""
 saveDir = ""
 testName = ""
 testRun = False
+collectGlobalStatistics = False
 
 for opt, arg in opts:
 	if opt == '-h':
@@ -885,6 +635,8 @@ for opt, arg in opts:
 		testName = arg
 	elif opt == '-t':
 		testRun = True
+	elif opt == '-g':
+		collectGlobalStatistics = True
 
 optsIncomplete = False
 
@@ -908,7 +660,7 @@ if testRun:
 
 print "The command used to run this program was: %s" % ( " ".join(sys.argv) )
 
-trimmedData, untrimmedData = retrieveRawData(inputPath)
+trimmedData, untrimmedData = data.retrieveRawData(inputPath)
 
 # Generate data. If the appropriate data list is empty, skip it.
 for data in (trimmedData, untrimmedData):
