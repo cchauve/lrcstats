@@ -604,7 +604,7 @@ binNumber_g = 50
 
 helpMessage = "Visualize long read correction data statistics."
 usageMessage = "Usage: %s [-h help and usage] [-i stats file input path] [-d output directory] [-n experiment name]" % (sys.argv[0])
-options = "hi:d:n:tg"
+options = "hi:d:n:t"
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], options)
@@ -620,7 +620,6 @@ inputPath = ""
 saveDir = ""
 testName = ""
 testRun = False
-collectGlobalStatistics = False
 
 for opt, arg in opts:
 	if opt == '-h':
@@ -635,8 +634,6 @@ for opt, arg in opts:
 		testName = arg
 	elif opt == '-t':
 		testRun = True
-	elif opt == '-g':
-		collectGlobalStatistics = True
 
 optsIncomplete = False
 
