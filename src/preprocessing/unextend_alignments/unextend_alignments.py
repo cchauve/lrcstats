@@ -1,4 +1,6 @@
-import sys, getopt
+import sys
+import getopt
+import re
 
 class Alignment(object):
 	'''
@@ -8,107 +10,104 @@ class Alignment(object):
 	def __init__(self, refLine, uReadLine, cReadLine):
 		'''
 		Inputs
-		- (string) refLine: directly from MAF file
-		- (string) uReadLine: ditto
-		- (string) cReadLine: ditto
+		- (list of strings) refLine: directly from MAF file
+		- (list of strings) uReadLine: ditto
+		- (list of strings) cReadLine: ditto
 		'''	
-		refLine = refLine.split()
 		self.strand = refLine[4]
 		self.srcSize = int(refLine[5])
 		ref = refLine[6]
 		
-		uReadLine = uReadLine.split()
 		readName = uReadLine[1]
-		self.readNumber = int( re.findall('(\d+)', uRead)[readNumberIndex_g] )
+		self.readNumber = int( re.findall('(\d+)', readName)[readNumberIndex_g] )
 		uRead = uReadLine[6]
 
-		cReadLine = cReadLine.split()
 		cRead = cReadLine[6]
 
 		assert len(cRead) == len(uRead)
 
 		# Used to update the starting point where the reads align in the
 		# reference
-		lengthBeforeRemoval = len(cRead)
+		lengthBeforeRemoval = len(ref)
 
 		# First remove extended prefixes by reversing the strings
-		ref, uRead, cRead = reverseReads(ref, uRead, cRead)
-		ref, uRead, cRead = removeExtendedSuffix(ref, uRead, cRead)
+		ref, uRead, cRead = self.reverseReads(ref, uRead, cRead)
+		ref, uRead, cRead = self.removeExtendedSuffix(ref, uRead, cRead)
 
 		# Reverse the string to get it back to normal 
-		ref, uRead, cRead = reverseReads(ref, uRead, cRead)
+		ref, uRead, cRead = self.reverseReads(ref, uRead, cRead)
 
 		# Update the starting point where the reads align in the reference
-		lengthAfterRemoval = len(cRead)
+		lengthAfterRemoval = len(ref)
 		difference = lengthBeforeRemoval - lengthAfterRemoval
-		oldStart = cReadLine[2]		
+		oldStart = int(refLine[2])	
 		self.start = oldStart + difference
 
 		# Remove extended suffix of ref, uRead and cRead and store result
-		self.ref, self.uRead, self.cRead = removeExtendedSuffix(ref, uRead, cRead)
+		self.ref, self.uRead, self.cRead = self.removeExtendedSuffix(ref, uRead, cRead)
 
-	def getReadNumber():
+	def getReadNumber(self):
 		'''
 		Returns the read number of the alignments.
 		'''
 		return self.readNumber
 
-	def getStrand():
+	def getStrand(self):
 		'''
 		Returns '+' or '-' to indicate whether the alignment 
 		is to the original ('+') or reverse-complemented ('-') source
 		'''
 		return self.strand
 
-	def getSrcSize():
+	def getSrcSize(self):
 		'''
 		Returns the size of the original reference genome.
 		'''
 		return self.srcSize
 
-	def getStart():
+	def getStart(self):
 		'''
 		Returns the start of the aligning region in the source sequence.
 		'''
 		return self.start
 
-	def getRefSize():
+	def getRefSize(self):
 		'''
 		Returns the number of non-'-' characters in the reference alignment
 		'''
-		return sizeOfSequence(self.ref)
+		return self.sizeOfSequence(self.ref)
 
-	def getUncorrectedSize():
+	def getUncorrectedSize(self):
 		'''
 		Returns the number of non-'-' characters in the uncorrected alignment
 		'''
-		return sizeOfSequence(self.uRead)
+		return self.sizeOfSequence(self.uRead)
 
-	def getCorrectedSize():
+	def getCorrectedSize(self):
 		'''
 		Returns the number of non-'-' characters in the corrected alignment
 		'''
-		return sizeOfSequence(self.uRead)
+		return self.sizeOfSequence(self.uRead)
 
-	def getRef():
+	def getRef(self):
 		'''
 		Get the truncated reference alignment with extended prefix and suffix removed.
 		'''
 		return self.ref
 
-	def getUncorrectedRead():
+	def getUncorrectedRead(self):
 		'''
 		Get the truncated uncorrected read alignment with extended prefix and suffix removed.
 		'''
 		return self.uRead
 
-	def getCorrectedRead():	
+	def getCorrectedRead(self):	
 		'''
 		Get the truncated corrected read alignment with extended prefix and suffix removed.
 		'''
 		return self.cRead
 
-	def removeExtendedSuffix(ref, uRead, cRead): 
+	def removeExtendedSuffix(self, ref, uRead, cRead): 
 		# Trim off trailing '-'
 		lengthBeforeStrip = len(ref)
 
@@ -121,18 +120,16 @@ class Alignment(object):
 		cRead = cRead[0:newEndIndex]
 		uRead = uRead[0:newEndIndex]
 
-		assert len(ref) == len(cRead)
-
 		return ref, uRead, cRead
 
-	def reverseReads(ref, uRead, cRead):
+	def reverseReads(self, ref, uRead, cRead):
 		# Reverse the reads
 		ref = ref[::-1]
 		uRead = uRead[::-1]
 		cRead = cRead[::-1]
-		return ref, cRead, uRead
+		return ref, uRead, cRead
 
-	def sizeOfSequence(read):
+	def sizeOfSequence(self, read):
 		# Returns the number of all non-'-' characters in read
 		read = read.replace('-', '')
 		return len(read)
@@ -150,19 +147,23 @@ def readInput(mafInputPath):
 		for line in file:
 			line = line.split()
 			if len(line) > 0 and line[0] != "#":
+				# Indicates start of read
 				if line[0] == 'a':
-					if None not in [refLine, uReadLine, cReadLine]:
-						alignment = Alignment(refLine, uReadLine, cReadLine)
-						alignments.append( alignment )
 					refLine = None
 					uReadLine = None
 					cReadLine = None
+
 				elif refLine is None:
 					refLine = line
+
 				elif uReadLine is None:
-					uReadLine = None
+					uReadLine = line
+
 				elif cReadLine is None:
-					cReadLine = None
+					cReadLine = line
+					alignment = Alignment(refLine, uReadLine, cReadLine)
+					alignments.append( alignment )
+	assert len(alignments) > 0
 	return alignments
 
 def writeUnextended(outputPath, alignments):
@@ -172,6 +173,8 @@ def writeUnextended(outputPath, alignments):
 	- (string) outputPath: absolute path to the output file
 	- (list of Alignment objects): contains the unextended alignments
 	'''	
+	assert len(alignments) > 0
+
 	with open(outputPath,'w') as file:
 		file.write("##maf version=1\n")
 		for alignment in alignments:
@@ -192,6 +195,9 @@ def writeUnextended(outputPath, alignments):
 			uReadSrc = "%d.uncorrected" % (readNumber)
 			uReadSize = alignment.getUncorrectedSize()
 			uRead = alignment.getUncorrectedRead()
+			# Since the long read is considered to be the "source" of the alignment
+			start = 0
+			srcSize = uReadSize
 
 			uReadLine = "s %s %d %d %s %d %s\n" % (uReadSrc, start, uReadSize, strand, srcSize, uRead) 
 			file.write(uReadLine)
@@ -199,15 +205,68 @@ def writeUnextended(outputPath, alignments):
 			cReadSrc = "%d.corrected" % (readNumber)
 			cReadSize = alignment.getCorrectedSize()
 			cRead = alignment.getCorrectedRead()
+			# Since the long read is considered to be the "source" of the alignment
+			srcSize = cReadSize
 
 			cReadLine = "s %s %d %d %s %d %s\n" % (cReadSrc, start, cReadSize, strand, srcSize, cRead) 
 			file.write(cReadLine)
 			file.write('\n')
 
+def test():
+	testInputPath = "test_in.maf"
+	print "Writing MAF test file..."
+	with open(testInputPath, 'w') as file:
+		for i in range(2):
+			file.write('a\n')
+
+			refLine = "s 1.reference 10 4 + 1000000 ----ACGA----\n"
+			file.write(refLine)
+
+			uReadLine = "s 1.uncorrected 0 4 + 4 ----ACGA----\n"
+			file.write(uReadLine) 
+
+			cReadLine = "s 1.corrected 0 12 + 12 XXXXACGAXXXX\n"
+			file.write(cReadLine)
+			file.write('\n')
+
+		file.write('a\n')
+
+		refLine = "s 1.reference 10 4 + 1000000 ACGA----\n"
+		file.write(refLine)
+
+		uReadLine = "s 1.uncorrected 0 4 + 4 ACGA----\n"
+		file.write(uReadLine) 
+
+		cReadLine = "s 1.corrected 0 8 + 8 ACGAXXXX\n"
+		file.write(cReadLine)
+		file.write('\n')
+
+		file.write('a\n')
+
+		refLine = "s 1.reference 10 4 + 1000000 ----ACGA\n"
+		file.write(refLine)
+
+		uReadLine = "s 1.uncorrected 0 4 + 4 ----ACGA\n"
+		file.write(uReadLine) 
+
+		cReadLine = "s 1.corrected 0 8 + 8 XXXXACGA\n"
+		file.write(cReadLine)
+		file.write('\n')
+
+	print "Reading MAF test file and processing alignments..."
+	alignments = readInput(testInputPath) 
+	testOutputPath = "test_out.maf"
+	print "Writing output file..."
+	writeUnextended(testOutputPath, alignments)
+	print "Test complete! Please check the input and output to ensure correctness."
+
+# Global variable
+readNumberIndex_g = 0
+
 helpMessage = "Reads three-way alignment MAF files and outputs another three-way MAF file without extended segments on reads and a second MAF file with only alignment between the reference and the extended segment of the read."
 usageMessage = "[-h help and usage] [-i three-way MAF file] [-r reference FASTA] [-m unextended MAF output path] [-e extension segments MAF output path] [-p used PBSim]"
 
-options = "hi:r:m:e:"
+options = "hi:r:m:e:t"
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], options)
@@ -240,15 +299,18 @@ for opt, arg in opts:
 		extensionPath = True
 	elif opt == '-p':
 		usedPbsim = True
+	elif opt == '-t':
+		test()
+		sys.exit()
 
-if not usedPbsim:
+if usedPbsim:
 	readNumberIndex_g = 1
-else:
-	readNumberIndex_g = 0
 
 if mafInputPath is None or refPath is None or unextendedPath is None or extensionPath is None:
 	print "Missing argument - please double check your command."
 	sys.exit(2)
 
+print "Reading file and unextending alignments..."
 alignments = readInput( mafInputPath )
+print "Writing output file..."
 writeUnextended(unextendedAlignments)
