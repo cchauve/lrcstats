@@ -37,15 +37,15 @@ def extractResourceUsage(outFiles):
 				line = line.split()
 				if len(line) > 1 and line[0] == "Resources" and line[1] == "Used:":
 					resourceTokens = line[2].split(',')
-					cput = resourceTokens[0]
-					mem = resourceTokens[1]
-					vmem = resourceTokens[2]
-					walltime = resourceTokens[3]
+					cput = resourceTokens[0].split('=')[1]
+					mem = resourceTokens[1].split('=')[1]
+					vmem = resourceTokens[2].split('=')[1]
+					walltime = resourceTokens[3].split('=')[1]
 					resources = { cput_k : cput, mem_k : mem, vmem_k : vmem, walltime_k : walltime }
 					resourceUsages[test] = resources
 	return resourceUsages		
 
-def writeResourceStats(outputPath, resourceUsages)
+def writeResourceStats(outputPath, resourceUsages):
 	'''
 	Write the resource usage statistics to a file to be analyzed by process_stats.py
 	Input
@@ -62,7 +62,7 @@ def writeResourceStats(outputPath, resourceUsages)
 			cput = resources[cput_k]
 			mem = resources[mem_k]
 			vmem = resources[vmem_k]
-			walltime = resouces[walltime_k]
+			walltime = resources[walltime_k]
 			line = "%s %s %s %s %s\n" % (test, cput, mem, vmem, walltime)
 			file.write(line)
 
@@ -73,7 +73,7 @@ vmem_k = "PEAK VIRTUAL MEMORY USAGE"
 walltime_k = "WALLTIME"
 
 helpMessage = "Given the path to a directory, gather all resource usage statistics from PBS epilogue files."
-usageMessage = "Usage: %s [-h help and usage] [-d output directory] [-o output path]" % (sys.argv[0])
+usageMessage = "Usage: %s [-h help and usage] [-d input directory] [-o output path]" % (sys.argv[0])
 options = "hd:o:"
 
 try:
@@ -99,6 +99,8 @@ for opt, arg in opts:
 	elif opt == '-o':
 		outputPath = arg
 
+optsIncomplete = False
+
 if dirPath is None:
 	print "Please provide the path to the directory."
 	optsIncomplete = True
@@ -111,5 +113,5 @@ if optsIncomplete:
 	sys.exit(2)
 	
 outFiles = findSummaryFiles(dirPath)
-resourceUsages = gatherResourceUsage(outFiles)
-writeSummary(outputPath, resourceUsages)
+resourceUsages = extractResourceUsage(outFiles)
+writeResourceStats(outputPath, resourceUsages)
