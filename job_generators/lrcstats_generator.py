@@ -70,7 +70,7 @@ def writeJob(program, species, shortCov, longCov):
 
 	if program is "jabba":
 		file.write("############### Convert FASTQ to FASTA ###########\n")
-		file.write("echo 'Converting FASTQ to FASTA'\n")
+		file.write("echo 'Converting FASTQ to FASTA...'\n\n")
 
 		fastq2fasta = "fastq2fasta=$preprocesspath/fastq2fasta/fastq2fasta.py\n"
 		file.write(fastq2fasta)
@@ -86,7 +86,7 @@ def writeJob(program, species, shortCov, longCov):
 		
 	if program in ["lordec", "colormap"]:
 		file.write("############### Sort FASTA ###########\n")
-		file.write("echo 'Sorting FASTA'\n\n")
+		file.write("echo 'Sorting FASTA file...'\n\n")
 
 		sortPath = "sortfasta=$preprocesspath/sortfasta/sortfasta.py\n"
 		file.write(sortPath)
@@ -111,27 +111,40 @@ def writeJob(program, species, shortCov, longCov):
 		file.write(inputOea)
 
 	if program in ["proovread", "jabba"]:
-		file.write("############### Concatenating Trimmed Reads ###########\n")
-		file.write("echo 'Concatenating trimmed reads'\n")
+		file.write("############### Processing Trimmed Reads ###########\n")
+		file.write("echo 'Processing trimmed reads...'\n")
 		
 		if program is "jabba":
 			processPath = "processtrimmed=$preprocesspath/concatenatejabba/concatenatejabba.py\n"
+			file.write(processPath)
+
 			processOutput = "processoutput=$outputdir/concatenated.fasta\n\n"
+			file.write(processOutput)
+
+			processCommand = "python $processtrimmed -i $input -o $processoutput\n\n"
+			file.write(processCommand)
+
+			inputfasta = "input=$processoutput\n\n"
+			file.write(inputfasta)
 		else:
-			processPath = "processtrimmed=$preprocesspath/untrimmify_proovread/untrimmify_proovread.py\n"
-			processOutput = "processoutput=$outputdir/untrimmified.fasta\n\n"
+			# Convert proovread trimmed reads to untrimmed reads
+			processPath = "untrimmify=$preprocesspath/untrimmify_proovread/untrimmify_proovread.py\n"
+			file.write(processPath)
+			
+			uncorrected_reads = "uncorrected=$prefix/simlord/long-d%s/%s-long-d%s.fastq\n" % (longCov, species, longCov)
 
-		file.write(processPath)
-		file.write(processOutput)
+			processOutput = "untrimmify_output=$outputdir/untrimmified.fasta\n\n"
+			file.write(processOutput)
 
-		processCommand = "python $processtrimmed -i $input -o $processoutput\n\n"
-		file.write(processCommand)
+			processCommand = "python $untrimmify -c $input -u $uncorrected -o $untrimmify_output\n\n"
+			file.write(processCommand)
 
-		inputfasta = "input=$processoutput\n\n"
-		file.write(inputfasta)
+			inputfasta = "input=$untrimmify_output\n\n"
+			file.write(inputfasta)
+
 
 	file.write("############### Prune the maf file(s) ###########\n")
-	file.write("echo 'Pruning MAF file(s)'\n")
+	file.write("echo 'Pruning MAF file(s)...'\n")
 
 	prunePath = "prunemaf=$preprocesspath/prunemaf/prunemaf.py\n"
 	file.write(prunePath)
@@ -156,7 +169,7 @@ def writeJob(program, species, shortCov, longCov):
 		file.write(mafLine)
 
 	file.write("############### Generate three-way alignment ###########\n")
-	file.write("echo 'Generating three-way alignment'\n")
+	file.write("echo 'Generating three-way alignment...'\n")
 
 	lrcstatsPath = "lrcstats=/home/seanla/Projects/lrcstats/src/collection/lrcstats\n"
 	file.write(lrcstatsPath)
@@ -183,8 +196,35 @@ def writeJob(program, species, shortCov, longCov):
 		command = "$lrcstats maf -m $mafOea -c $inputOea -o $mafOutputOea\n\n"
 		file.write(command)
 
+	if program in ["colormap", "jabba"]:
+		file.write("############### Removing extended regions #############\n")
+		file.write("echo 'Removing extended regions...'\n")
+
+		unextendPath = "unextend=/home/seanla/Projects/lrcstats/src/preprocessing/unextend_alignments/unextend_alignments.py\n"
+		file.write(unextendPath)
+
+		unextendOutput = "unextendOutput=$outputdir/%s_unextended.maf\n\n" % (test)
+		file.write(unextendOutput)
+
+		unextendCommand = "$unextend -i $mafOutput -o $unextendOutput\n\n"
+		file.write(unextendCommand)
+
+		mafOutput = "mafOutput=$unextendOutput\n\n"
+		file.write(mafOutput)
+
+		if program is "colormap":
+			unextendOutput = "unextendOutputOea=$outputdir/%s_oea_unextended.maf\n\n" % (test)
+			file.write(unextendOutput)
+
+			unextendCommand = "$unextend -i $mafOutputOea -o $unextendOutputOea\n\n"
+			file.write(unextendCommand)
+
+			mafOutput = "mafOutputOea=$unextendOutputOea\n\n"
+			file.write(mafOutput)
+			
+
 	file.write("############### Collecting data ###########\n")
-	file.write("echo 'Collecting data'\n")
+	file.write("echo 'Collecting data...'\n")
 
 	statsOutput = "statsOutput=$outputdir/%s.stats\n\n" % (test)
 	file.write(statsOutput)
@@ -202,26 +242,46 @@ def writeJob(program, species, shortCov, longCov):
 		command = "$lrcstats stats -m $mafOutputOea -o $statsOutputOea\n\n"
 		file.write(command)
 
-	file.write("############### Visualizing statistics ###########\n")
-	file.write("echo 'Visualizing statistics'\n")
+	file.write("############## Finding global statistics ############\n")
+	file.write("echo 'Finding global statistics...'\n\n")
+	
+	global_stats = "global_stats=/home/seanla/Projects/lrcstats/src/statistics/global_stats.py\n"
+	file.write(global_stats)
 
-	stats = "stats=/home/seanla/Projects/lrcstats/src/statistics/process_stats.py\n"
-	file.write(stats)
+	globalOutput = "global_stats_output=$outputdir/%s_global_stats.txt\n\n" % (test)
+	file.write(globalOutput)
 
-	command = "python $stats -i $statsOutput -d $outputdir -n %s\n\n" % (test)
+	command = "python $global_stats -i $statsOutput -o $global_stats_output\n\n"
 	file.write(command)
 
 	if program is "colormap":
-		command = "python $stats -i $statsOutputOea -d $outputdir -n %s_oea\n\n" % (test)
+		globalOutput = "global_stats_output_oea=$outputdir/%s_oea_global_stats.txt\n\n" % (test)
+		file.write(globalOutput)
+
+		command = "python $global_stats -i $statsOutputOea -o $global_stats_output_oea\n\n"
 		file.write(command)
+
+	if constructVisualizations:
+		file.write("############### Visualizing statistics ###########\n")
+		file.write("echo 'Visualizing statistics'\n")
+
+		visualize_stats = "visualize_stats=/home/seanla/Projects/lrcstats/src/statistics/visualize_stats.py\n"
+		file.write(visualize_stats)
+
+		command = "python $visualize_stats -i $statsOutput -d $outputdir -n %s\n\n" % (test)
+		file.write(command)
+
+		if program is "colormap":
+			command = "python $visualize_stats -i $statsOutputOea -d $outputdir -n %s_oea\n\n" % (test)
+			file.write(command)
 
 	file.close()
 
 if __name__ == "__main__":
-        helpMessage = "Generate  PBS job scripts."
-        usageMessage = "Usage: %s [-h help and usage] [-a do all coverages] [-e ecoli] [-y yeast] [-c CoLoRMap] [-d LoRDeC] [-j Jabba] [-p proovread] [-s short read coverage] [-l long read coverage]" % (sys.argv[0])
+        helpMessage = "Generate PBS job scripts."
+        usageMessage = "Usage: %s [-h help and usage] [-a do all coverages] [-e ecoli] [-y yeast] [-f fly] [-c CoLoRMap] [-d LoRDeC] [-j Jabba] [-p proovread] [-s short read coverage] [-l long read coverage] [-v construct visualizations]" % (sys.argv[0])
 
-        options = "haeycdjps:l:"
+        options = "haeycdjps:l:fv"
 
         try:
                 opts, args = getopt.getopt(sys.argv[1:], options)
@@ -233,15 +293,20 @@ if __name__ == "__main__":
                 print usageMessage
                 sys.exit(2)
 
+	allCov = False
 	shortCov = None
 	longCov = None
+
 	doYeast = False
 	doEcoli = False
+	doFly = False
+
 	doLordec = False
 	doJabba = False
 	doProovread = False
 	doColormap = False
-	allCov = False
+	
+	constructVisualizations = False
 
         for opt, arg in opts:
                 # Help message
@@ -253,6 +318,8 @@ if __name__ == "__main__":
                         doEcoli = True
                 elif opt == '-y':
                         doYeast = True
+		elif opt == '-f':
+			doFly = True
 		elif opt == '-s':
 			shortCov = str(arg)
 		elif opt == '-l':
@@ -267,10 +334,8 @@ if __name__ == "__main__":
 			allCov = True
 		elif opt == '-c':
 			doColormap = True
-		else:
-			print "Error: unknown argument!"
-			print usageMessage
-			sys.exit(2)
+		elif opt == '-v':
+			constructVisualizations = True
 
 	optsIncomplete = False
 
@@ -280,7 +345,7 @@ if __name__ == "__main__":
 	if longCov is None and allCov is False:
 		print "Please input the required long coverage."
 		optsIncomplete = True
-	if not doYeast and not doEcoli:
+	if not doYeast and not doEcoli and doFly:
 		print "Please indicate which species you would like to test."
 		optsIncomplete = True
 	if not doColormap and not doLordec and not doJabba and not doProovread:
@@ -305,6 +370,9 @@ if __name__ == "__main__":
 		species.append("yeast")
 	if doEcoli:
 		species.append("ecoli")
+	if doFly:
+		species.append("fly")
+
 	if doLordec:
 		programs.append("lordec")
 		lordec = "l"	
