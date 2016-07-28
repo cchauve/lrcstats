@@ -42,10 +42,8 @@ class ReadDatum(object):
 		directly from the STATS file outputted by lrcstats
 		'''
 		self.data = {}
-		# keys is a global variable and contains the keys
+		# keys is a class variable and contains the keys
 		# for the data dictionary in ReadDatum objects.
-		# These keys can be found initialized in the main body of the
-		# program.
 		assert len(data) == 11 or len(data) == 15
 
 		for i in range(1, len(data)):
@@ -239,7 +237,6 @@ def retrieveRawData(dataPath):
 
 	for datum in rawData:
 		datum = datum.split()
-
 		if datum[0] == 'u':
 			datum = UntrimmedDatum(datum)
 			UntrimmedData.append(datum)

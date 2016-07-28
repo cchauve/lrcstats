@@ -42,7 +42,8 @@ def writeJob(program, species, shortCov, longCov):
 	file.write("#PBS -m ea\n")
 	file.write("#PBS -j oe\n")
 
-	outlog = "#PBS -o /global/scratch/seanla/Data/%s/corrections/%s/%s/%s/%s/%s.out\n" %(species, now.month, now.day, program, test, test) 
+	outputDir = "/global/scratch/seanla/Data/%s/corrections/%s/%s/%s/%s" %(species, now.month, now.day, program, test)
+	outlog = "#PBS -o %s/%s.out\n" % (outputDir, test)
 	file.write(outlog)
 
 	jobName = "#PBS -N %s-correction\n\n" % (test)
@@ -50,18 +51,25 @@ def writeJob(program, species, shortCov, longCov):
 	###############################################################
 
 	file.write("set -e\n")
-	outputDir = "outputDir=%s\n\n"
+
+	outputDirLine = "outputDir=%s\n\n" % (outputDir)
+	file.write(outputDirLine)
 	
-	mkdir = "mkdir -p %s\n" % (outputdir)
+	mkdir = "mkdir -p $outputDir\n"
 
 	file.write(mkdir)
 
 	############## Write program specific commands ###############
 	if program is "lordec":
 		output = "%s/%s.fasta" % (outputdir, test)
+
 		dir = "cd $outputDir\n\n"
-		command = "/home/seanla/Software/LoRDEC-0.6/lordec-correct -T ${PBS_NUM_PPN} --trials 5 --branch 200 --errorrate 0.4 -2 %s %s -k 19 -s 3 -i %s -o %s" % (short1, short2, long, output)
 		file.write(dir)
+
+		programPath = "lordec=/home/seanla/Software/LoRDEC-0.6/lordec-correct\n"
+		file.write(programPath)
+
+		command = "$lordec -T ${PBS_NUM_PPN} --trials 5 --branch 200 --errorrate 0.4 -2 %s %s -k 19 -s 3 -i %s -o %s" % (short1, short2, long, output)
 		file.write(command)
 
 	if program is "jabba":

@@ -38,7 +38,11 @@ def concatenateTrimmedReads(reads):
 			previousRead = currentRead
 			sequence = read[1]
 		else:
-			sequence = sequence + " " + read[1]		
+			sequence = sequence + " " + read[1]
+
+	# Don't forget to add the last read
+	concatReads.append( (previousRead,sequence) )
+
 	return concatReads
 
 def writeFile(reads, outputPath):
