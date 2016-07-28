@@ -176,7 +176,7 @@ def writeUnextended(outputPath, alignments):
 	assert len(alignments) > 0
 
 	with open(outputPath,'w') as file:
-		file.write("##maf version=1\n")
+		file.write("##maf version=1\n\n\n")
 		for alignment in alignments:
 			file.write("a\n")
 			
