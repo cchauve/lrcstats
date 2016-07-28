@@ -86,7 +86,7 @@ void generateUntrimmedMaf(std::string mafInputName, std::string clrName, std::st
 		fastaHeader = clrLine.substr(1, clrLine.npos);
 		int64_t readFastaNum = atoi( fastaHeader.c_str() );
 
-		std::cout << "Analyzing read " << readFastaNum << "...\n";
+		std::cout << "Aligning read " << readFastaNum << "...\n";
 		assert( readFastaNum == readMafNum );
 
 		std::getline(clrInput, clrLine);
@@ -179,7 +179,7 @@ void generateTrimmedMaf(std::string mafInputName, std::string clrName, std::stri
 		fastaHeader = clrLine.substr(1, clrLine.npos);
 		int64_t readFastaNum = atoi( fastaHeader.c_str() );
 
-		std::cout << "Analyzing read " << readFastaNum << "...\n";
+		std::cout << "Aligning read " << readFastaNum << "...\n";
 		assert( readFastaNum == readMafNum );
 
 		std::getline(clrInput, clrLine);
@@ -289,6 +289,7 @@ void createUntrimmedStat(std::string mafName, std::string outputPath)
 		std::getline(mafFile, line); 
 	} 
 
+	// The getline in the while loop condition skips the "a" line
 	while (std::getline(mafFile, line)) {
 		// Read ref line
 		std::getline(mafFile, line);
@@ -314,7 +315,7 @@ void createUntrimmedStat(std::string mafName, std::string outputPath)
 		int64_t clrSize = atoi( split(line).at(sizeIndex).c_str() );
 		assert( clrSize > 0 );
 
-		// Skip last line
+		// Skip last line, which is empty 
 		std::getline(mafFile, line);
 
 		// Write whole read statistics
@@ -366,6 +367,7 @@ void createTrimmedStat(std::string mafName, std::string outputPath)
 		std::getline(mafFile, line); 
 	} 
 
+	// The getline in the while loop condition skips the "a" line
 	while (std::getline(mafFile, line)) {
 		// Read ref line
 		std::getline(mafFile, line);
@@ -425,10 +427,10 @@ void displayHelp()
 
 void displayUsage()
 {
-		std::cerr << "Usage: lrcstats [mode] [-m MAF input path] [-c cLR input path] [-t cLR are trimmed] "
-		      	  << "[-o output path]\n";
-		std::cerr << "lrcstats maf to create 3-way MAF file\n";
-		std::cerr << "lrcstats stats to perform statistics on MAF file\n";
+		std::cout << "Usage: lrcstats [mode] [-m MAF input path] [-c cLR input path] [-t cLR are trimmed] "
+		      	  << "[-o output path] [-g perform global statistics]\n";
+		std::cout << "lrcstats maf to create 3-way MAF file\n";
+		std::cout << "lrcstats stats to perform statistics on MAF file\n";
 }
 
 int main(int argc, char *argv[])
@@ -460,7 +462,7 @@ int main(int argc, char *argv[])
 	std::string outputPath = "";
 	bool trimmed = false;
 
-	while ((opt = getopt(argc, argv, "m:c:o:ht")) != -1) {
+	while ((opt = getopt(argc, argv, "m:c:o:htg")) != -1) {
 		switch (opt) {
 			case 'm':
 				// Source maf file name
