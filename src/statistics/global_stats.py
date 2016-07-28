@@ -34,40 +34,43 @@ def collectStatistics(trimmedData):
 
 	return statistics
 
-def writeStatisticsSummary(outputPath, name):
+def writeStatisticsSummary(outputPath, statistics):
 	'''
 	Write the summary of the statistics into a text file.
 	Inputs
+	- (string) outputPath: the path to save file
 	- (dict of ints) statistics: contains the statistics
-	- (string) name: Program, short coverage and long coverage used
 	'''
+	# Get the corrected read statistics
 	correctedThroughput = statistics[correctedBases_k]
-	correctedMutations = statistics[correctedDeletions_k] + statistics[correctedInsertions_k]
+	correctedMutations = statistics[correctedDeletions_k] + statistics[correctedInsertions_k] \
 				+ statistics[correctedSubstitutions_k]
 	correctedTruePositives = correctedThroughput - correctedMutations
 	correctedErrorRate = correctedMutations/correctedThroughput
 
+	# Get the uncorrected read statistics
 	uncorrectedThroughput = statistics[uncorrectedBases_k]
-	uncorrectedMutations = statistics[uncorrectedDeletions_k] + statistics[uncorrectedInsertions_k]
+	uncorrectedMutations = statistics[uncorrectedDeletions_k] + statistics[uncorrectedInsertions_k] \
 				+ statistics[uncorrectedSubstitutions_k]
 	uncorrectedTruePositives = uncorrectedThroughput - uncorrectedMutations
 	uncorrectedErrorRate = uncorrectedMutations/uncorrectedThroughput
 
 	with open(outputPath, 'w') as file:
-		file.write("%s\n" % (name))
+		# file.write("%s\n" % (name))
 		header = "            Error Rate   Throughput   Correct   Incorrect   Deletions   Insertions   Substitutions\n"
 		file.write(header)
 
-		correctedLine = "Corrected   %d           %d           %d        %d          %d          %d           %d\n" \
+		correctedLine = "Corrected   %f %d %d %d %d %d %d\n" \
 				% (correctedErrorRate, correctedThroughput, correctedTruePositives, 
 					correctedMutations, statistics[correctedDeletions_k], statistics[correctedInsertions_k], 
-					statistics[correctedSubsitutions])	
+					statistics[correctedSubstitutions_k])	
 		file.write(correctedLine)
 
-		uncorrectedLine = "Uncorrected %d           %d           %d        %d          %d          %d           %d\n" \
+		uncorrectedLine = "Uncorrected %f %d %d %d %d %d %d\n" \
 				% (uncorrectedErrorRate, uncorrectedThroughput, uncorrectedTruePositives, 
 					uncorrectedMutations, statistics[uncorrectedDeletions_k], 
-					statistics[uncorrectedInsertions_k], statistics[uncorrectedSubsitutions])	
+					statistics[uncorrectedInsertions_k], statistics[uncorrectedSubstitutions_k])	
+		file.write(uncorrectedLine)
 
 # Global variables for data dict
 correctedBases_k = "CORRECTED BASES"
@@ -81,8 +84,8 @@ uncorrectedInsertions_k = "UNCORRECTED INSERTIONS"
 uncorrectedSubstitutions_k = "UNCORRECTED SUBSTITUTIONS"
 
 helpMessage = "Summarize global long read correction data statistics."
-usageMessage = "Usage: %s [-h help and usage] [-i stats file input path] [-d output directory] [-n experiment name]" % (sys.argv[0])
-options = "hi:d:n:t"
+usageMessage = "Usage: %s [-h help and usage] [-i stats file input path] [-o output path]" % (sys.argv[0])
+options = "hi:o:t"
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], options)
@@ -95,8 +98,7 @@ if len(sys.argv) == 1:
 	sys.exit(2)
 
 inputPath = None
-saveDir = None
-testName = None
+outputPath = None
 testRun = False
 
 for opt, arg in opts:
@@ -106,24 +108,19 @@ for opt, arg in opts:
 		sys.exit()
 	elif opt == '-i':
 		inputPath = arg
-	elif opt == '-d':
-		saveDir = arg
-	elif opt == '-n':
-		testName = arg
+	elif opt == '-o':
+		outputPath = arg
 	elif opt == '-t':
 		testRun = True
 
 optsIncomplete = False
 
 if inputPath is None and not testRun:
-	print "Please provide an input path."
+	print "Please specify the input path."
 	optsIncomplete = True
-if saveDir is None:
-	print "Please provide the output directory."
+if outputPath is None:
+	print "Please specify the output path."
 	optsIncomplete = True
-if testName is None:
-	print "Please indicate the name of the experiment."
-	optsIncomplete = True 
 
 if optsIncomplete:
 	print usageMessage
@@ -133,3 +130,4 @@ if optsIncomplete:
 trimmedData, untrimmedData = data.retrieveRawData(inputPath)
 
 statistics = collectStatistics(trimmedData)
+writeStatisticsSummary(outputPath, statistics)
