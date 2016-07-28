@@ -264,9 +264,9 @@ def test():
 readNumberIndex_g = 0
 
 helpMessage = "Reads three-way alignment MAF files and outputs another three-way MAF file without extended segments on reads and a second MAF file with only alignment between the reference and the extended segment of the read."
-usageMessage = "[-h help and usage] [-i three-way MAF file] [-r reference FASTA] [-m unextended MAF output path] [-e extension segments MAF output path] [-p used PBSim]"
+usageMessage = "[-h help and usage] [-i three-way MAF file] [-m unextended MAF output path] [-p used PBSim]"
 
-options = "hi:r:m:e:t"
+options = "hi:m:pt"
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], options)
@@ -279,9 +279,9 @@ if len(sys.argv) == 1:
 	sys.exit(2)
 
 mafInputPath = None
-refPath = None
+#refPath = None
 unextendedPath = None
-extensionPath = None
+#extensionPath = None
 usedPbsim = False
 
 for opt, arg in opts:
@@ -291,12 +291,8 @@ for opt, arg in opts:
 		sys.exit()
 	elif opt == '-i':
 		mafInputPath = arg
-	elif opt == '-r':
-		refPath = arg
 	elif opt == '-m':
 		unextendedPath = arg
-	elif opt == '-e':
-		extensionPath = True
 	elif opt == '-p':
 		usedPbsim = True
 	elif opt == '-t':
