@@ -207,7 +207,7 @@ def writeJob(program, species, shortCov, longCov):
 		unextendOutput = "unextendOutput=$outputdir/%s_unextended.maf\n\n" % (test)
 		file.write(unextendOutput)
 
-		unextendCommand = "python $unextend -i $mafOutput -o $unextendOutput\n\n"
+		unextendCommand = "python $unextend -i $mafOutput -m $unextendOutput\n\n"
 		file.write(unextendCommand)
 
 		mafOutput = "mafOutput=$unextendOutput\n\n"
