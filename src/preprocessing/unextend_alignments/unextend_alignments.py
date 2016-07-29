@@ -302,7 +302,7 @@ for opt, arg in opts:
 if usedPbsim:
 	readNumberIndex_g = 1
 
-if mafInputPath is None or refPath is None or unextendedPath is None or extensionPath is None:
+if mafInputPath is None or unextendedPath is None:
 	print "Missing argument - please double check your command."
 	sys.exit(2)
 
