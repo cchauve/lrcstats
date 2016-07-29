@@ -144,9 +144,12 @@ def readInput(mafInputPath):
 	'''
 	with open(mafInputPath, 'r') as file:
 		alignments = []
+		refLine = None
+		uReadLine = None
+		cReadLine = None
 		for line in file:
 			line = line.split()
-			if len(line) > 0 and line[0] != "#":
+			if len(line) > 0 and line[0] != "#" and line[0] != "track":
 				# Indicates start of read
 				if line[0] == 'a':
 					refLine = None
