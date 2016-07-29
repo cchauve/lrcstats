@@ -312,4 +312,4 @@ if mafInputPath is None or unextendedPath is None:
 print "Reading file and unextending alignments..."
 alignments = readInput( mafInputPath )
 print "Writing output file..."
-writeUnextended(alignments)
+writeUnextended(unextendedPath, alignments)
