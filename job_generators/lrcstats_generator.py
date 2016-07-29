@@ -132,6 +132,7 @@ def writeJob(program, species, shortCov, longCov):
 			file.write(processPath)
 			
 			uncorrected_reads = "uncorrected=$prefix/simlord/long-d%s/%s-long-d%s.fastq\n" % (longCov, species, longCov)
+			file.write(uncorrected_reads)
 
 			processOutput = "untrimmify_output=$outputdir/untrimmified.fasta\n\n"
 			file.write(processOutput)
@@ -216,7 +217,7 @@ def writeJob(program, species, shortCov, longCov):
 			unextendOutput = "unextendOutputOea=$outputdir/%s_oea_unextended.maf\n\n" % (test)
 			file.write(unextendOutput)
 
-			unextendCommand = "$unextend -i $mafOutputOea -o $unextendOutputOea\n\n"
+			unextendCommand = "python $unextend -i $mafOutputOea -o $unextendOutputOea\n\n"
 			file.write(unextendCommand)
 
 			mafOutput = "mafOutputOea=$unextendOutputOea\n\n"
