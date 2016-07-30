@@ -237,7 +237,7 @@ def writeJob(program, species, shortCov, longCov):
 	file.write(command)
 
 	if program is "colormap":
-		statsOutput = "$statsOutputOea=$outputdir/%s_oea.stats\n\n" % (test)
+		statsOutput = "statsOutputOea=$outputdir/%s_oea.stats\n\n" % (test)
 		file.write(statsOutput)
 
 		command = "$lrcstats stats -m $mafOutputOea -o $statsOutputOea\n\n"
