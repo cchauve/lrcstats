@@ -117,8 +117,15 @@ class Alignment(object):
 		lengthDifference = lengthBeforeStrip - lengthAfterStrip
 		
 		newEndIndex = len(cRead) - lengthDifference
+
+		extendedSegment = cRead[newEndIndex:]
 		cRead = cRead[0:newEndIndex]
 		uRead = uRead[0:newEndIndex]
+
+		if self.isInMiddleOfTrimmedRead(extendedSegment):
+			ref += '-'
+			uRead += '-'
+			cRead += 'X'
 
 		return ref, uRead, cRead
 
@@ -130,9 +137,19 @@ class Alignment(object):
 		return ref, uRead, cRead
 
 	def sizeOfSequence(self, read):
-		# Returns the number of all non-'-' characters in read
+		# Returns the number of all non-'-' or 'X' characters in read
 		read = read.replace('-', '')
+		read = read.replace('X', '')
 		return len(read)
+
+	def isInMiddleOfTrimmedRead(self, read):
+		# Returns whether the extended sequence is in the middle of
+		# a trimmed read in the corrected long read alignment
+		numX = read.count('X')
+		if numX % 2 == 0:
+			return False
+		else:
+			return True
 
 def readInput(mafInputPath):
 	'''
