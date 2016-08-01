@@ -9,7 +9,11 @@ def writeJob(program, species, shortCov, longCov):
 	
 	################### Write the resources #######################
 	file.write("#!/bin/bash\n")
-	resources = ["walltime=3:00:00", "mem=8gb", "nodes=1:ppn=1"]
+	if species is "ecoli":
+		walltime = "walltime=12:00:00"
+	else:
+		walltime = "walltime=6:00:00"
+	resources = [walltime, "mem=8gb", "nodes=1:ppn=1"]
 	for resource in resources:
 		line = "#PBS -l %s\n" %(resource)
 		file.write(line)
