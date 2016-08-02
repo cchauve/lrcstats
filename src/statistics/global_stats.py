@@ -129,5 +129,5 @@ if optsIncomplete:
 # We don't use the untrimmedData
 trimmedData, untrimmedData = data.retrieveRawData(inputPath)
 
-statistics = collectStatistics(trimmedData)
+statistics = collectStatistics(untrimmedData)
 writeStatisticsSummary(outputPath, statistics)

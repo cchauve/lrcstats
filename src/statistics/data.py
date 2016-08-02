@@ -111,21 +111,6 @@ class ReadDatum(object):
 		uSub = self.data[ReadDatum.uncorrSub_k]
 		return uDel + uIns + uSub
 
-class TrimmedDatum(ReadDatum):
-	'''
-	Similar to ReadDatum object, but also outputs statistics related
-	specifically for trimmed reads.
-	'''
-	def __init__(self,data):
-		'''
-		Accepts as input list of trimmed read data points obtained
-		directly from the STATS file outputted by lrcstats
-		'''
-		ReadDatum.__init__(self,data)
-
-	# Get the corresponding number of mutations of the corrected long read
-	# and its corresponding uncorrected read
-
 	def getCorrDel(self):
 		cDel = self.data[ReadDatum.corrDel_k]
 		return cDel
@@ -149,6 +134,7 @@ class TrimmedDatum(ReadDatum):
 	def getUncorrSub(self):
 		uSub = self.data[ReadDatum.uncorrSub_k]
 		return uSub
+
 
 class UntrimmedDatum(ReadDatum):
 	'''
@@ -241,7 +227,7 @@ def retrieveRawData(dataPath):
 			datum = UntrimmedDatum(datum)
 			UntrimmedData.append(datum)
 		elif datum[0] == 't':
-			datum = TrimmedDatum(datum)
+			datum = ReadDatum(datum)
 			TrimmedData.append(datum)
 
 	return (TrimmedData, UntrimmedData)
