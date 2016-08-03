@@ -56,20 +56,20 @@ def writeStatisticsSummary(outputPath, trimmedStatistics, untrimmedStatistics):
 	uncorrectedTruePositivesTrimmed = uncorrectedThroughputTrimmed - uncorrectedMutationsTrimmed
 	uncorrectedErrorRateTrimmed = uncorrectedMutationsTrimmed/uncorrectedThroughputTrimmed
 
-	# Untrimmed statistics
-	# Get the corrected read statistics
-	correctedThroughputUntrimmed = untrimmedStatistics[correctedBases_k]
-	correctedMutationsUntrimmed = untrimmedStatistics[correctedDeletions_k] + untrimmedStatistics[correctedInsertions_k] \
-				+ untrimmedStatistics[correctedSubstitutions_k]
-	correctedTruePositivesUntrimmed = correctedThroughputUntrimmed - correctedMutationsUntrimmed
-	correctedErrorRateUntrimmed = correctedMutationsUntrimmed/correctedThroughputUntrimmed
+	if len(untrimmedStatistics) > 0:
+		# Untrimmed statistics
+		# Get the corrected read statistics
+		correctedThroughputUntrimmed = untrimmedStatistics[correctedBases_k]
+		correctedMutationsUntrimmed = untrimmedStatistics[correctedDeletions_k] + untrimmedStatistics[correctedInsertions_k]\			 + untrimmedStatistics[correctedSubstitutions_k]
+		correctedTruePositivesUntrimmed = correctedThroughputUntrimmed - correctedMutationsUntrimmed
+		correctedErrorRateUntrimmed = correctedMutationsUntrimmed/correctedThroughputUntrimmed
 
 	# Get the uncorrected read statistics
-	uncorrectedThroughputUntrimmed = untrimmedStatistics[uncorrectedBases_k]
-	uncorrectedMutationsUntrimmed = untrimmedStatistics[uncorrectedDeletions_k] + untrimmedStatistics[uncorrectedInsertions_k] \
-				+ untrimmedStatistics[uncorrectedSubstitutions_k]
-	uncorrectedTruePositivesUntrimmed = uncorrectedThroughputUntrimmed - uncorrectedMutationsUntrimmed
-	uncorrectedErrorRateUntrimmed = uncorrectedMutationsUntrimmed/uncorrectedThroughputUntrimmed
+		uncorrectedThroughputUntrimmed = untrimmedStatistics[uncorrectedBases_k]
+		uncorrectedMutationsUntrimmed = untrimmedStatistics[uncorrectedDeletions_k] \ 
+			+ untrimmedStatistics[uncorrectedInsertions_k] + untrimmedStatistics[uncorrectedSubstitutions_k]
+		uncorrectedTruePositivesUntrimmed = uncorrectedThroughputUntrimmed - uncorrectedMutationsUntrimmed
+		uncorrectedErrorRateUntrimmed = uncorrectedMutationsUntrimmed/uncorrectedThroughputUntrimmed
 
 	with open(outputPath, 'w') as file:
 		header = "            Error Rate   Throughput   Correct   Incorrect   Deletions   Insertions   Substitutions\n"
@@ -86,16 +86,20 @@ def writeStatisticsSummary(outputPath, trimmedStatistics, untrimmedStatistics):
 					trimmedStatistics[uncorrectedInsertions_k], trimmedStatistics[uncorrectedSubstitutions_k])	
 		file.write(uncorrectedLine)
 
-		correctedLine = "Corrected - untrimmed   %f %d %d %d %d %d %d\n" \
+		if len(untrimmedStatistics) > 0:
+			correctedLine = "Corrected - untrimmed   %f %d %d %d %d %d %d\n" \
 				% (correctedErrorRateUntrimmed, correctedThroughputUntrimmed, correctedTruePositivesUntrimmed, 
-					correctedMutationsUntrimmed, untrimmedStatistics[correctedDeletions_k], untrimmedStatistics[correctedInsertions_k], untrimmedStatistics[correctedSubstitutions_k])	
-		file.write(correctedLine)
+					correctedMutationsUntrimmed, untrimmedStatistics[correctedDeletions_k], 
+					untrimmedStatistics[correctedInsertions_k], 
+					untrimmedStatistics[correctedSubstitutions_k])	
+			file.write(correctedLine)
 
-		uncorrectedLine = "Uncorrected - untrimmed %f %d %d %d %d %d %d\n" \
+			uncorrectedLine = "Uncorrected - untrimmed %f %d %d %d %d %d %d\n" \
 				% (uncorrectedErrorRateUntrimmed, uncorrectedThroughputUntrimmed, uncorrectedTruePositivesUntrimmed,
 					uncorrectedMutationsUntrimmed, untrimmedStatistics[uncorrectedDeletions_k], 
-					untrimmedStatistics[uncorrectedInsertions_k], untrimmedStatistics[uncorrectedSubstitutions_k])	
-		file.write(uncorrectedLine)
+					untrimmedStatistics[uncorrectedInsertions_k], 
+					untrimmedStatistics[uncorrectedSubstitutions_k])	
+			file.write(uncorrectedLine)
 
 # Global variables for data dict
 correctedBases_k = "CORRECTED BASES"

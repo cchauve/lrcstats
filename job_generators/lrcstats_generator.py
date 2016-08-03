@@ -10,7 +10,7 @@ def writeJob(program, species, shortCov, longCov):
 	################### Write the resources #######################
 	file.write("#!/bin/bash\n")
 	if species is "ecoli":
-		walltime = "walltime=12:00:00"
+		walltime = "walltime=24:00:00"
 	else:
 		walltime = "walltime=6:00:00"
 	resources = [walltime, "mem=8gb", "nodes=1:ppn=1"]
@@ -118,34 +118,17 @@ def writeJob(program, species, shortCov, longCov):
 		file.write("############### Processing Trimmed Reads ###########\n")
 		file.write("echo 'Processing trimmed reads...'\n")
 		
-		if program is "jabba":
-			processPath = "processtrimmed=$preprocesspath/concatenatejabba/concatenatejabba.py\n"
-			file.write(processPath)
+		processPath = "concatenate=$preprocesspath/concatenate_trimmed/concatenate_trimmed.py\n"
+		file.write(processPath)
 
-			processOutput = "processoutput=$outputdir/concatenated.fasta\n\n"
-			file.write(processOutput)
+		processOutput = "concatenated_output=$outputdir/concatenated.fasta\n\n"
+		file.write(processOutput)
 
-			processCommand = "python $processtrimmed -i $input -o $processoutput\n\n"
-			file.write(processCommand)
+		processCommand = "python $concatenate -i $input -o $concatenated_output\n\n"
+		file.write(processCommand)
 
-			inputfasta = "input=$processoutput\n\n"
-			file.write(inputfasta)
-		else:
-			# Convert proovread trimmed reads to untrimmed reads
-			processPath = "untrimmify=$preprocesspath/untrimmify_proovread/untrimmify_proovread.py\n"
-			file.write(processPath)
-			
-			uncorrected_reads = "uncorrected=$prefix/simlord/long-d%s/%s-long-d%s.fastq\n" % (longCov, species, longCov)
-			file.write(uncorrected_reads)
-
-			processOutput = "untrimmify_output=$outputdir/untrimmified.fasta\n\n"
-			file.write(processOutput)
-
-			processCommand = "python $untrimmify -c $input -u $uncorrected -o $untrimmify_output\n\n"
-			file.write(processCommand)
-
-			inputfasta = "input=$untrimmify_output\n\n"
-			file.write(inputfasta)
+		inputfasta = "input=$concatenated_output\n\n"
+		file.write(inputfasta)
 
 
 	file.write("############### Prune the maf file(s) ###########\n")
@@ -182,11 +165,8 @@ def writeJob(program, species, shortCov, longCov):
 	mafOutput = "mafOutput=$outputdir/%s.maf\n\n" % (test)
 	file.write(mafOutput)
 
-	if program is "jabba":
+	if program is "jabba" or program is "proovread":
 		command = "$lrcstats maf -m $maf -c $input -t -o $mafOutput\n\n"
-		file.write(command)
-	elif program is "proovread":
-		command = "$lrcstats maf -m $maf -c $input  -o $mafOutput\n\n"
 		file.write(command)
 	elif program is "lordec":
 		command = "$lrcstats maf -m $maf -c $input -o $mafOutput\n\n"
@@ -234,7 +214,7 @@ def writeJob(program, species, shortCov, longCov):
 	statsOutput = "statsOutput=$outputdir/%s.stats\n\n" % (test)
 	file.write(statsOutput)
 
-	if program is "jabba":
+	if program is "jabba" or program is "proovread":
 		command = "$lrcstats stats -m $mafOutput -o $statsOutput -t\n\n"
 	else:
 		command = "$lrcstats stats -m $mafOutput -o $statsOutput\n\n"
