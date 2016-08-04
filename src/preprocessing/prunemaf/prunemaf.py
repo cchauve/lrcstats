@@ -69,7 +69,7 @@ if __name__ == "__main__":
 					for line in fasta:
 						if line is not '' and line[0] is '>':
 							# Find the read number from the FASTA header line
-							readNumber = int( line[1:] )
+							readNumber = int( re.findall('(\d+)', line)[readNumberIndex] )
 							reads.append( readNumber )
 
 					for line in maf:
