@@ -13,10 +13,12 @@ def getReads(inputPath):
 		reads = []
 		sequence = ""
 		readNum = -1
+		header = ""
 		for line in file:
 			if line[0] == '>':
 				if sequence != "":
-					reads.append( (readNum, sequence) )
+					reads.append( (readNum, sequence, header) )
+				header = line
 				line = line.split('_')
 				readNum = int(line[1])
 				sequence = ""
@@ -36,7 +38,7 @@ def writeFasta(outputPath, reads):
 	'''
 	with open(outputPath, 'w') as file:
 		for read in reads:
-			header = ">%d\n" % (read[0])
+			header = "%s" % (read[2])
 			file.write(header)	
 			sequence = "%s\n" % (read[1])
 			file.write(sequence)
