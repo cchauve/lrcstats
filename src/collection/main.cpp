@@ -82,17 +82,20 @@ void generateUntrimmedMaf(std::string mafInputName, std::string clrName, std::st
 		// Next, read from clr file
 		//std::cout << clrLine << "\n";
 
+		/*
 		std::string fastaHeader;
 		fastaHeader = clrLine.substr(1, clrLine.npos);
 		int64_t readFastaNum = atoi( fastaHeader.c_str() );
-
-		std::cout << "Aligning read " << readFastaNum << "...\n";
+		*/
+		std::cout << "Aligning read " << readMafNum << "...\n";
+		/*
 		if ( readFastaNum != readMafNum ) {
 			std::cout << "Error; FASTA read number does not equal MAF read number.\n";
 			std::cout << "FASTA read number is " << readFastaNum << "\n";
 			std::cout << "MAF read number is " << readMafNum << "\n";
 			assert( readFastaNum == readMafNum );
 		}
+		*/
 
 		std::getline(clrInput, clrLine);
 		clr = clrLine;
@@ -184,8 +187,8 @@ void generateTrimmedMaf(std::string mafInputName, std::string clrName, std::stri
 		fastaHeader = clrLine.substr(1, clrLine.npos);
 		int64_t readFastaNum = atoi( fastaHeader.c_str() );
 
-		std::cout << "Aligning read " << readFastaNum << "...\n";
-		assert( readFastaNum == readMafNum );
+		std::cout << "Aligning read " << readMafNum << "...\n";
+		//assert( readFastaNum == readMafNum );
 
 		std::getline(clrInput, clrLine);
 		clr = clrLine;
