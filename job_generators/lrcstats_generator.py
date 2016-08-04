@@ -10,7 +10,7 @@ def writeJob(program, species, shortCov, longCov):
 	################### Write the resources #######################
 	file.write("#!/bin/bash\n")
 	if species is "ecoli":
-		walltime = "walltime=24:00:00"
+		walltime = "walltime=12:00:00"
 	else:
 		walltime = "walltime=6:00:00"
 	resources = [walltime, "mem=8gb", "nodes=1:ppn=1"]
