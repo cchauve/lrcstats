@@ -87,7 +87,12 @@ void generateUntrimmedMaf(std::string mafInputName, std::string clrName, std::st
 		int64_t readFastaNum = atoi( fastaHeader.c_str() );
 
 		std::cout << "Aligning read " << readFastaNum << "...\n";
-		assert( readFastaNum == readMafNum );
+		if ( readFastaNum != readMafNum ) {
+			std::cout << "Error; FASTA read number does not equal MAF read number.\n";
+			std::cout << "FASTA read number is " << readFastaNum << "\n";
+			std::cout << "MAF read number is " << readMafNum << "\n";
+			assert( readFastaNum == readMafNum );
+		}
 
 		std::getline(clrInput, clrLine);
 		clr = clrLine;

@@ -42,8 +42,14 @@ def writeJob(program, species, shortCov, longCov):
 	file.write(outputdirLine)
 
 	maf = "%s/simlord/long-d%s/%s-long-d%s.fastq.sam.maf" % (prefix, longCov, species, longCov)
-	mafLine = "maf=%s\n\n" % (maf)
+	mafLine = "maf=%s\n" % (maf)
 	file.write(mafLine)
+
+	if program is "colormap":
+		mafOeaLine = "mafOea=$maf\n"
+		file.write(mafOeaLine)
+
+	file.write("\n")
 	###############################################################
 
 	# Script ends immediately if error
@@ -150,7 +156,7 @@ def writeJob(program, species, shortCov, longCov):
 		pruneOutput = "pruneOutputOea=$outputdir/prunedOea\n\n"
 		file.write(pruneOutput)
 
-		pruneCommand = "python $prunemaf -f $inputOea -m $maf -o $pruneOutputOea\n\n"
+		pruneCommand = "python $prunemaf -f $inputOea -m $mafOea -o $pruneOutputOea\n\n"
 		file.write(pruneCommand)
 
 		mafLine = "mafOea=${pruneOutputOea}.maf\n\n"
@@ -206,7 +212,6 @@ def writeJob(program, species, shortCov, longCov):
 
 			mafOutput = "mafOutputOea=$unextendOutputOea\n\n"
 			file.write(mafOutput)
-			
 
 	file.write("############### Collecting data ###########\n")
 	file.write("echo 'Collecting data...'\n")

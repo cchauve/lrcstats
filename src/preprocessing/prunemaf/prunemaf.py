@@ -51,6 +51,7 @@ if __name__ == "__main__":
 		sys.exit(2)
 
 	outputPath = "%s.maf" % (outputPrefix)
+	# MAF uncorrected read alignments that don't appear in the FASTA file go here
 	junkPath = "%s_junk.maf" % (outputPrefix)
 
 	reads = []
@@ -60,6 +61,7 @@ if __name__ == "__main__":
 	else:
 		readNumberIndex = 0
 
+	# Filter the MAF file
 	with open(fastaPath, 'r') as fasta:
 		with open(mafPath, 'r') as maf:
 			with open(outputPath, 'w') as output:
@@ -69,6 +71,7 @@ if __name__ == "__main__":
 							# Find the read number from the FASTA header line
 							readNumber = int( line[1:] )
 							reads.append( readNumber )
+
 					for line in maf:
 						tokens = line.rstrip().split()
 
@@ -81,6 +84,7 @@ if __name__ == "__main__":
 							ref = line
 						elif len( tokens ) > 1:
 							readNumber = int( re.findall('(\d+)', tokens[1])[readNumberIndex] )
+							# Write 4 lines at once
 							inputLine = "a\n%s%s\n" % (ref, line)	
 							# If the current read has been corrected by the program
 							# then keep it
