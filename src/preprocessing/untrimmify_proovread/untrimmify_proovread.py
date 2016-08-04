@@ -78,10 +78,7 @@ def fillTrimmedGaps(read):
 	'''
 	slices = read[slices_g]
 
-	try:
-		uncorrectedRead = read[uncorrected_g]
-	except:
-		raise
+	uncorrectedRead = read[uncorrected_g]
 
 	trimmedReads = read[trimmed_g]
 
@@ -93,11 +90,12 @@ def fillTrimmedGaps(read):
 		if i != len(slices):
 			slice = slices[i]
 			stop = slice[0]
-			index = (start, stop)
+			indices = (start, stop)
+			# Initialize start index for next time
 			start = stop + slice[1]
 		else:
-			index = (start, len(uncorrectedRead) )
-		uncorrectedSegmentSlices.append( index )
+			indices = (start, len(uncorrectedRead) )
+		uncorrectedSegmentSlices.append( indices )
 
 	numberOfSlices = len(uncorrectedSegmentSlices)
 	numberOfTrimmedReads = len(trimmedReads)
