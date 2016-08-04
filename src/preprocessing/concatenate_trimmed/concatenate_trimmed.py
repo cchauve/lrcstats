@@ -12,19 +12,22 @@ def getReads(inputPath):
 	with open(inputPath, 'r') as inputFile:
 		for line in inputFile:
 			if line != '' and line[0] == '>':
+				# The next line gets rid of the substr information if
+				# the reads are from proovread
+				header = line.split()[0]
 				number = int( re.findall('(\d+)', line)[readNumberIndex] )		
 			else:
 				sequence = line.rstrip()
 				if number in reads:
-					reads[number] += " " + sequence
+					reads[number][sequence_k] += " " + sequence
 				else:
-					reads[number] = sequence
+					reads[number] = {sequence_k: sequence, header_k: header}
 	return reads
 
 def writeFile(reads, outputPath):
 	'''
 	Inputs
-	- ( list of tuples of int and string ) reads: list of read numbers and sequences to
+	- (list of tuples of int and string) reads: list of read numbers and sequences to
 							be written into file
 	- (string) outputPath: specifies where to write processed reads 
 	Outputs
@@ -32,11 +35,17 @@ def writeFile(reads, outputPath):
 	'''
 	with open(outputPath, 'w') as outputFile:
 		for number in reads:
-			sequence = reads[number]
-			header = ">%d\n" % (number)
+			header = reads[number][header_k]
+			header = "%s\n" % (header)
 			outputFile.write(header)
+
+			sequence = reads[number][sequence_k]
 			sequence = "%s\n" % (sequence) 
 			outputFile.write(sequence)
+
+# Global variables for reads dict
+sequence_k = "SEQUENCE"
+header_k = "HEADER"
 
 helpMessage = "Process Jabba or Proovread FASTA long reads files so that trimmed portions of the same read are concatenated (but separated by spaces) into one single sequence."
 usageMessage = "Usage: %s [-h help and usage] [-i Jabba or Proovread input path] [-o output path] [-p PBSim data]" % (sys.argv[0])
