@@ -547,7 +547,7 @@ void TrimmedAlignments::findAlignments()
 		int64_t cIndex = rowIndex - 1;
 		int64_t currentCost = matrix[rowIndex][columnIndex];
 
-		// Check if cIndex is the first base of a read, if it is then that means
+		// Check if cIndex is the last base of a read, if it is then that means
 		// we're either at the beginning or the end of a read
 		if (std::find(lastBaseIndices.begin(), lastBaseIndices.end(), cIndex) != lastBaseIndices.end()) {
 			isLastBase = true;
@@ -583,7 +583,7 @@ void TrimmedAlignments::findAlignments()
 
 		if (rowIndex == 0 or currentCost == deletion) {
 			// Mark the beginning of a trimmed long read
-			if (isLastBase and firstDeletion) {
+			if ( (isLastBase or rowIndex == 0) and firstDeletion ) {
 				clrMaf = 'X' + clrMaf;
 				ulrMaf = '-' + ulrMaf;
 				refMaf = '-' + refMaf;
