@@ -20,6 +20,7 @@ def findErrorRatesAndLengths(inputPath):
 		for line in file:
 			if len(line) > 0 and line[0:5] == "@Read":
 				length = int( re.findall('(\d+)', line)[readLengthIndex] )		
+				print length
 				errors = int( re.findall('(\d+)', line)[errorIndex] )		
 				errorRate = errors/length	
 				lengths.append(length)
@@ -43,7 +44,8 @@ def makeErrorRateScatterPlot(lengths, errorRates, testName, outputPath):
         fig.savefig(savePath, bbox_inches='tight')
 
 def breezy(outputPath):
-	species = ['ecoli', 'yeast', 'fly']
+	#species = ['ecoli', 'yeast', 'fly']
+	species = ['yeast']
 	coverages = ['10', '20', '50', '75']
 	
 	for specie in species:
