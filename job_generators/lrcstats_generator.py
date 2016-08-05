@@ -9,10 +9,7 @@ def writeJob(program, species, shortCov, longCov):
 	
 	################### Write the resources #######################
 	file.write("#!/bin/bash\n")
-	if species is "ecoli":
-		walltime = "walltime=12:00:00"
-	else:
-		walltime = "walltime=6:00:00"
+	walltime = "walltime=3:00:00:00"
 	resources = [walltime, "mem=8gb", "nodes=1:ppn=1"]
 	for resource in resources:
 		line = "#PBS -l %s\n" %(resource)
@@ -241,7 +238,10 @@ def writeJob(program, species, shortCov, longCov):
 	globalOutput = "global_stats_output=$outputdir/%s_global_stats.txt\n\n" % (test)
 	file.write(globalOutput)
 
-	command = "python $global_stats -i $statsOutput -o $global_stats_output\n\n"
+	if program in ['proovread', 'jabba']:
+		command = "python $global_stats -i $statsOutput -o $global_stats_output\n\n"
+	else:
+		command = "python $global_stats -i $statsOutput -o $global_stats_output -b\n\n"
 	file.write(command)
 
 	if program is "colormap":
