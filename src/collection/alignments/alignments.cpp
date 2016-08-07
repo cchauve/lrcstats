@@ -584,9 +584,9 @@ void TrimmedAlignments::findAlignments()
 		if (rowIndex == 0 or currentCost == deletion) {
 			// Mark the beginning of a trimmed long read
 			if ( (isLastBase or rowIndex == 0) and firstDeletion ) {
-				clrMaf = 'X' + clrMaf;
-				ulrMaf = '-' + ulrMaf;
 				refMaf = '-' + refMaf;
+				ulrMaf = '-' + ulrMaf;
+				clrMaf = 'X' + clrMaf;
 			}
 			refMaf = ref[urIndex] + refMaf;
 			ulrMaf = ulr[urIndex] + ulrMaf;
@@ -597,9 +597,9 @@ void TrimmedAlignments::findAlignments()
 		} else if (columnIndex == 0 or currentCost == insert ) {
 			// Mark the end of a trimmed long read
 			if (isLastBase) {
-				clrMaf = 'X' + clrMaf;
-				ulrMaf = '-' + ulrMaf;
 				refMaf = '-' + refMaf;
+				ulrMaf = '-' + ulrMaf;
+				clrMaf = 'X' + clrMaf;
 			}	
 			refMaf = '-' + refMaf;
 			ulrMaf = '-' + ulrMaf;
@@ -610,9 +610,9 @@ void TrimmedAlignments::findAlignments()
 		} else if (currentCost == substitute) {
 			// Mark the end of a trimmed long read
 			if (isLastBase) {
-				clrMaf = 'X' + clrMaf;
-				ulrMaf = '-' + ulrMaf;
 				refMaf = '-' + refMaf;
+				ulrMaf = '-' + ulrMaf;
+				clrMaf = 'X' + clrMaf;
 			}	
 			refMaf = ref[urIndex] + refMaf;
 			ulrMaf = ulr[urIndex] + ulrMaf;
@@ -621,6 +621,12 @@ void TrimmedAlignments::findAlignments()
 			rowIndex--;
 			columnIndex--;
 			firstDeletion = true;
+
+			if (rowIndex == 0 and columnIndex == 0) {
+				refMaf = '-' + refMaf;
+				ulrMaf = '-' + ulrMaf;
+				clrMaf = 'X' + clrMaf;
+			}
 		} else {
 			std::cout << "ERROR: No paths found. Terminating backtracking.\n";
 			std::cout << "cIndex is " << cIndex << "\n";
