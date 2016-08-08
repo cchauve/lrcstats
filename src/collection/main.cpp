@@ -363,6 +363,7 @@ void createTrimmedStat(std::string mafName, std::string outputPath)
 	std::string line = "";
 
 	// Indices where each respective information lies in the MAF file line
+	int readIndex = 1;
 	int sizeIndex = 3; 
 	int seqIndex = 6;
 	// Number of statistics we consider
@@ -399,6 +400,7 @@ void createTrimmedStat(std::string mafName, std::string outputPath)
 		assert(clr != "");
 
 		int64_t clrSize = atoi( split(line).at(sizeIndex).c_str() );
+		std::string read = split(line).at(readIndex);
 		assert( clrSize > 0 );
 
 		// Skip last line
@@ -406,6 +408,11 @@ void createTrimmedStat(std::string mafName, std::string outputPath)
 
 		// Write corrected segment statistics
 		std::vector<CorrespondingSegments> correspondingSegmentsList = getTrimmedCorrespondingSegmentsList(clr,ulr,ref);
+
+		if (correspondingSegmentsList.size() == 0) {
+			std::cout << "Error at read " << read << "\n";
+			assert( correspondingSegmentsList.size() > 0 );
+		}
 
 		for (int index = 0; index < correspondingSegmentsList.size(); index++) {
 			CorrespondingSegments segments = correspondingSegmentsList.at(index);
