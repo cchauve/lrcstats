@@ -12,6 +12,7 @@ class Alignments
 		std::string getClr();
 		std::string getUlr();
 		std::string getRef();
+		void printMatrix();	
 	protected:
 		std::string clr;
 		std::string ulr;
@@ -23,7 +24,6 @@ class Alignments
 		void deleteMatrix();
                 int64_t cost(char refBase, char cBase);
 		void processAlignments();
-		void printMatrix();	
 };
 
 class UntrimmedAlignments : public Alignments
