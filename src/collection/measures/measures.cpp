@@ -76,6 +76,8 @@ std::vector< CorrespondingSegments > getTrimmedCorrespondingSegmentsList(std::st
 	CorrespondingSegments correspondingSegments;
 	std::vector< CorrespondingSegments > segmentList;
 
+	assert( length > 0 );
+
 	for (int64_t index = 0; index < length; index++) {
 		// Check if we've just entered a corrected segment
 		if ( not inCorrectedSegment and cRead[index] == 'X') {
