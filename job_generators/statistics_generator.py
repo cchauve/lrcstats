@@ -247,7 +247,7 @@ def writeJob(program, species, shortCov, longCov):
 		globalOutput = "global_stats_output_oea=$outputdir/%s_oea_global_stats.txt\n\n" % (test)
 		file.write(globalOutput)
 
-		command = "python $global_stats -i $statsOutputOea -o $global_stats_output_oea\n\n"
+		command = "python $global_stats -i $statsOutputOea -o $global_stats_output_oea -b\n\n"
 		file.write(command)
 
 	if constructVisualizations:
