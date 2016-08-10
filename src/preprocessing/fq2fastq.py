@@ -1,4 +1,6 @@
-import sys, os, getopt
+import sys
+import os
+import getopt
 
 if __name__ == "__main__":
         helpMessage = "Changes the extension of every file with extension .fq to .fastq in the input directory."
@@ -15,7 +17,7 @@ if __name__ == "__main__":
                 print usageMessage
                 sys.exit(2)
 
-	inputDir = ""
+	inputDir = None
 
         for opt, arg in opts:
                 # Help message
@@ -29,11 +31,12 @@ if __name__ == "__main__":
 			print "Error: unknown argument"
 			sys.exit(2)
 
-	if inputDir == "":
+	if inputDir is None:
 		print "Error: please provide an input directory."
 		print usageMessage
 		sys.exit(2)
 
+	# Walk through the directory, changing fq extensions to fastq
 	for root, dir, files in os.walk(inputDir):
 		for file in files:
 			if file.endswith(".fq"):
