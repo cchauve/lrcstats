@@ -74,6 +74,16 @@ def simulateShortReads(genome, coverage):
 		command = "$art -p -i $ref -l 100 -f $cov -o $outputPrefix\n"
 		file.write(command)
 
+		file.write('\n')
+
+		fq2fastqPath = "fq2fastq=/home/seanla/Projects/lrcstats/src/preprocessing/fq2fastq.py\n"
+		file.write(fq2fastqPath)
+
+		file.write('\n')
+
+		fq2fastqCommand = "python $fq2fastq -i $outputDir\n"
+		file.write(fq2fastqCommand)
+
 def simulateLongReads(genome, coverage):
 	# Given the genome and coverage, make PBS script to simulate short reads
 	scriptPath = "%s/simulate_%s_long_%s.pbs" % (jobsDir, genome, coverage) 
