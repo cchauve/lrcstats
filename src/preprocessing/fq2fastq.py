@@ -36,10 +36,14 @@ if __name__ == "__main__":
 		print usageMessage
 		sys.exit(2)
 
+	print "Converting files with extension .fq to .fastq..."
+	print "Input directory is %s." % (inputDir)
+
 	# Walk through the directory, changing fq extensions to fastq
 	for root, dir, files in os.walk(inputDir):
 		for file in files:
 			if file.endswith(".fq"):
+				print "Changing extension of %s to fastq..." % (file)
 				absPath = os.path.realpath(os.path.join(root,file))
 				base = os.path.splitext(absPath)[0]
 				os.rename(absPath, base + ".fastq")	
