@@ -15,15 +15,6 @@ def writeJob(program, species, shortCov, longCov):
 	else:
 		mem = 32
 	resources = ["walltime=3:00:00:00", "mem=%dgb" % (mem), "nodes=1:ppn=8"]
-	################## Data paths #################################
-	prefix = "/global/scratch/seanla/Data/%s" % (species)
-	art = "%s/art" % (prefix)
-	short1 = "%s/short-paired-d%s/%s-short-paired-d%s1.fastq" % (art, shortCov, species, shortCov)
-	short2 = "%s/short-paired-d%s/%s-short-paired-d%s2.fastq" % (art, shortCov, species, shortCov)
-	mergedShort = "%s/short-paired-d%s/%s-short-paired-d%s-merged.fastq" % (art, shortCov, species, shortCov)
-
-	long = "%s/simlord/long-d%s/%s-long-d%s.fastq" % (prefix, longCov, species, longCov) 
-	outputdir = "%s/corrections/%s/%s/%s/%s" % (prefix, now.month, now.day, program, test)
 	###############################################################
 	
 	filename = "/home/seanla/Jobs/lrcstats/corrections/%s.pbs" % (test)
@@ -42,26 +33,64 @@ def writeJob(program, species, shortCov, longCov):
 	file.write("#PBS -m ea\n")
 	file.write("#PBS -j oe\n")
 
-	outputDir = "/global/scratch/seanla/Data/%s/corrections/%s/%s/%s/%s" %(species, now.month, now.day, program, test)
-	outlog = "#PBS -o %s/%s.out\n" % (outputDir, test)
+	outputdir = "/global/scratch/seanla/Data/%s/corrections/%s/%s/%s/%s" % (species, now.month, now.day, program, test)
+
+	outlog = "#PBS -o %s/%s.out\n" % (outputdir, test)
 	file.write(outlog)
 
-	jobName = "#PBS -N %s-correction\n\n" % (test)
+	jobName = "#PBS -N %s-correction\n" % (test)
 	file.write(jobName)
+
+	file.write('\n')
 	###############################################################
 
 	file.write("set -e\n")
+	file.write('\n')
 
-	outputDirLine = "outputDir=%s\n\n" % (outputDir)
-	file.write(outputDirLine)
+	################## Data paths #################################
+	test = "test=%s\n" % (test)
+	file.write(test)
+
+	species = "species=%s\n" % (species)
+	file.write(species)
+
+	prefix = "prefix=/global/scratch/seanla/Data/${species}\n"
+	file.write(prefix)
+
+	shortCov = "shortCov=%s\n" % (shortCov)
+	file.write(shortCov)
+
+	longCov = "longCov=%s\n" % (longCov)
+	file.write(longCov)
+
+	art = "art=$prefix/art/short-paired-d${shortCov}\n"
+	file.write(art)
+
+
+	if program is "colormap":
+		mergedShort = "mergedShort=$art/${species}-short-paired-d${shortCov}-merged.fastq\n"
+		file.write(mergedShort)
+	else:
+		short1 = "short1=$art/${species}-short-paired-d${shortCov}1.fastq\n" 
+		file.write(short1)
+
+		short2 = "short2=$art/${species}-short-paired-d${shortCov}2.fastq\n"
+		file.write(short2)
+
+	long = "long=$prefix/simlord/long-d${longCov}/${species}-long-d${longCov}.fastq\n"
+	file.write(long)
+
+	outputdir = "outputDir=%s\n" % (outputdir)
+	file.write(outputdir)
 	
 	mkdir = "mkdir -p $outputDir\n"
-
 	file.write(mkdir)
+
+	file.write('\n')
 
 	############## Write program specific commands ###############
 	if program is "lordec":
-		output = "%s/%s.fasta" % (outputdir, test)
+		output = "output=$output/$test.fasta"
 
 		dir = "cd $outputDir\n\n"
 		file.write(dir)
@@ -69,86 +98,136 @@ def writeJob(program, species, shortCov, longCov):
 		programPath = "lordec=/home/seanla/Software/LoRDEC-0.6/lordec-correct\n"
 		file.write(programPath)
 
-		command = "$lordec -T ${PBS_NUM_PPN} --trials 5 --branch 200 --errorrate 0.4 -2 %s %s -k 19 -s 3 -i %s -o %s" % (short1, short2, long, output)
+		command = "$lordec -T ${PBS_NUM_PPN} --trials 5 --branch 200 --errorrate 0.4 -2 $short1 $short2 -k 19 -s 3 -i $long -o $output"
 		file.write(command)
 
 	if program is "jabba":
-		karectOutput = "%s/karect" % (outputdir)
-		mkdir = "mkdir -p %s\n" % (karectOutput)
+		karectOutput = "karectDir=$outputDir/karect\n"
+		file.write(karectOutput)
+
+		brownieOutput = "brownieDir=$outputDir/brownie\n"
+		file.write(brownieOutput)
+
+		jabbaOutput = "jabbaDir=$outputDir/jabba\n"
+		file.write(jabbaOutput)
+
+		file.write('\n')
+
+		mkdir = "mkdir -p $karectDir\n"
 		file.write(mkdir)
 
-		brownieOutput = "%s/brownie" % (outputdir)
-		mkdir = "mkdir -p %s\n" % (brownieOutput)
+		mkdir = "mkdir -p $brownieDir\n"
 		file.write(mkdir)
 
-		jabbaOutput = "%s/jabba" % (outputdir)
-		mkdir = "mkdir -p %s\n" % (jabbaOutput)
+		mkdir = "mkdir -p $jabbaDir\n"
 		file.write(mkdir)
 
-		karectCommand = "/home/seanla/Software/karect/karect -correct -inputfile=%s -inputfile=%s -resultdir=%s -tempdir=%s -celltype=haploid -matchtype=hamming -threads=${PBS_NUM_PPN}\n\n" % (short1, short2, karectOutput, karectOutput)
+		file.write('\n')
+
+		karectPath = "karect=/home/seanla/Software/karect/karect\n"
+		file.write(karectPath)
+
+		karectCommand = "$karect -correct -inputfile=$short1 -inputfile=$short2 -resultdir=$karectDir -tempdir=$karectDir -celltype=haploid -matchtype=hamming -threads=${PBS_NUM_PPN}\n"
 		file.write(karectCommand)
+		
+		file.write('\n')
 
-		karectShort1="%s/karect_%s-short-paired-d%s1.fastq" % (karectOutput, species, shortCov)
-		karectShort2="%s/karect_%s-short-paired-d%s2.fastq" % (karectOutput, species, shortCov)
+		karectShort1="short1=$karectDir/karect_${species}-short-paired-d${shortCov}1.fastq\n"
+		file.write(karectShort1)
 
-		brownieCommand = "/home/seanla/Software/brownie/brownie graphCorrection -k 75 -p %s %s %s\n\n" % (brownieOutput, karectShort1, karectShort2)
+		karectShort2="short2=$karectDir/karect_${species}-short-paired-d${shortCov}2.fastq\n"
+		file.write(karectShort2)
+
+		browniePath= "brownie=/home/seanla/Software/brownie/brownie\n"
+		file.write(browniePath)
+
+		file.write('\n')
+
+		brownieCommand = "$brownie graphCorrection -k 75 -p $short1 $short2 $brownieDir\n"
 		file.write(brownieCommand)
 
-		removeKarect = "rm -r %s\n\n" % (karectOutput)
+		file.write('\n')
+
+		removeKarect = "rm -r $karectDir\n"
 		file.write(removeKarect)
 
-		dbgraph = "%s/DBGraph.fasta" % (brownieOutput)
-		jabbaCommand = "/home/seanla/Software/jabba/jabba -t ${PBS_NUM_PPN} -l 20 -k 75 -o %s -g %s -fastq %s\n\n" % (jabbaOutput, dbgraph, long) 
+		dbgraph = "dbGraph=$brownie/DBGraph.fasta\n"
+		file.write(dbgraph)
+
+		jabbaPath = "jabba=/home/seanla/Software/jabba/jabba\n"
+		file.write(jabbaPath)
+
+		file.write('\n')
+
+		jabbaCommand = "$jabba -t ${PBS_NUM_PPN} -l 20 -k 75 -o $jabbaDir -g $dbGraph -fastq $long\n"
 		file.write(jabbaCommand)
 
-		removeBrownie = "rm -r %s\n" % (brownieOutput)
+		file.write('\n')
+
+		removeBrownie = "rm -r $brownieDir\n"
 		file.write(removeBrownie)
 
 	if program is "proovread":
-		output = "%s/%s" % (outputdir, test)
+		output = "output=$outputDir/$test\n"
+		file.write(output)
 
-		bwaIndex = "/home/seanla/Software/proovread/util/bwa/bwa-proovread index %s\n\n" % (long)
+		bwaPath = "bwa=/home/seanla/Software/proovread/util/bwa/bwa-proovread\n"
+		file.write(bwaPath)
+
+		file.write('\n')
+
+		bwaIndex = "$bwa index $long\n\n"
 		file.write(bwaIndex)
 
-		samPath = "%s/sam" %(outputdir)
-		mkdir = "mkdir -p %s\n\n" % (samPath)
+		samPath = "samPath=$outputDir/sam\n"
+		file.write(samPath)
+
+		mkdir = "mkdir -p $samPath\n"
 		file.write(mkdir)
 
-		sam = "%s/%s-%sSx%sL.sam" % (samPath, species, shortCov, longCov)
+		file.write('\n')
 
-		bwaMem = "/home/seanla/Software/proovread/util/bwa/bwa-proovread mem %s %s %s > %s\n\n" % (long, short1, short2, sam) 
+		sam = "sam=$samPath/${test}.sam\n"
+		file.write(sam)
+
+		bwaMem = "$bwa mem $long $short1 $short2 > $sam\n"
 		file.write(bwaMem)
-			
-		bam = "%s.bam" % (sam)
-		samtools = "/global/software/samtools/samtools13/bin/samtools sort -T %s -o %s %s\n\n" % (samPath, bam, sam) 
-		file.write(samtools)
-			
-		dir = "cd /home/seanla/Software/proovread/bin\n\n"
-		file.write(dir)
 
-		command = "./proovread -t ${PBS_NUM_PPN} --lr-qv-offset 70 --bam %s -l %s -p %s\n\n" % (bam, long, output)
+		file.write('\n')
+			
+		bam = "bam=${sam}.bam\n"
+		file.write(bam)
+
+		samtoolsPath = "samtools=/global/software/samtools/samtools13/bin/samtools\n"
+		file.write(samtoolsPath)
+
+		samtools = "$samtools sort -T $samPath -o $bam $sam\n"
+		file.write(samtools)
+
+		file.write('\n')
+			
+		proovread = "proovread=/home/seanla/Software/proovread/bin/proovread\n"
+		file.write(proovread)
+
+		file.write('\n')
+
+		command = "$proovread -t ${PBS_NUM_PPN} --lr-qv-offset 70 --bam $bam -l $long -p $output\n"
 		file.write(command)
 
-		removeSam = "rm -r %s\n" % (samPath)
+		file.write('\n')
+
+		removeSam = "rm -r $samPath\n"
 
 	if program is "colormap":
 		colormapPath = "colormap=/home/seanla/Software/colormap/runBoth.sh\n"
-		short1path = "short1=%s\n" % (short1)
-		short2path = "short2=%s\n" % (short2)
-		output = "outputDir=%s\n" % (outputdir)
-		mergedShortPath = "mergedShort=%s\n" % (mergedShort)
-		longPath = "long=%s\n" % (long)
-		cdCommand = "cd $outputDir\n"
-		colormap = "$colormap $long $mergedShort $outputDir ${PBS_NUM_PPN}\n" 
-
 		file.write(colormapPath)
-		file.write(short1path)
-		file.write(short2path)
-		file.write(output)
-		file.write(mergedShortPath)
-		file.write(longPath)
+
 		file.write('\n')
+
+		cdCommand = "cd $outputDir\n"
 		file.write(cdCommand)
+
+		colormap = "$colormap $long $mergedShort $outputDir ${PBS_NUM_PPN}\n" 
 		file.write(colormap)
 
 	file.close()
