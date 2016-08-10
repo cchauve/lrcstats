@@ -1,4 +1,6 @@
-import sys, os, getopt
+import sys,
+import os
+import getopt
 
 if __name__ == "__main__":
         helpMessage = "Merge input files into output in the order it is given in the command line argument string. Separate file names with space."
@@ -41,6 +43,7 @@ if __name__ == "__main__":
 
 	inputs = inputs.split()
 
+	print "Merging files..."
 	print "Writing output to %s" % (output)
 
 	with open(output, 'w') as outfile:
