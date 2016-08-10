@@ -32,7 +32,7 @@ def writeHeader(file, scriptPath):
 	line = "#PBS -o %s.out\n" % (scriptPath)
 	file.write(line)
 
-def simulateShortReads(genome, coverage):
+def simulateArtShortReads(genome, coverage):
 	# Given the genome and coverage, make PBS script to simulate short reads
 	scriptPath = "%s/simulate_%s_short_d%s.pbs" % (jobsDir, genome, coverage) 
 	with open(scriptPath, 'w') as file:
@@ -84,7 +84,7 @@ def simulateShortReads(genome, coverage):
 		fq2fastqCommand = "python $fq2fastq -i $outputDir\n"
 		file.write(fq2fastqCommand)
 
-def simulateLongReads(genome, coverage):
+def simulateSimlordLongReads(genome, coverage):
 	# Given the genome and coverage, make PBS script to simulate short reads
 	scriptPath = "%s/simulate_%s_long_%s.pbs" % (jobsDir, genome, coverage) 
 	with open(scriptPath, 'w') as file:
@@ -141,8 +141,24 @@ def simulateLongReads(genome, coverage):
 		reads = "reads=$(python $reads4coverage -c $cov -i $fastq -r $ref)\n"
 		file.write(reads)
 
-		command = "$simlord -n $reads -sf $fastq -rr $ref $output\n"
+		command = "$simlord -n $reads -sf $fastq -rr $ref $outputPrefix\n"
 		file.write(command)
+
+		file.write('\n')
+
+		sam2mafPath = "sam2maf=/home/seanla/Projects/lrcstats/src/preprocessing/sam2maf/sam2maf.py\n"
+		file.write(sam2mafPath)
+	
+		samPath = "sam=${outputPrefix}.sam\n"
+		file.write(samPath)
+
+		mafPath = "maf=${sam}.maf\n"
+		file.write(mafPath)	
+
+		file.write('\n')
+
+		sam2mafCommand = "python $sam2maf -r $ref -s $sam -o $maf\n"
+		file.write(sam2mafCommand)
 
 # Global variables
 jobsDir = "/home/seanla/Jobs/lrcstats/simulate"
@@ -226,6 +242,6 @@ elif simShort:
 for genome in genomes:
 	for coverage in coverages:
 		if simLong:
-			simulateLongReads(genome, coverage)
+			simulateSimlordLongReads(genome, coverage)
 		elif simShort:
-			simulateShortReads(genome, coverage) 
+			simulateArtShortReads(genome, coverage) 
