@@ -84,6 +84,9 @@ def simulateArtShortReads(genome, coverage):
 		fq2fastqCommand = "python $fq2fastq -i $outputDir\n"
 		file.write(fq2fastqCommand)
 
+		shortMergedPath = "shortMerged=${outputPrefix}-merged.fastq\n"
+		file.write(shortMergedPath)
+
 def simulateSimlordLongReads(genome, coverage):
 	# Given the genome and coverage, make PBS script to simulate short reads
 	scriptPath = "%s/simulate_%s_long_%s.pbs" % (jobsDir, genome, coverage) 
