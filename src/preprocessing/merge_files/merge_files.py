@@ -19,7 +19,7 @@ if len(sys.argv) == 1:
 	sys.exit(2)
 
 inputs = [] 
-output = ""
+output = None
 
 for opt, arg in opts:
 	# Help message
