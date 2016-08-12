@@ -4,8 +4,6 @@
 
 int main()
 {
-	
-	
 	std::string clr = "CAgtacagTTTTTTcttgGCCCCAGTGGGCTAA";
 	std::string clrMaf = "-C-A--gtacag--T-TTT-TT-cttgGCCCC-AGTGGGCTAA";
 	std::string ulrMaf = "CCAAGGGTACAGTTTTTTTTTTCCTTGG-CCCAA-TGGGCTAA";
