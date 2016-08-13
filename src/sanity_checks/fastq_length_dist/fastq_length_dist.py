@@ -99,6 +99,8 @@ if datasetName is None:
 if optsIncomplete:
 	print usageMessage
 	sys.exit(2)
-
+print("Finding lengths...")
 lengths = findLengths(inputPath)
+
+print("Creating length histogram...")
 makeLengthHistogram(lengths, outputPath, datasetName) 
