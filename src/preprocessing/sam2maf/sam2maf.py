@@ -173,7 +173,7 @@ def convert(ref, samPath, mafPath):
 					if flag == 16:
 						read = getReverse(read)
 
-					refAlignment = getRefAlignment(refSeq, start, cigarList, flag)
+					refAlignment = getRefAlignment(refSeq, cigarList, flag)
 					readAlignment = getReadAlignment(read, cigarList)
 					assert len(refAlignment) == len(readAlignment)
 
