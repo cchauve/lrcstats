@@ -171,47 +171,12 @@ def writeJob(program, species, shortCov, longCov):
 		output = "output=$outputDir/$test\n"
 		file.write(output)
 
-		bwaPath = "bwa=/home/seanla/Software/proovread/util/bwa/bwa-proovread\n"
-		file.write(bwaPath)
-
-		file.write('\n')
-
-		bwaIndex = "$bwa index $long\n\n"
-		file.write(bwaIndex)
-
-		samPath = "samPath=$outputDir/sam\n"
-		file.write(samPath)
-
-		mkdir = "mkdir -p $samPath\n"
-		file.write(mkdir)
-
-		file.write('\n')
-
-		sam = "sam=$samPath/${test}.sam\n"
-		file.write(sam)
-
-		bwaMem = "$bwa mem $long $short1 $short2 > $sam\n"
-		file.write(bwaMem)
-
-		file.write('\n')
-			
-		bam = "bam=${sam}.bam\n"
-		file.write(bam)
-
-		samtoolsPath = "samtools=/global/software/samtools/samtools13/bin/samtools\n"
-		file.write(samtoolsPath)
-
-		samtools = "$samtools sort -T $samPath -o $bam $sam\n"
-		file.write(samtools)
-
-		file.write('\n')
-			
 		proovread = "proovread=/home/seanla/Software/proovread/bin/proovread\n"
 		file.write(proovread)
 
 		file.write('\n')
 
-		command = "$proovread -t ${PBS_NUM_PPN} --lr-qv-offset 70 --bam $bam -l $long -p $output\n"
+		command = "$proovread -t ${PBS_NUM_PPN} --lr-qv-offset 70 -s $short1 -s $short2 -l $long -p $output\n"
 		file.write(command)
 
 		file.write('\n')
