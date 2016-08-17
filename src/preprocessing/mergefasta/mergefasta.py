@@ -1,8 +1,7 @@
-#!/global/software/python/python272/bin/python
 import sys, os, getopt
 
 if __name__ == "__main__":
-        helpMessage = "Merge fasta files into output in the order it is given in the command line argument string. Separate file names with space."
+        helpMessage = "Merge fasta files into output in the order it is given in the command line argument string. Specify more than one -i arguments for multiple files."
         usageMessage = "Usage: %s [-h help and usage] [-n species name] [-i input files] [-o output file]" % (sys.argv[0])
         options = "hn:i:o:"
 
@@ -16,7 +15,7 @@ if __name__ == "__main__":
                 print usageMessage
                 sys.exit(2)
 
-	inputs = ""
+	inputs = []
 	output = ""
 	name = ""
 
@@ -27,7 +26,7 @@ if __name__ == "__main__":
                         print usageMessage
                         sys.exit()
                 elif opt == '-i':
-                        inputs = arg
+                        inputs.append(arg)
                 elif opt == '-o':
                         output = arg
 		elif opt == '-n':
@@ -35,7 +34,7 @@ if __name__ == "__main__":
 
 	optsIncomplete = False
 
-	if inputs == "":
+	if len(inputs) == 0:
 		print "Error: please provide input."
 		optsIncomplete = True
 	if output == "":
@@ -49,12 +48,10 @@ if __name__ == "__main__":
 		print usageMessage
 		sys.exit(2)
 
-	inputs = inputs.split(" ")
-
 	print "Writing output to %s" % (output)
 
 	with open(output, 'w') as outfile:
-		outfile.write( "> %s\n" % (name) )
+		outfile.write( ">%s\n" % (name) )
 		for input in inputs:
 			print "Merging %s..." % (input)
 			with open(input) as infile:
