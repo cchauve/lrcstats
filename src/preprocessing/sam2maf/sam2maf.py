@@ -170,9 +170,6 @@ def convert(ref, samPath, mafPath):
 					# get the reference sequence from the reference genome
 					refSeq = getRefSeq(ref, start, cigarList)
 
-					if flag == 16:
-						read = getReverse(read)
-
 					refAlignment = getRefAlignment(refSeq, cigarList, flag)
 					readAlignment = getReadAlignment(read, cigarList)
 					assert len(refAlignment) == len(readAlignment)
