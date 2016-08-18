@@ -52,7 +52,7 @@ def getCigarList(cigar):
 
 def nextBase(base, flag):
 	'''
-	If flag is 16, then the sequence is question is the reverse
+	If flag is 16 or 272, then the sequence is question is the reverse
 	complement of the original sequence and we return the complement
 	of base. Otherwise, just return the original base.
 	'''
@@ -159,37 +159,38 @@ def convert(ref, samPath, mafPath):
 
 					# Get relevant info from the SAM file for that particular read
 					flag = int( line[1] )
-					start = int( line[3] ) - 1
-					cigar = line[5]
-					read = line[9]
+					if flag != 4:
+						start = int( line[3] ) - 1
+						cigar = line[5]
+						read = line[9]
 
-					# Get the list of CIGAR ops
-					cigar = getDelimitedCigar(cigar)
-					cigarList = getCigarList(cigar)
+						# Get the list of CIGAR ops
+						cigar = getDelimitedCigar(cigar)
+						cigarList = getCigarList(cigar)
 
-					# get the reference sequence from the reference genome
-					refSeq = getRefSeq(ref, start, cigarList)
+						# get the reference sequence from the reference genome
+						refSeq = getRefSeq(ref, start, cigarList)
 
-					refAlignment = getRefAlignment(refSeq, cigarList, flag)
-					readAlignment = getReadAlignment(read, cigarList)
-					assert len(refAlignment) == len(readAlignment)
+						refAlignment = getRefAlignment(refSeq, cigarList, flag)
+						readAlignment = getReadAlignment(read, cigarList)
+						assert len(refAlignment) == len(readAlignment)
 
-					readSize = getGaplessLength(readAlignment)
-					refSize = getGaplessLength(refAlignment) 
+						readSize = getGaplessLength(readAlignment)
+						refSize = getGaplessLength(refAlignment) 
 					
-					if flag in [16, 272]:
-						readAlignment = getReverse(readAlignment)
-						refAlignment = getReverse(refAlignment)		
-						strand = "-"
-					else:
-						strand = "+"
-					maf.write("a\n")
-					refLine = "s ref %s %s %s %s %s\n" % (start, refSize, strand, srcSize, refAlignment)
-					maf.write(refLine)
-					readLine = "s %d %s %s %s %s %s\n" % (readNumber, start, readSize, strand, srcSize, readAlignment)
-					maf.write(readLine)
-					maf.write("\n")
-					readNumber += 1
+						if flag in [16, 272]:
+							readAlignment = getReverse(readAlignment)
+							refAlignment = getReverse(refAlignment)		
+							strand = "-"
+						else:
+							strand = "+"
+						maf.write("a\n")
+						refLine = "s ref %s %s %s %s %s\n" % (start, refSize, strand, srcSize, refAlignment)
+						maf.write(refLine)
+						readLine = "s %d %s %s %s %s %s\n" % (readNumber, start, readSize, strand, srcSize, readAlignment)
+						maf.write(readLine)
+						maf.write("\n")
+						readNumber += 1
 
 def unitTest():
 	'''
