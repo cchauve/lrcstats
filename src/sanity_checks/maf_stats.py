@@ -32,20 +32,20 @@ def getIdentity(ref, read):
 			totalIdentity += 1
 	return totalIdentity			
 
-def makeIdentityLengthScatterPlot(identities, lengths, datasetName, outputPrefix):
+def makeLengthAccuracyScatterPlot(accuracyRates, lengths, datasetName, outputPrefix):
         '''
 	Creates a scatter plot where the x-axis is length and y-axis is error rate
         '''
 
         fig, axes = plt.subplots()
-        axes.scatter(lengths, identities)
+        axes.scatter(lengths, accuracyRates)
 
         # Add labels
-        axes.set_ylabel("Identity of Read")
+        axes.set_ylabel("Accuracy of Read")
         axes.set_xlabel("Length of Read")
-        axes.set_title("Length vs Identity of Dataset %s" % (datasetName))
+        axes.set_title("Length vs Accuracy of Dataset %s" % (datasetName))
 
-        savePath = "%s_error_rate_scatter.png" % (outputPath) 
+        savePath = "%s_length_accuracy_scatter.png" % (outputPrefix) 
         fig.savefig(savePath, bbox_inches='tight')
 
 helpMessage = "Output a file with statistics about MAF file."
@@ -96,14 +96,17 @@ if optsIncomplete:
 
 alignedReads = 0
 totalAlignedBases = 0
-totalIdentities = 0
+totalIdentity = 0
 
-identities = []
+accuracyRates = []
 lengths = []
+
+ref = None
+read = None
 
 with open(inputPath,'r') as input:
 	for line in input:
-		if len(line) > 0 and line[0] != "@":
+		if len(line.rstrip()) > 0:
 			line = line.split()
 			if line[0] == "a":
 				ref = None
@@ -121,9 +124,10 @@ with open(inputPath,'r') as input:
 
 				identity = getIdentity(ref, read)
 				totalIdentity += identity
-				identities.append(identity)
+				accuracyRate = identity/length
+				accuracyRates.append(accuracyRate)
 
-makeIdentityLengthScatterplot(identities, lengths, datasetName, outputPrefix) 
+makeLengthAccuracyScatterPlot(accuracyRates, lengths, datasetName, outputPrefix) 
 
 meanIdentity = totalIdentity/alignedReads 
 print( "Mean Identity = %d\n" % (meanIdentity) )
