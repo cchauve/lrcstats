@@ -1,2 +1,3 @@
 src/preprocessing/unextend_alignments/test_out.maf
 src/sanity_checks/fastq_length_dist/test.png
+jobs/*
