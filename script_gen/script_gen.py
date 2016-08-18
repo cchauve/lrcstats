@@ -6,7 +6,9 @@ def createBlankConfig():
 	'''
 	Creates a blank configuration file in the current directory.
 	'''
-	config ="[path]\n" \
+	config ="[paths]\n" \
+		"# For each path, don't include the leading \ please!\n" \
+		"\n" \
 		"# Absolute path to LRCStats dir\n" \
 		"lrcstats = \n" \
 		"\n" \
@@ -28,6 +30,27 @@ def createBlankConfig():
 	with open(blankConfigPath,'w') as file:
 		file.write(config)	
 
+def readConfig(configPath):
+	'''
+	Reads a configuration file and outputs a dict of paths
+	to the necessary programs.
+	''' 
+	with open(configPath, 'r') as config:
+		paths = {}
+		for line in config:
+			tokens = line.split()
+			# hashtags are comments
+			if line[0] != "#" and len(tokens) == 3:
+				key = tokens[0]
+				path = tokens[2]
+				paths[key] = path				
+	return paths
+
+def readConfig_test(testPath):
+	paths = readConfig(testPath)
+	for key in paths:
+		print "%s = %s" % (key, paths[key])
+	
 MAJOR_VERSION = 1
 MINOR_VERSION = 0
 
