@@ -58,7 +58,7 @@ def nextBase(base, flag):
 	'''
 	complement = { 'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G' }
 
-	if (flag == 16):
+	if flag in [16, 272]:
 		return complement[base]
 	else:
 		return base
@@ -177,7 +177,7 @@ def convert(ref, samPath, mafPath):
 					readSize = getGaplessLength(readAlignment)
 					refSize = getGaplessLength(refAlignment) 
 					
-					if flag == 16:
+					if flag in [16, 272]:
 						readAlignment = getReverse(readAlignment)
 						refAlignment = getReverse(refAlignment)		
 						strand = "-"
