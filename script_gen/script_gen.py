@@ -1,6 +1,4 @@
-import sys
 import argparse
-import datetime
 
 def createBlankConfig():
 	'''
@@ -46,11 +44,6 @@ def readConfig(configPath):
 				paths[key] = path				
 	return paths
 
-def readConfig_test(testPath):
-	paths = readConfig(testPath)
-	for key in paths:
-		print "%s = %s" % (key, paths[key])
-	
 MAJOR_VERSION = 1
 MINOR_VERSION = 0
 

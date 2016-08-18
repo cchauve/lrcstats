@@ -12,6 +12,8 @@ def writeHeader(file, scriptPath):
 		line = "PBS -l %s\n" % (resource)
 		file.write(line)
 
+	line = "#PBS -l epilogue="
+
 	# Specify the location of the epilogue script
 	line = "#PBS -l epilogue=/home/seanla/Jobs/epilogue.script\n"
 	file.write(line)
@@ -163,88 +165,90 @@ def simulateSimlordLongReads(genome, coverage):
 		sam2mafCommand = "python $sam2maf -r $ref -s $sam -o $maf\n"
 		file.write(sam2mafCommand)
 
-# Global variables
-jobsDir = "/home/seanla/Jobs/lrcstats/simulate"
-scratchDir = "/global/scratch/seanla/Data"
-ecoliFastq = "SRR1284073.fastq"
-yeastFastq = "SRR1284073-1284662_combined.fastq"
-flyFastq = "SRR1204085.fastq"
+if __name__ == "__main__":
 
-helpMessage = "Generate PBS job scripts for simulating DNA reads."
-usageMessage = "Usage: %s [-h help and usage] [-f fly] [-e ecoli] [-y yeast] [-l simulate long reads] [-s simulate short reads] [-c coverage] [-a simulate all coverages]" % (sys.argv[0])
+	# Global variables
+	jobsDir = "/home/seanla/Jobs/lrcstats/simulate"
+	scratchDir = "/global/scratch/seanla/Data"
+	ecoliFastq = "SRR1284073.fastq"
+	yeastFastq = "SRR1284073-1284662_combined.fastq"
+	flyFastq = "SRR1204085.fastq"
 
-options = "hfeylsca:"
+	helpMessage = "Generate PBS job scripts for simulating DNA reads."
+	usageMessage = "Usage: %s [-h help and usage] [-f fly] [-e ecoli] [-y yeast] [-l simulate long reads] [-s simulate short reads] [-c coverage] [-a simulate all coverages]" % (sys.argv[0])
 
-try:
-	opts, args = getopt.getopt(sys.argv[1:], options)
-except getopt.GetoptError:
-	print "Error: unable to read command line arguments."
-	sys.exit(2)
+	options = "hfeylsca:"
 
-if len(sys.argv) == 1:
-	print usageMessage
-	sys.exit(2)
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], options)
+	except getopt.GetoptError:
+		print "Error: unable to read command line arguments."
+		sys.exit(2)
 
-simLong = False
-simShort = False
-coverage = None
-allCov = False
-
-doYeast = False
-doEcoli = False
-doFly = False
-
-genomes = []
-coverage = None
-
-for opt, arg in opts:
-	# Help message
-	if opt == '-h':
-		print helpMessage
+	if len(sys.argv) == 1:
 		print usageMessage
-		sys.exit()
-	elif opt == '-f':
-		doFly = True
-		genomes.append('fly')
-	elif opt == '-e':
-		doEcoli = True
-		genomes.append('ecoli')
-	elif opt == '-y':
-		doYeast = True
-		genomes.append('yeast')
-	elif opt == '-s':
-		simShort = True
-	elif opt == '-l':
-		simLong = True
-	elif opt == '-c':
-		coverages = [arg]
-	elif opt == '-a':
-		allCov = True
+		sys.exit(2)
 
-optsIncomplete = False
+	simLong = False
+	simShort = False
+	coverage = None
+	allCov = False
 
-if not doFly or not doYeast or not doEcoli:
-	print "Please select a genome to simulate."
-	optsIncomplete = True
-if not simLong and not simShort:
-	print "Please select which type of reads you would like to simulate."
-	optsIncomplete = True
-if simLong and simShort and not allCov:
-	print "You can only simulate both short and long reads by specifying simulating all coverages."
-	optsIncomplete = True
+	doYeast = False
+	doEcoli = False
+	doFly = False
 
-if optsIncomplete:
-	print usageMessage
-	sys.exit(2)
+	genomes = []
+	coverage = None
 
-if simLong:
-	coverages = ['10', '20', '50', '75']
-elif simShort:
-	coverages = ['50', '100', '200']
+	for opt, arg in opts:
+		# Help message
+		if opt == '-h':
+			print helpMessage
+			print usageMessage
+			sys.exit()
+		elif opt == '-f':
+			doFly = True
+			genomes.append('fly')
+		elif opt == '-e':
+			doEcoli = True
+			genomes.append('ecoli')
+		elif opt == '-y':
+			doYeast = True
+			genomes.append('yeast')
+		elif opt == '-s':
+			simShort = True
+		elif opt == '-l':
+			simLong = True
+		elif opt == '-c':
+			coverages = [arg]
+		elif opt == '-a':
+			allCov = True
 
-for genome in genomes:
-	for coverage in coverages:
-		if simLong:
-			simulateSimlordLongReads(genome, coverage)
-		elif simShort:
-			simulateArtShortReads(genome, coverage) 
+	optsIncomplete = False
+
+	if not doFly or not doYeast or not doEcoli:
+		print "Please select a genome to simulate."
+		optsIncomplete = True
+	if not simLong and not simShort:
+		print "Please select which type of reads you would like to simulate."
+		optsIncomplete = True
+	if simLong and simShort and not allCov:
+		print "You can only simulate both short and long reads by specifying simulating all coverages."
+		optsIncomplete = True
+
+	if optsIncomplete:
+		print usageMessage
+		sys.exit(2)
+
+	if simLong:
+		coverages = ['10', '20', '50', '75']
+	elif simShort:
+		coverages = ['50', '100', '200']
+
+	for genome in genomes:
+		for coverage in coverages:
+			if simLong:
+				simulateSimlordLongReads(genome, coverage)
+			elif simShort:
+				simulateArtShortReads(genome, coverage) 
