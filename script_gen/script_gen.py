@@ -1,6 +1,6 @@
 import argparse
 import sys
-import read_config
+import simulate
 
 def createBlankConfig():
 	'''
@@ -12,7 +12,7 @@ def createBlankConfig():
 		"# Absolute path to LRCStats dir\n" \
 		"lrcstats = \n" \
 		"\n" \
-		"# Directories of read simulator programs\n" \
+		"# Path to the read simulator programs\n" \
 		"art = \n" \
 		"simlord = \n" \
 		"\n" \
@@ -40,6 +40,22 @@ def createBlankConfig():
 	with open(blankConfigPath,'w') as file:
 		file.write(config)	
 
+def readConfig(configPath):
+	'''
+	Reads a configuration file and outputs a dict of user variables
+	to the necessary programs.
+	''' 
+	with open(configPath, 'r') as config:
+		variables = {}
+		for line in config:
+			tokens = line.split()
+			# hashtags are comments
+			if len(tokens) == 3 and line[0] != "#":
+				key = tokens[0]
+				path = tokens[2]
+				variables[key] = path				
+	return variables
+
 MAJOR_VERSION = 1
 MINOR_VERSION = 0
 
@@ -66,7 +82,7 @@ if args.blank_config:
 	sys.exit()
 
 if args.config:
-	variables = read_config.readConfig( args.config )
+	variables = readConfig( args.config )
 	print("Read configuration file.")
 else:
 	print("Error; please provide a configuration file.")
