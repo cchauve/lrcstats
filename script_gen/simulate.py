@@ -1,37 +1,27 @@
-def writeHeader(file, scriptPath):
-	# Write the generic header lines for PBS scripts
-	line = "#!/bin/bash\n"
-	file.write(line)
+import job_header
 
-	# Write the resources
+def writeResources(file):
+	'''
+	Write the resources
+	'''
 	resources = ['walltime=12:00:00', 'mem=8gb', 'nodes=1:ppn=4']
 	for resource in resources:
 		line = "PBS -l %s\n" % (resource)
 		file.write(line)
 
-	# Specify the location of the epilogue script
-	line = "#PBS -l epilogue=%s/scripts/epilogue.script\n" % (variables["lrcstats"])
-	file.write(line)
-
-	# Email to send info about jobs
-	line = "#PBS -M %s\n" % ( variables["email"] )
-	file.write(line)
-	
-	# Only send emails when jobs are done or aborted
-	# Epilogue info all in one file
-	line = "#PBS -m ea\n" \
-		"#PBS -j oe\n"	
-	file.write(line)
-
-	# Epilogue script output path
-	line = "#PBS -o %s.out\n" % (scriptPath)
-	file.write(line)
-
 def simulateArtShortReads(genome, coverage):
-	# Given the genome and coverage, make PBS script to simulate short reads
+	'''
+	Given the genome and coverage, make PBS script to simulate short reads
+	'''
 	scriptPath = "%s/scripts/simulate/simulate_%s_short_d%s.pbs" % (variables["lrcstats"], genome, coverage) 
 	with open(scriptPath, 'w') as file:
-		writeGenericHeader(file, scriptPath)
+		job_header.writeGenericHeader(file)
+
+		# Epilogue script output path
+		line = "#PBS -o %s.out\n" % (scriptPath)
+		file.write(line)
+
+		writeResources(file)
 
 		# Name of the job
 		line = "#PBS -N simulate_%s_short_d%s\n" % (genome, coverage)

@@ -1,68 +1,104 @@
-import sys, getopt, datetime
+import job_header
+
+def writeResources(file, genome):
+        '''
+        Write the resource usage into the job script.
+        '''
+        resources = ["walltime=3:00:00:00", "mem=16gb", "nodes=1:ppn=8"]
+
+        for resource in resources:
+                line = "#PBS -l %s\n" % (resource)
+                file.write(line)
+
+	file.write('\n')
+
+def writePaths(file, test):
+	'''
+	Write the paths to the data.
+	Inputs:
+        - (file object) file
+        - (dict of strings) test: dict of test parameters
+	'''
+	lrcstats = "lrcstats=%s\n" % (variables["lrcstats"])
+
+	program = "program=%s\n" % (test["program"])
+
+        genome = "genome=%s\n" % (test["genome"])
+
+        longCov = "longCov=%s\n" % (test["longCov"])
+
+        prefix = "prefix=%s/${genome}\n" % (variables["data"])
+
+
+	line = lrcstats + program + genome + longCov + prefix + test 
+        file.write(line)
+	
+	line = "outputDir=${prefix}/alignments/${program}/${test}\n" \
+		"inputDir=${prefix}/corrections/${program}/${test}\n" \
+		"maf=${prefix}/simlord/long-d${longCov}/${genome}-long-d${longCov}.fastq.sam.maf\n" \
+		"\n" \
+		"set -e\n" \
+		"mkdir -p ${outputDir}\n"
+	file.write(line)	
+
+def writeSortFasta(file):
+	'''
+	Write the commands to sort FASTA file
+	'''
+	line = "############### Sort FASTA ###########\n" \
+		"echo 'Sorting FASTA file...'\n" \
+		"\n" \
+		"sortfasta=$lrcstats/src/preprocessing/sortfasta/sortfasta.py\n" \
+		"sortedOutput=$outputDir/sorted.fasta\n" \
+		"\n" \
+		"python $sortfasta -i $input -o $sortedOutput\n"
+		"\n" \
+		"input=$sortedOutput\n" \
+		"\n" 
+	file.write(line)	
+
+def writePruneMaf(file):
+	'''
+	Write the commands to prune the MAF file
+	'''
+	line = "############### Prune the maf file(s) ###########\n" \
+		"echo 'Pruning MAF file(s)...'\n") \
+		"\n" \
+		"prunemaf=${lrcstats}/src/preprocess/prunemaf/prunemaf.py\n" \
+		"pruneOutput=${outputDir}/pruned\n" \
+		"python $prunemaf -f $input -m $maf -o $pruneOutput\n" \
+		"\n" \
+		"maf=${pruneOutput}.maf\n" \
+		"\n"
+	file.write(line)
+
+def writeProcessTrimmedReads(file):
+	'''
+	Write the commands to process trimmed reads.
+	'''
+	line = "############### Processing Trimmed Reads ###########\n" \
+		"echo 'Processing trimmed reads...'\n" \
+		"concatenate=${lrcstats}/src/preprocessing/concatenate_trimmed/concatenate_trimmed.py\n" \
+		"concatenated_output=$outputdir/concatenated.fasta\n" \
+		"\n" \
+		"python $concatenate -i $input -o $concatenated_output\n" \
+		"\n" \
+		"input=$concatenated_output\n" \
+		"\n"
+	file.write(line)
+
+def writeLordec(file, test):
+	'''
+	Write the commands for lordec alignment
+	'''
+	inputfasta="input=$inputdir/${test}.fasta\n"
+	file.write(inputfasta)
+
+	writeSortFasta(file)
+	writePruneMaf(file)
 
 def writeJob(program, species, shortCov, longCov):
-	################ Various variables ##########################
-	test = "%s-%s-%sSx%sL" % (program, species, shortCov, longCov)
-	
-	filename = "/home/seanla/Jobs/lrcstats/statistics/%s.pbs" % (test)
-	file = open(filename, 'w')
-	
-	################### Write the resources #######################
-	file.write("#!/bin/bash\n")
-	resources = ["walltime=3:00:00:00", "mem=8gb", "nodes=1:ppn=4"]
-	for resource in resources:
-		line = "#PBS -l %s\n" %(resource)
-		file.write(line)
-	###############################################################
 
-	######## Write other important information for job ############
-	file.write("#PBS -l epilogue=/home/seanla/Jobs/epilogue.script\n")
-	file.write("#PBS -M laseanl@sfu.ca\n")
-	file.write("#PBS -m ea\n")
-	file.write("#PBS -j oe\n")
-
-	outlog = "#PBS -o /global/scratch/seanla/Data/%s/statistics/%s/%s/%s.out\n" %(species, program, test, test) 
-	file.write(outlog)
-
-	jobName = "#PBS -N %s-statistics\n\n" % (test)
-	file.write(jobName)
-	###############################################################
-
-	################## Data paths #################################
-	prefix = "/global/scratch/seanla/Data/%s" % (species)
-	prefixLine = "prefix=%s\n" % (prefix)
-	file.write(prefixLine)
-
-	outputdir = "%s/statistics/%s/%s" % (prefix, program, test)
-	outputdirLine = "outputdir=%s\n" % (outputdir)
-	file.write(outputdirLine)
-
-	maf = "%s/simlord/long-d%s/%s-long-d%s.fastq.sam.maf" % (prefix, longCov, species, longCov)
-	mafLine = "maf=%s\n" % (maf)
-	file.write(mafLine)
-
-	if program is "colormap":
-		mafOeaLine = "mafOea=$maf\n"
-		file.write(mafOeaLine)
-
-	file.write("\n")
-	###############################################################
-
-	# Script ends immediately if error
-	file.write("set -e\n")
-
-	mkdir = "mkdir -p %s\n\n" % (outputdir)
-	file.write(mkdir)
-
-	preprocess = "/home/seanla/Projects/lrcstats/src/preprocessing"
-	preprocessPath = "preprocesspath=%s\n" % (preprocess)
-	file.write(preprocessPath)
-
-	inputdir = "inputdir=$prefix/corrections/%s/%s\n" % (program, test)
-	file.write(inputdir)
-
-	if program is "lordec":
-		inputfasta="input=$inputdir/%s.fasta\n" % (test)
 	if program is "jabba":
 		inputfasta="input=$inputdir/jabba/Jabba-%s-long-d%s.fastq\n" % (species, longCov)
 	if program is "proovread":
@@ -266,142 +302,38 @@ def writeJob(program, species, shortCov, longCov):
 
 	file.close()
 
-if __name__ == "__main__":
-        helpMessage = "Generate PBS job scripts."
-        usageMessage = "Usage: %s [-h help and usage] [-a do all coverages] [-e ecoli] [-y yeast] [-f fly] [-c CoLoRMap] [-d LoRDeC] [-j Jabba] [-p proovread] [-s short read coverage] [-l long read coverage] [-v construct visualizations]" % (sys.argv[0])
+def generateAlignmentJob(test):
+	'''
+	Generates a PBS job script for cLR, uLR and ref alignments.
+	Input
+	- (dict of strings) test: dict of test parameters
+	'''
+	testName = "%s-%s-%sSx%sL" % (test["program"], test["genome"], test["shortCov"], test["longCov"])
+	scriptPath = "%s/scripts/align/%s/%s-correct.pbs" % (variables["lrcstats"], test["program"], testName)
 
-        options = "haeycdjps:l:fv"
+	with open(scriptPath, 'w') as file:
+		job_header.writeGenericHeader(file)
+		jobOutputPath = "#PBS -o %s/%s/alignments/%s/%s/%s.out" \
+                        % (variables["data"], test["genome"], test["program"], testName, testName)
+                file.write(jobOutputPath)
 
-        try:
-                opts, args = getopt.getopt(sys.argv[1:], options)
-        except getopt.GetoptError:
-                print "Error: unable to read command line arguments."
-                sys.exit(2)
+		jobName = "#PBS -N %s-align\n" % (testName)
+                file.write(jobName)
 
-        if len(sys.argv) == 1:
-                print usageMessage
-                sys.exit(2)
+		writeResources(file)
+		writePaths(file, test)
+		
+		line = "set -e\n" \
+                        "\n"
+                file.write(line)
 
-	allCov = False
-	shortCov = None
-	longCov = None
-
-	doYeast = False
-	doEcoli = False
-	doFly = False
-
-	doLordec = False
-	doJabba = False
-	doProovread = False
-	doColormap = False
-	
-	constructVisualizations = False
-
-        for opt, arg in opts:
-                # Help message
-                if opt == '-h':
-                        print helpMessage
-                        print usageMessage
-                        sys.exit()
-                elif opt == '-e':
-                        doEcoli = True
-                elif opt == '-y':
-                        doYeast = True
-		elif opt == '-f':
-			doFly = True
-		elif opt == '-s':
-			shortCov = str(arg)
-		elif opt == '-l':
-			longCov = str(arg)
-		elif opt == '-d':
-			doLordec = True
-		elif opt == '-j':
-			doJabba = True
-		elif opt == '-p':
-			doProovread = True
-		elif opt == '-a':
-			allCov = True
-		elif opt == '-c':
-			doColormap = True
-		elif opt == '-v':
-			constructVisualizations = True
-
-	optsIncomplete = False
-
-	if shortCov is None and allCov is False:
-		print "Please input the short coverage."
-		optsIncomplete = True
-	if longCov is None and allCov is False:
-		print "Please input the required long coverage."
-		optsIncomplete = True
-	if not doYeast and not doEcoli and doFly:
-		print "Please indicate which species you would like to test."
-		optsIncomplete = True
-	if not doColormap and not doLordec and not doJabba and not doProovread:
-		print "Please select a program to use."
-		optsIncomplete = True
-
-	if optsIncomplete:
-		print usageMessage
-		sys.exit(2)
-
-	species = []
-	programs = []
-	shortCovs = []
-	longCovs = []
-
-	proovread = ""
-	jabba = ""
-	lordec = ""
-	colormap = ""
-
-	if doYeast:
-		species.append("yeast")
-	if doEcoli:
-		species.append("ecoli")
-	if doFly:
-		species.append("fly")
-
-	if doLordec:
-		programs.append("lordec")
-		lordec = "l"	
-	if doJabba:
-		programs.append("jabba")
-		jabba = "j"	
-	if doProovread:
-		programs.append("proovread")
-		proovread = "p"
-	if doColormap:
-		programs.append("colormap")
-		colormap = "c"
-
-	# Do all the short and long coverages
-	if allCov:
-		shortCovs = ['50', '100', '200']
-		longCovs = ['10', '20', '50', '75']
-	else:
-		shortCovs.append(shortCov)
-		longCovs.append(longCov)
-
-	# yes, specie is not the proper singular form of species, but im lazy
-	for shortCov in shortCovs:
-		for longCov in longCovs:
-			for specie in species:
-				for program in programs:
-					writeJob(program, specie, shortCov, longCov)	
-
-	if allCov:	
-		submitFile = "/home/seanla/Jobs/lrcstats/statistics/submitjobs-%s%s%s%s-all.sh" % (colormap, lordec, jabba, proovread)
-	else:
-		submitFile = "/home/seanla/Jobs/lrcstats/statistics/submitjobs-%s%s%s%s-%sSx%sL.sh" % (colormap, lordec, jabba, proovread, shortCov, longCov)
-
-	# Create the shell script to execute all jobs
-	with open(submitFile, 'w') as file:
-		file.write("#!/bin/bash\n\n")
-		for shortCov in shortCovs:
-			for longCov in longCovs:
-				for specie in species:
-					for program in programs:
-						test = "%s-%s-%sSx%sL" % (program, specie, shortCov, longCov)
-						filename = "%s.pbs" % (test)
-						file.write( "qsub %s\n" % (filename) )
+                if test["program"] == "colormap":
+                        writeColormap(file)
+                elif test["program"] == "colormap_oea":
+                        writeColormapOea(file)
+                elif test["program"] == "proovread":
+                        writeProovread(file)
+                elif test["program"] == "lordec":
+                        writeLordec(file)
+                elif test["program"] == "jabba":
+                        writeJabba(file)

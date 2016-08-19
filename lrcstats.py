@@ -1,6 +1,6 @@
 import argparse
 import sys
-import simulate
+from script_gen import * 
 
 def createBlankConfig():
 	'''
@@ -34,9 +34,9 @@ def createBlankConfig():
 		"fly_fastq = \n" \
 		"\n" \
 		"# Your email address to send PBS job info to\n" \
-		"email = \n"
+		"email = \n" \
 
-	blankConfigPath = "blank.config"
+	blankConfigPath = "script_gen/blank.config"
 	with open(blankConfigPath,'w') as file:
 		file.write(config)	
 
@@ -70,19 +70,35 @@ parser.add_argument('-b', '--blank_config', action='store_true', help=
 	create a new blank configuration file in the current directory 
 	to construct your own testing pipeline and exit the program
 	""")
+parser.add_argument('-s', '--simulate', action='store_true', help=
+	"""
+	create read simulation scripts
+	""")
+parser.add_argument('-c', '--correct', action='store_true', help=
+	"""
+	create correction job scripts
+	""")
+parser.add_argument('-a', '--align', action='store_true', help=
+	"""
+	create three-way alignment scripts
+	""") 
+parser.add_argument('-s', '--stats', action='store_true', help=
+	"""
+	create stats scripts
+	""")
 
 requiredNamed = parser.add_argument_group('required named arguments')
-requiredNamed.add_argument('-c', '--config', metavar='CONFIG', type=str, help="path to the configuration file")
+requiredNamed.add_argument('-i', '--input_config', metavar='CONFIG', type=str, help="path to the configuration file")
 
 args = parser.parse_args()
 
 if args.blank_config:
 	createBlankConfig()
-	print("Created a new blank configuration file.")
+	print("Created a new blank configuration file in script_gen folder.")
 	sys.exit()
 
-if args.config:
-	variables = readConfig( args.config )
+if args.input_config:
+	variables = readConfig( args.input_config )
 	print("Read configuration file.")
 else:
 	print("Error; please provide a configuration file.")
