@@ -1,4 +1,4 @@
-import sys, getopt, datetime
+import datetime
 
 def writeJob(program, species, shortCov, longCov):
 	################ Various variables ##########################
