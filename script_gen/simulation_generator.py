@@ -1,5 +1,6 @@
 import sys
 import getopt
+import read_config
 
 def writeHeader(file, scriptPath):
 	# Write the generic header lines for PBS scripts
@@ -12,22 +13,18 @@ def writeHeader(file, scriptPath):
 		line = "PBS -l %s\n" % (resource)
 		file.write(line)
 
-	line = "#PBS -l epilogue="
-
 	# Specify the location of the epilogue script
-	line = "#PBS -l epilogue=/home/seanla/Jobs/epilogue.script\n"
+	line = "#PBS -l epilogue=%s/scripts/epilogue.script\n" % (variables["lrcstats"])
 	file.write(line)
 
 	# Email to send info about jobs
-	line = "#PBS -M laseanl@sfu.ca\n"
+	line = "#PBS -M %s\n" % ( variables["email"] )
 	file.write(line)
 	
 	# Only send emails when jobs are done or aborted
-	line = "#PBS -m ea\n"
-	file.write(line)
-	
 	# Epilogue info all in one file
-	line = "#PBS -j oe\n"	
+	line = "#PBS -m ea\n" \
+		"#PBS -j oe\n"	
 	file.write(line)
 
 	# Epilogue script output path
@@ -48,46 +45,36 @@ def simulateArtShortReads(genome, coverage):
 
 		# Write genome name and coverage
 		coverage = "cov=%s\n" % (coverage)
-		file.write(coverage)
 
 		genome = "genome=%s\n" % (genome)
-		file.write(genome)
 
-		genomeDir = "genomeDir=%s/${genome}\n" % (scratchDir, genome)
-		file.write(genomeDir)
+		genomeDir = "genomeDir=%s/${genome}\n" % (variables["data"], genome)
 
-		outputDir = "outputDir=$genomeDir/art/short-d${cov}\n"
-		file.write(outputDir)
+		# where the art executable is
+		artPath = "art=%s/art_illumina\n" % (variables["art"])
 
-		outputPrefix = "outputPrefix=$outputDir/${genome}-short-paired-d${cov}\n" 
-		file.write(outputPrefix)
+		fq2fastqPath = "fq2fastq=%s/src/preprocessing/fq2fastq.py\n" % (variables["lrcstats"])
 
-		reference = "$genomeDir/${genome}_reference.fasta\n" 
-		file.write(reference)
+		merge_files = "merge_files=%s/src/preprocessing/merge_files/merge_files.py\n" % (variables["lrcstats"])
 
-		artPath = "art=/home/seanla/Software/art_bin_GreatSmokyMountains/art_illumina\n"
-		file.write(artPath)
+		line = coverage + genome + genomeDir + artPath + fq2fastqPath + merge_files
+		file.write(line)
 
-		file.write('\n')
-
-		mkdir = "mkdir -p $outputDir\n"
-		file.write(mkdir)
-
-		command = "$art -p -i $ref -l 100 -f $cov -o $outputPrefix\n"
-		file.write(command)
-
-		file.write('\n')
-
-		fq2fastqPath = "fq2fastq=/home/seanla/Projects/lrcstats/src/preprocessing/fq2fastq.py\n"
-		file.write(fq2fastqPath)
-
-		file.write('\n')
-
-		fq2fastqCommand = "python $fq2fastq -i $outputDir\n"
-		file.write(fq2fastqCommand)
-
-		shortMergedPath = "shortMerged=${outputPrefix}-merged.fastq\n"
-		file.write(shortMergedPath)
+		line = "outputDir=$genomeDir/art/short-d%{cov}\n" \
+			"outputPrefix=$outputDir/${genome}-short-paired-d${cov}\n" \
+			"ref=$genomeDir/${genome}_reference.fasta\n" \
+			"\n" \
+			"mkdir -p $outputDir\n" \
+			"$art -p -i $ref -l 100 -f $cov -o $outputPrefix\n" \
+			"\n" \
+			"python $fq2fastq -i $outputDir\n"
+			"\n" \
+			"short1=${outputPrefix}1.fastq\n" \
+			"short2=${outputPrefix}2.fastq\n" \
+			"shortMerged=${outputPrefix}-merged.fastq\n" \
+			"\n" \
+			"python $merge_files -i $short1 -i $short2 -o $shortMerged\n"
+		file.write(line)
 
 def simulateSimlordLongReads(genome, coverage):
 	# Given the genome and coverage, make PBS script to simulate short reads
@@ -167,17 +154,19 @@ def simulateSimlordLongReads(genome, coverage):
 
 if __name__ == "__main__":
 
+	'''
 	# Global variables
 	jobsDir = "/home/seanla/Jobs/lrcstats/simulate"
 	scratchDir = "/global/scratch/seanla/Data"
 	ecoliFastq = "SRR1284073.fastq"
 	yeastFastq = "SRR1284073-1284662_combined.fastq"
 	flyFastq = "SRR1204085.fastq"
+	'''
 
 	helpMessage = "Generate PBS job scripts for simulating DNA reads."
-	usageMessage = "Usage: %s [-h help and usage] [-f fly] [-e ecoli] [-y yeast] [-l simulate long reads] [-s simulate short reads] [-c coverage] [-a simulate all coverages]" % (sys.argv[0])
+	usageMessage = "Usage: %s [-h help and usage] [-f fly] [-e ecoli] [-y yeast] [-l simulate long reads] [-s simulate short reads] [-d depth of coverage] [-a simulate all coverages]" % (sys.argv[0])
 
-	options = "hfeylsca:"
+	options = "hfeylsdca:"
 
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], options)
@@ -201,6 +190,8 @@ if __name__ == "__main__":
 	genomes = []
 	coverage = None
 
+	configPath = None
+
 	for opt, arg in opts:
 		# Help message
 		if opt == '-h':
@@ -220,10 +211,12 @@ if __name__ == "__main__":
 			simShort = True
 		elif opt == '-l':
 			simLong = True
-		elif opt == '-c':
+		elif opt == '-d':
 			coverages = [arg]
 		elif opt == '-a':
 			allCov = True
+		elif opt == '-c':
+			configPath = arg
 
 	optsIncomplete = False
 
@@ -236,10 +229,15 @@ if __name__ == "__main__":
 	if simLong and simShort and not allCov:
 		print "You can only simulate both short and long reads by specifying simulating all coverages."
 		optsIncomplete = True
+	if configPath is None:
+		print "Please provide the path to the configuration file."
+		optsIncomplete = True	
 
 	if optsIncomplete:
 		print usageMessage
 		sys.exit(2)
+
+	variables = get_config.getConfig(configPath)
 
 	if simLong:
 		coverages = ['10', '20', '50', '75']
