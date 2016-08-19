@@ -52,16 +52,36 @@ def getCigarList(cigar):
 
 def nextBase(base, flag):
 	'''
-	If flag is 16, then the sequence is question is the reverse
+	If flag is 16 or 272, then the sequence is question is the reverse
 	complement of the original sequence and we return the complement
 	of base. Otherwise, just return the original base.
 	'''
-	complement = { 'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G' }
-
-	if (flag == 16):
-		return complement[base]
+	if flag in [16, 272]:
+		return getBaseComplement(base)
 	else:
 		return base
+
+def getBaseComplement(base):
+	'''
+	Returns the complement of the nucleotide base.
+	'''
+	complement = { 'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G' }
+	return complement[base]
+
+def getSeqComplement(seq):
+	'''
+	Returns the complement of the DNA sequence.
+	'''
+	length = len(seq)
+	seqComplement = ""
+
+	for i in range(length):
+		base = seq[i]
+		complement = getBaseComplement(base)
+		seqComplement += complement	
+
+	return seqComplement
+	
 
 def getRefSeq(ref, refPos, cigarList):
 	'''
@@ -159,40 +179,41 @@ def convert(ref, samPath, mafPath):
 
 					# Get relevant info from the SAM file for that particular read
 					flag = int( line[1] )
-					start = int( line[3] ) - 1
-					cigar = line[5]
-					read = line[9]
+					if flag != 4:
+						start = int( line[3] ) - 1
+						cigar = line[5]
+						read = line[9]
 
-					# Get the list of CIGAR ops
-					cigar = getDelimitedCigar(cigar)
-					cigarList = getCigarList(cigar)
+						if flag in [16, 272]:
+							read = getSeqComplement(read)
 
-					# get the reference sequence from the reference genome
-					refSeq = getRefSeq(ref, start, cigarList)
+						# Get the list of CIGAR ops
+						cigar = getDelimitedCigar(cigar)
+						cigarList = getCigarList(cigar)
 
-					if flag == 16:
-						read = getReverse(read)
+						# get the reference sequence from the reference genome
+						refSeq = getRefSeq(ref, start, cigarList)
 
-					refAlignment = getRefAlignment(refSeq, cigarList, flag)
-					readAlignment = getReadAlignment(read, cigarList)
-					assert len(refAlignment) == len(readAlignment)
+						refAlignment = getRefAlignment(refSeq, cigarList, flag)
+						readAlignment = getReadAlignment(read, cigarList)
+						assert len(refAlignment) == len(readAlignment)
 
-					readSize = getGaplessLength(readAlignment)
-					refSize = getGaplessLength(refAlignment) 
+						readSize = getGaplessLength(readAlignment)
+						refSize = getGaplessLength(refAlignment) 
 					
-					if flag == 16:
-						readAlignment = getReverse(readAlignment)
-						refAlignment = getReverse(refAlignment)		
-						strand = "-"
-					else:
-						strand = "+"
-					maf.write("a\n")
-					refLine = "s ref %s %s %s %s %s\n" % (start, refSize, strand, srcSize, refAlignment)
-					maf.write(refLine)
-					readLine = "s %d %s %s %s %s %s\n" % (readNumber, start, readSize, strand, srcSize, readAlignment)
-					maf.write(readLine)
-					maf.write("\n")
-					readNumber += 1
+						if flag in [16, 272]:
+							readAlignment = getReverse(readAlignment)
+							refAlignment = getReverse(refAlignment)		
+							strand = "-"
+						else:
+							strand = "+"
+						maf.write("a\n")
+						refLine = "s ref %s %s %s %s %s\n" % (start, refSize, strand, srcSize, refAlignment)
+						maf.write(refLine)
+						readLine = "s %d %s %s %s %s %s\n" % (readNumber, start, readSize, strand, srcSize, readAlignment)
+						maf.write(readLine)
+						maf.write("\n")
+						readNumber += 1
 
 def unitTest():
 	'''
@@ -230,14 +251,21 @@ def unitTest():
 
 	bases = ['A', 'C', 'G', 'T']
 	complements = ['T', 'G', 'C', 'A']	
-	flags = [0, 16]
+	flags = [0, 16, 256, 272]
 
 	for flag in flags:
 		for i in range( len(bases) ):
-			if flag == 0:
+			if flag in [0, 256]:
 				assert nextBase(bases[i], flag) == bases[i]
 			else:
 				assert nextBase(bases[i], flag) == complements[i]
+
+	seq = "ACGT"
+	realComplement = "TGCA"
+
+	complement = getSeqComplement(seq)	
+
+	assert complement == realComplement
 
 	print "All tests passed!"
 
