@@ -1,6 +1,9 @@
 src/preprocessing/unextend_alignments/test_out.maf
 src/sanity_checks/fastq_length_dist/test.png
-jobs/*
+scripts/simulate/*
+scripts/correct/*
+scripts/align/*
+scripts/stats/*
 script_gen/*.config
 *.DS_store
 *.pyc
