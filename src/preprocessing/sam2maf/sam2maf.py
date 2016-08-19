@@ -56,12 +56,32 @@ def nextBase(base, flag):
 	complement of the original sequence and we return the complement
 	of base. Otherwise, just return the original base.
 	'''
-	complement = { 'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G' }
-
 	if flag in [16, 272]:
-		return complement[base]
+		return getBaseComplement(base)
 	else:
 		return base
+
+def getBaseComplement(base):
+	'''
+	Returns the complement of the nucleotide base.
+	'''
+	complement = { 'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G' }
+	return complement[base]
+
+def getSeqComplement(seq):
+	'''
+	Returns the complement of the DNA sequence.
+	'''
+	length = len(seq)
+	seqComplement = ""
+
+	for i in range(length):
+		base = seq[i]
+		complement = getBaseComplement(base)
+		seqComplement += complement	
+
+	return seqComplement
+	
 
 def getRefSeq(ref, refPos, cigarList):
 	'''
@@ -164,6 +184,9 @@ def convert(ref, samPath, mafPath):
 						cigar = line[5]
 						read = line[9]
 
+						if flag in [16, 272]:
+							read = getSeqComplement(read)
+
 						# Get the list of CIGAR ops
 						cigar = getDelimitedCigar(cigar)
 						cigarList = getCigarList(cigar)
@@ -228,14 +251,21 @@ def unitTest():
 
 	bases = ['A', 'C', 'G', 'T']
 	complements = ['T', 'G', 'C', 'A']	
-	flags = [0, 16]
+	flags = [0, 16, 256, 272]
 
 	for flag in flags:
 		for i in range( len(bases) ):
-			if flag == 0:
+			if flag in [0, 256]:
 				assert nextBase(bases[i], flag) == bases[i]
 			else:
 				assert nextBase(bases[i], flag) == complements[i]
+
+	seq = "ACGT"
+	realComplement = "TGCA"
+
+	complement = getSeqComplement(seq)	
+
+	assert complement == realComplement
 
 	print "All tests passed!"
 
