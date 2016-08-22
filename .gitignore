@@ -1,4 +1,4 @@
 scripts/*
-config/*.config
+*.config
 *.DS_store
 *.pyc
