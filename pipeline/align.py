@@ -32,7 +32,7 @@ def writePaths(file, testDetails, paths):
 
 	shortCov = "shortCov=%s\n" % (testDetails["shortCov"])
 
-        prefix = "prefix=%s/${genome}/${experiment}\n" % (paths["data"])
+        prefix = "prefix=%s/${experiment}\n" % (paths["data"])
 
 	test = "testName=${program}-${genome}-${shortCov}Sx${longCov}L\n"
 
@@ -118,7 +118,7 @@ def writeConvertFastq2Fasta(file):
 		"echo 'Converting FASTQ to FASTA...'\n" \
 		"\n" \
 		"fastq2fasta=${lrcstats}/src/preprocessing/fastq2fasta/fastq2fasta.py\n" \
-		"outputq2a=$outputdir/${testName}\n" \
+		"outputq2a=$outputDir/${testName}\n" \
 		"\n" \
 		"python $fastq2fasta -i $input -o $outputq2a\n" \
 		"\n" \
@@ -194,8 +194,8 @@ def generateAlignmentJob(testDetails, paths):
 
 	with open(scriptPath, 'w') as file:
 		job_header.writeHeader(file, paths)
-		jobOutputPath = "#PBS -o %s/%s/%s/align/%s/%s/%s.out\n" \
-                        % (paths["data"], testDetails["genome"], testDetails["experimentName"], \
+		jobOutputPath = "#PBS -o %s/%s/align/%s/%s/%s.out\n" \
+                        % (paths["data"], testDetails["experimentName"], \
 				 testDetails["program"], testName, testName)
                 file.write(jobOutputPath)
 

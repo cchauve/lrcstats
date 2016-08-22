@@ -38,8 +38,8 @@ def generateStatsJob(testDetails, paths):
 			line = "#PBS -l %s\n" % (resource)
 			file.write(line)
 
-		jobOutputPath = "#PBS -o %s/%s/%s/statistics/%s/%s/%s.out\n" \
-                        % (paths["data"], testDetails["genome"], testDetails["experimentName"], \
+		jobOutputPath = "#PBS -o %s/%s/statistics/%s/%s/%s.out\n" \
+                        % (paths["data"], testDetails["experimentName"], \
 				testDetails["program"], testName, testName)
                 file.write(jobOutputPath)
 

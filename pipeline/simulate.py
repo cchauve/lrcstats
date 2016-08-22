@@ -41,7 +41,7 @@ def simulateArtShortReads(testDetails, paths):
 
 		genome = "genome=%s\n" % (testDetails["genome"])
 
-		genomeDir = "genomeDir=%s/${genome}\n" % (paths["data"])
+		genomeDir = "genomeDir=%s\n" % (paths["data"])
 
 		refKey = "%s_ref" % (testDetails["genome"])
 		refPath = "ref=%s\n" % (paths[refKey])
@@ -56,7 +56,7 @@ def simulateArtShortReads(testDetails, paths):
 		line = experiment + coverage + genome + genomeDir + refPath + artPath + fq2fastqPath + merge_files
 		file.write(line)
 
-		line = "outputDir=$genomeDir/${experiment}/art/short-d${cov}\n" \
+		line = "outputDir=$genomeDir/${experiment}/simulate/art/short-d${cov}\n" \
 			"outputPrefix=$outputDir/${genome}-short-paired-d${cov}\n" \
 			"\n" \
 			"mkdir -p $outputDir\n" \
@@ -119,7 +119,7 @@ def simulateSimlordLongReads(testDetails, paths):
 
 		line = "sam2maf=${lrcstats}/src/preprocessing/sam2maf/sam2maf.py\n" \
 			"reads4coverage=${lrcstats}/src/preprocessing/reads4coverage.py\n" \
-			"outputDir=${genomeDir}/${experiment}/simlord/long-d${cov}\n" \
+			"outputDir=${genomeDir}/${experiment}/simulate/simlord/long-d${cov}\n" \
 			"outputPrefix=${outputDir}/${genome}-long-d${cov}\n"
 		file.write(line)
 
@@ -136,8 +136,8 @@ def simulateSimlordLongReads(testDetails, paths):
 			"reads=$(python $reads4coverage -c $cov -i $fastq -r $ref)\n" \
 			"$simlord -n $reads -sf $fastq -rr $ref $outputPrefix\n" \
 			"\n" \
-			"sam=${outputPrefix}.sam\n" \
-			"maf=${sam}.maf\n" \
+			"sam=${outputPrefix}.fastq.sam\n" \
+			"maf=${sam}\n" \
 			"\n" \
 			"python $sam2maf -r $ref -s $sam -o $maf\n"
 		file.write(line)

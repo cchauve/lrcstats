@@ -33,9 +33,9 @@ def writePaths(file, testDetails, paths):
 
 	longCov = "longCov=%s\n" % (testDetails["longCov"])
 
-	prefix = "prefix=%s/${genome}/${experiment}\n" % (paths["data"])
+	prefix = "prefix=%s/${experiment}\n" % (paths["data"])
 
-	art = "art=${prefix}/art/short-paired-d${shortCov}\n"
+	art = "art=${prefix}/simulate/art/short-d${shortCov}\n"
 
 	line = experiment + program + genome + shortCov + longCov + prefix + art
 	file.write(line)
@@ -44,8 +44,8 @@ def writePaths(file, testDetails, paths):
 		"mergedShort=${art}/${genome}-short-paired-d${shortCov}-merged.fastq\n" \
 		"short1=${art}/${genome}-short-paired-d${shortCov}1.fastq\n" \
 		"short2=${art}/${genome}-short-paired-d${shortCov}2.fastq\n" \
-		"long=${prefix}/simlord/long-d${longCov}/${genome}-long-d${longCov}.fastq\n" \
-		"outputDir=${prefix}/corrections/${program}/${testName}\n" \
+		"long=${prefix}/simulate/simlord/long-d${longCov}/${genome}-long-d${longCov}.fastq\n" \
+		"outputDir=${prefix}/correct/${program}/${testName}\n" \
 		"\n"
 	file.write(line)
 
@@ -90,11 +90,11 @@ def writeJabba(file, paths):
 		"short1=$karectDir/karect_${genome}-short-paired-d${shortCov}1.fastq\n" \
 		"short2=$karectDir/karect_${genome}-short-paired-d${shortCov}2.fastq\n" \
 		"\n" \
-		"$brownie graphCorrection -k 75 -p $short1 $short2 $brownieDir\n" \
+		"$brownie graphCorrection -k 75 -p $brownieDir $short1 $short2\n" \
 		"\n" \
 		"rm -r $karectDir\n" \
 		"\n" \
-		"dbGraph=$brownie/DBGraph.fasta\n" \
+		"dbGraph=$brownieDir/DBGraph.fasta\n" \
 		"\n" \
 		"$jabba -t ${PBS_NUM_PPN} -l 20 -k 75 -o $jabbaDir -g $dbGraph -fastq $long\n" \
 		"\n" \
@@ -155,8 +155,8 @@ def generateCorrectionJob(testDetails, paths):
 		job_header.writeHeader(file, paths)
 
 		# job epilogue output files will be in the same directory as the output data
-		jobOutputPath = "#PBS -o %s/%s/%s/corrections/%s/%s/%s.out\n" \
-			% (paths["data"], testDetails["genome"], testDetails["experimentName"],
+		jobOutputPath = "#PBS -o %s/%s/correct/%s/%s/%s.out\n" \
+			% (paths["data"], testDetails["experimentName"],
 				 testDetails["program"], testName, testName)
 
 		file.write(jobOutputPath)
