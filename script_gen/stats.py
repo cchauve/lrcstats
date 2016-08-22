@@ -13,41 +13,41 @@ def writeRemoveExtended(file):
 		"maf=$unextendOutput\n" 
 	file.write(line)
 
-def generateStatsJob(test_details):
+def generateStatsJob(testDetails):
 	'''
 	Write the statistics job script.
 	'''
-	test_name = "%s-%s-%sSx%sL" \
-		% (test_details["program"], test_details["genome"], \
-			test_details["short_cov"], test_details["long_cov"])
+	testName = "%s-%s-%sSx%sL" \
+		% (testDetails["program"], testDetails["genome"], \
+			testDetails["shortCov"], testDetails["longCov"])
         scriptPath = "%s/scripts/stats/%s/%s-correct.pbs" \
-		% (paths["lrcstats"], test_details["program"], test_name)
+		% (paths["lrcstats"], testDetails["program"], testName)
 	with open(scriptPath,'w') as file:
 		job_header.writeHeader()
 
 		jobOutputPath = "#PBS -o %s/%s/statistics/%s/%s/%s.out" \
-                        % (paths["data"], test_details["genome"], \
-				test_details["program"], test_name, test_name)
+                        % (paths["data"], testDetails["genome"], \
+				testDetails["program"], testName, testName)
                 file.write(jobOutputPath)
 
-		jobName = "#PBS -N %s-stats\n\n" % (test_name)
+		jobName = "#PBS -N %s-stats\n\n" % (testName)
                 file.write(jobName)
 		
 		lrcstats = "lrcstats=%s\n" % (paths["lrcstats"])
 
-		program = "program=%s\n" % (test_details["program"])
+		program = "program=%s\n" % (testDetails["program"])
 
-		genome = "genome=%s\n" % (test_details["genome"])
+		genome = "genome=%s\n" % (testDetails["genome"])
 
-		long_cov = "long_cov=%s\n" % (test_details["long_cov"])
+		longCov = "longCov=%s\n" % (testDetails["longCov"])
 		
-		short_cov = "short_cov=%s\n" % (test_details["short_cov"])
+		shortCov = "shortCov=%s\n" % (testDetails["shortCov"])
 
 		prefix = "prefix=%s/${genome}\n" % (paths["data"])
 
-		test = "test=${program}-${genome}-${short_cov}Sx${long_cov}L\n"
+		test = "test=${program}-${genome}-${shortCov}Sx${longCov}L\n"
 
-		line = lrcstats + program + genome + long_cov + prefix + test 
+		line = lrcstats + program + genome + longCov + prefix + test 
 		file.write(line)
 
 		line = "set -e\n" \
@@ -58,7 +58,7 @@ def generateStatsJob(test_details):
 			"outputDir=${prefix}/stats/${program}/${test}\n"
 		file.write(line)
 
-		if test_details["program"] in ["colormap", "colormap_oea", "jabba"]:
+		if testDetails["program"] in ["colormap", "colormap_oea", "jabba"]:
 			writeRemoveExtended(file)
 
 		line = "############### Collecting data ###########\n" \
@@ -68,7 +68,7 @@ def generateStatsJob(test_details):
 			"\n"
 		file.write(line)
 
-		if test_details["program"] in ["jabba", "proovread"]:
+		if testDetails["program"] in ["jabba", "proovread"]:
 			command = "$lrcstats stats -m $mafOutput -o $statsOutput -t\n\n"
 		else:
 			command = "$lrcstats stats -m $mafOutput -o $statsOutput\n\n"
@@ -85,9 +85,11 @@ def generateStatsJob(test_details):
 			"summarize_stats=${lrcstats}/src/statistics/summarize_stats.py\n" \
 			"\n"
 
-		if test_details["program"] in ["proovread", "jabba"]:
+		program = testDetails["program"]
+
+		if program in ["proovread", "jabba"]:
 			line = "python $summarize_stats -i ${input} -b -o ${statsOutput}\n" \
-		elif test_details["program"] in ["lordec", "colormap", "colormap_oea"]:
+		elif program in ["lordec", "colormap", "colormap_oea"]:
 			line = "python $summarize_stats -i ${input} -o ${statsOutput}\n" \
 
 		file.write(line)

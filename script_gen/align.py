@@ -12,7 +12,7 @@ def writeResources(file, genome):
 
 	file.write('\n')
 
-def writePaths(file, test_details):
+def writePaths(file, testDetails):
 	'''
 	Write the paths to the data.
 	Inputs:
@@ -21,24 +21,24 @@ def writePaths(file, test_details):
 	'''
 	lrcstats = "lrcstats=%s\n" % (variables["lrcstats"])
 
-	program = "program=%s\n" % (test_details["program"])
+	program = "program=%s\n" % (testDetails["program"])
 
-        genome = "genome=%s\n" % (test_details["genome"])
+        genome = "genome=%s\n" % (testDetails["genome"])
 
-        long_cov = "long_cov=%s\n" % (test_details["long_cov"])
+        longCov = "longCov=%s\n" % (testDetails["longCov"])
 
-	short_cov = "short_cov=%s\n" % (test_details["short_cov"])
+	shortCov = "shortCov=%s\n" % (testDetails["shortCov"])
 
         prefix = "prefix=%s/${genome}\n" % (variables["data"])
 
-	test = "test=${program}-${genome}-${short_cov}Sx${long_cov}L\n"
+	test = "test=${program}-${genome}-${shortCov}Sx${longCov}L\n"
 
-	line = lrcstats + program + genome + long_cov + prefix + test 
+	line = lrcstats + program + genome + longCov + prefix + test 
         file.write(line)
 	
 	line = "outputDir=${prefix}/alignments/${program}/${test}\n" \
 		"inputDir=${prefix}/corrections/${program}/${test}\n" \
-		"maf=${prefix}/simlord/long-d${long_cov}/${genome}-long-d${long_cov}.fastq.sam.maf\n" \
+		"maf=${prefix}/simlord/long-d${longCov}/${genome}-long-d${longCov}.fastq.sam.maf\n" \
 		"\n" \
 		"set -e\n" \
 		"mkdir -p ${outputDir}\n" \
@@ -132,7 +132,7 @@ def writeConvertFastq2Fasta(file):
 		"\n"
 	file.write(line)
 
-def writeLordec(file, test_details):
+def writeLordec(file, testDetails):
 	'''
 	Write the commands for lordec alignment
 	'''
@@ -141,20 +141,20 @@ def writeLordec(file, test_details):
 
 	writeSortFasta(file)
 	writePruneMaf(file)
-	writeAlignment(file, test_details["program"])
+	writeAlignment(file, testDetails["program"])
 
-def writeJabba(file, test_details):
+def writeJabba(file, testDetails):
 	'''
 	Write the commands for jabba alignment
 	'''
-	inputFastq="input=${inputDir}/jabba/Jabba-${genome}-long-d${long_cov}.fastq\n"
+	inputFastq="input=${inputDir}/jabba/Jabba-${genome}-long-d${longCov}.fastq\n"
 	file.write(inputFastq)
 	writeConvertFastq2Fasta(file)
 	writeProcessedTrimmedReads(file)
 	writePruneMaf(file)
-	writeAlignment(file, test_details["program"])
+	writeAlignment(file, testDetails["program"])
 
-def writeProovread(file, test_details):
+def writeProovread(file, testDetails):
 	'''
 	Write the commands for proovread alignment
 	'''
@@ -162,9 +162,9 @@ def writeProovread(file, test_details):
 	file.write(inputFasta)
 	writeProcessedTrimmedReads(file)
 	writePruneMaf(file)
-	writeAlignment(file, test_details["program"])
+	writeAlignment(file, testDetails["program"])
 
-def writeColormap(file, test_details):
+def writeColormap(file, testDetails):
 	'''
 	Write the commands for colormap w/o OEA
 	'''
@@ -172,9 +172,9 @@ def writeColormap(file, test_details):
 	file.write(inputFasta)
 	writeSortFasta(file)
 	writePruneMaf(file)
-	writeAlignment(file, test_details["program"])
+	writeAlignment(file, testDetails["program"])
 
-def writeColormapOea(file, test_details):
+def writeColormapOea(file, testDetails):
 	'''
 	Write the commands for colormap w/ OEA
 	'''
@@ -182,42 +182,44 @@ def writeColormapOea(file, test_details):
 	file.write(inputfasta)
 	writeSortFasta(file)
 	writePruneMaf(file)
-	writeAlignment(file, test_details["program"])
+	writeAlignment(file, testDetails["program"])
 
-def generateAlignmentJob(test_details):
+def generateAlignmentJob(testDetails):
 	'''
 	Generates a PBS job script for cLR, uLR and ref alignments.
 	Input
 	- (dict of strings) test: dict of test parameters
 	'''
-	test_name = "%s-%s-%sSx%sL" \
-		% (test_details["program"], test_details["genome"], \
-			 test_details["short_cov"], test_details["long_cov"])
+	testName = "%s-%s-%sSx%sL" \
+		% (testDetails["program"], testDetails["genome"], \
+			 testDetails["shortCov"], testDetails["longCov"])
 	scriptPath = "%s/scripts/align/%s/%s-correct.pbs" \
-		% (variables["lrcstats"], test_details["program"], test_name)
+		% (variables["lrcstats"], testDetails["program"], testName)
 	with open(scriptPath, 'w') as file:
 		job_header.writeHeader(file)
 		jobOutputPath = "#PBS -o %s/%s/alignments/%s/%s/%s.out" \
-                        % (variables["data"], test["genome"], test["program"], test_name, test_name)
+                        % (variables["data"], test["genome"], test["program"], testName, testName)
                 file.write(jobOutputPath)
 
-		job_name = "#PBS -N %s-align\n" % (test_name)
-                file.write(job_name)
+		jobName = "#PBS -N %s-align\n" % (testName)
+                file.write(jobName)
 
 		writeResources(file)
-		writePaths(file, test_details)
+		writePaths(file, testDetails)
 		
 		line = "set -e\n" \
                         "\n"
                 file.write(line)
 
-                if test_details["program"] == "colormap":
+		program = testDetails["program"]
+
+                if program == "colormap":
                         writeColormap(file)
-                elif test_details["program"] == "colormap_oea":
+                elif program == "colormap_oea":
                         writeColormapOea(file)
-                elif test_details["program"] == "proovread":
+                elif program == "proovread":
                         writeProovread(file)
-                elif test_details["program"] == "lordec":
+                elif program == "lordec":
                         writeLordec(file)
-                elif test_details["program"] == "jabba":
+                elif program == "jabba":
                         writeJabba(file)

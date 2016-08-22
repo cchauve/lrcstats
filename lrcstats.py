@@ -40,45 +40,43 @@ def createBlankConfig():
 		"[experiment_details]\n" \
 		"# No spaces in between items in list please\n" \
 		"# i.e. in the form [item_1,...,item_n]\n" \
-		"genomes = [fly,yeast,ecoli,human]\n" \
-		"short_coverages = []\n" \
-		"long_coverages = []\n" \
-		"programs = []\n" 
+		"genomes = [ecoli]\n" \
+		"short_coverages = [50,100,200]\n" \
+		"long_coverages = [10,20,50,75]\n" \
+		"programs = [proovread,lordec,jabba,colormap,colormap_oea]\n" 
 
 	blankConfigPath = "blank.config"
 	with open(blankConfigPath,'w') as file:
 		file.write(config)	
 
-def parseListString(list_string):
+def parseListString(listString):
 	'''
 	Given a string of the form "[item_1,...,item_n]",
 	returns a list of the form ["item_1", ... , "item_n"] 
 	'''
-	# Get rid of the braces
-
 	# Reverse the string
-	list_string = list_string[::-1]
+	listString = listString[::-1]
 
 	# Get rid of the first left brace
-	list_string = list_string.rstrip("[")
+	listString = listString.rstrip("[")
 
 	# Unreverse the string
-	list_string = list_string[::-1]
+	listString = listString[::-1]
 
 	# Get rid of the last brace
-	list_string = list_string.rstrip("]")
+	listString = listString.rstrip("]")
 
 	# Split that string
-	detail_list = list_string.split(",")
+	details = listString.split(",")
 
-	return detail_list
+	return details
 def readConfig(configPath):
 	'''
 	Reads a configuration file and outputs a dict of user variables
 	to the necessary programs.
 	''' 
 	paths = {}
-	experiment_details = {} 
+	experimentDetails = {} 
 	with open(configPath, 'r') as config:
 		for line in config:
 			tokens = line.split()
@@ -87,17 +85,17 @@ def readConfig(configPath):
 				if len(tokens) == 1 and line[0] == "[variables]":
 					currentSection = "variables"
 				elif len(tokens) == 1 and line[0] == "[experiment_details]":
-					currentSection = "experiment_details"
+					currentSection = "experimentDetails"
 				elif len(tokens) == 3 and currentSection is "variables":
 					key = tokens[0]
 					path = tokens[2]
 					paths[key] = path				
-				elif len(tokens) == 3 and currentSection is "experiment_details":
+				elif len(tokens) == 3 and currentSection is "experimentDetails":
 					key = tokens[0]
-					detail_list = parseListString(tokens[2])
-					experiment_details[key] = detail_list
+					details = parseListString(tokens[2])
+					experimentDetails[key] = details
 
-	configVariables = {"paths": paths, "experiment_details": experiment_details}
+	configVariables = {"paths": paths, "experimentDetails": experimentDetails}
 	return configVariables
 
 MAJOR_VERSION = 1
@@ -148,15 +146,23 @@ else:
 	print("Error; please provide a configuration file.")
 	sys.exit(2) 
 
-experiment_details = configVariables["experiment_details"]
+experimentDetails = configVariables["experimentDetails"]
 paths = configVariables["paths"]
 
-for program in experiment_details["programs"]:
-	for genome in experiment_details["genomes"]:
-		for short_coverage in experiment_details["short_coverages"]:
-			for long_coverage in experiment_details["long_coverages"]:
-				test_details = {"program": program, "genome": genome, \
-						"short_coverage": short_coverage, \
-						"long_coverage": long_coverage}
-				if args.simulate:
-					stats.generateStatsJob(test_details) 
+for program in experimentDetails["programs"]:
+	for genome in experimentDetails["genomes"]:
+		for shortCov in experimentDetails["short_coverages"]:
+			for longCov in experimentDetails["long_coverages"]:
+				if int(shortCov) > int(longCov):
+					testDetails = {"program": program, "genome": genome, \
+							"shortCov": shortCov, \
+							"longCov": longCov}
+					if args.simulate:
+						simulate.simulateArtShortReads(testDetails)
+						simulate.simulateSimlordLongReads(testDetails)
+					if args.correct:
+						correct.generateCorrectionJob(testDetails)
+					if args.align:
+						align.generateAlignmentJob(testDetails)
+					if args.stats:
+						stats.generateStatsJob(testDetails)	
