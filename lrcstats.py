@@ -3,10 +3,10 @@ import argparse
 import sys
 # For os.makedirs
 import os
-from script_gen import simulate
-from script_gen import correct
-from script_gen import align
-from script_gen import stats
+from pipeline import simulate
+from pipeline import correct
+from pipeline import align
+from pipeline import stats
 
 def createBlankConfig():
 	'''
