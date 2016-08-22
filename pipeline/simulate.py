@@ -105,7 +105,7 @@ def simulateSimlordLongReads(testDetails, paths):
 
 		genome = "genome=%s\n" % (testDetails["genome"])
 
-		genomeDir = "genomeDir=%s/${genome}\n" % (paths["data"])
+		genomeDir = "genomeDir=%s\n" % (paths["data"])
 
 		refKey = "%s_ref" % (testDetails["genome"])
 		refPath = "ref=%s\n" % (paths[refKey])
