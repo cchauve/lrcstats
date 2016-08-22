@@ -34,8 +34,12 @@ def createBlankConfig():
 		"# Directory to store read data\n" \
 		"data = \n" \
 		"\n" \
-		"# File names of the real PacBio read FASTQ files for\n" \
-		"# E.coli, yeast and fly\n" \
+		"# Paths to the reference genome FASTA file\n" \
+		"yeast_ref = \n" \
+		"ecoli_ref = \n" \
+		"fly_ref = \n" \
+		"\n" \
+		"# Paths to the real PacBio read FASTQ files\n" \
 		"yeast_fastq = \n" \
 		"ecoli_fastq = \n" \
 		"fly_fastq = \n" \

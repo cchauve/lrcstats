@@ -17,7 +17,7 @@ def simulateArtShortReads(testDetails, paths):
 	- (dict of strings) paths: contains the program paths for the users systems
 	'''
 	# Reminder: experimentName is a global variable - initialized in lrcstats.py
-	scriptPath = "%s/scripts/%s/simulate/simulate-%s-short_d%s.pbs" \
+	scriptPath = "%s/scripts/%s/simulate/simulate-%s-short-d%s.pbs" \
 			% (paths["lrcstats"], testDetails["experimentName"], testDetails["genome"], testDetails["shortCov"]) 
 	with open(scriptPath, 'w') as file:
 		job_header.writeHeader(file, paths)
@@ -43,6 +43,9 @@ def simulateArtShortReads(testDetails, paths):
 
 		genomeDir = "genomeDir=%s/${genome}\n" % (paths["data"])
 
+		refKey = "%s_ref" % (testDetails["genome"])
+		refPath = "ref=%s\n" % (paths[refKey])
+
 		artPath = "art=%s\n" % (paths["art"])
 
 		fq2fastqPath = "fq2fastq=%s/src/preprocessing/fq2fastq.py\n" % (paths["lrcstats"])
@@ -50,12 +53,11 @@ def simulateArtShortReads(testDetails, paths):
 		merge_files = "merge_files=%s/src/preprocessing/merge_files/merge_files.py\n" \
 				% (paths["lrcstats"])
 
-		line = coverage + genome + genomeDir + artPath + fq2fastqPath + merge_files
+		line = coverage + genome + genomeDir + refPath + artPath + fq2fastqPath + merge_files
 		file.write(line)
 
 		line = "outputDir=$genomeDir/${experiment}/art/short-d${cov}\n" \
 			"outputPrefix=$outputDir/${genome}-short-paired-d${cov}\n" \
-			"ref=$genomeDir/${genome}_reference.fasta\n" \
 			"\n" \
 			"mkdir -p $outputDir\n" \
 			"$art -p -i $ref -l 100 -f $cov -o $outputPrefix\n" \
@@ -105,25 +107,27 @@ def simulateSimlordLongReads(testDetails, paths):
 
 		genomeDir = "genomeDir=%s/${genome}\n" % (paths["data"])
 
+		refKey = "%s_ref" % (testDetails["genome"])
+		refPath = "ref=%s\n" % (paths[refKey])
+
 		simlord = "simlord=%s\n" % (paths["simlord"])
 
 		lrcstats = "lrcstats=%s\n" % (paths["lrcstats"])
 
-		line = experiment + coverage + genome + genomeDir + simlord + lrcstats
+		line = experiment + coverage + genome + genomeDir + refPath + simlord + lrcstats
 		file.write(line)
 
 		line = "sam2maf=${lrcstats}/src/preprocessing/sam2maf/sam2maf.py\n" \
 			"reads4coverage=${lrcstats}/src/preprocessing/reads4coverage.py\n" \
 			"outputDir=${genomeDir}/${experiment}/simlord/long-d${cov}\n" \
-			"outputPrefix=${outputDir}/${genome}-long-d${cov}\n" \
-			"ref=${genomeDir}/${genome}_reference.fasta\n" 
+			"outputPrefix=${outputDir}/${genome}-long-d${cov}\n"
 		file.write(line)
 
 		# Get the name of the real PacBio FASTQ file
 		key = "%s_fastq" % (testDetails["genome"])
 		fastq = paths[key]
 
-		fastqPath = "fastq=${genomeDir}/%s\n" % (fastq)
+		fastqPath = "fastq=%s\n" % (fastq)
 		file.write(fastqPath)
 
 		file.write('\n')
