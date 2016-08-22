@@ -13,7 +13,7 @@ def createBlankConfig():
 	Creates a blank configuration file in the current directory.
 	'''
 	config ="[paths]\n" \
-		"# For each path, don't include the ending \ please!\n" \
+		"# For each path, don't include the ending / please!\n" \
 		"\n" \
 		"# Absolute path to LRCStats dir\n" \
 		"lrcstats = \n" \
