@@ -13,8 +13,9 @@ def writeResources(file, genome):
 	for resource in resources:
 		line = "#PBS -l %s\n" % (resource)
 		file.write(line)
+	file.write("\n")
 
-def writePaths(file, testDetails):
+def writePaths(file, testDetails, paths):
 	'''
 	Write the paths to the file.
 	Inputs:
@@ -22,13 +23,11 @@ def writePaths(file, testDetails):
 	- (dict of strings) testDetails: dict of test parameters
 	'''
 
-	# Reminder: experimentName is a global variable - initialized in lrcstats.py
-
  	program = "program=%s\n" % (testDetails["program"])
 
 	genome = "genome=%s\n" % (testDetails["genome"])
 
-	experiment = "experiment=%s\n" % (experimentName)
+	experiment = "experiment=%s\n" % (testDetails["experimentName"])
 
 	shortCov = "shortCov=%s\n" % (testDetails["shortCov"])
 
@@ -41,30 +40,30 @@ def writePaths(file, testDetails):
 	line = experiment + program + genome + shortCov + longCov + prefix + art
 	file.write(line)
 
-	line = "test=${program}-${genome}-${shortCov}Sx${longCov}L\n"
+	line = "testName=${program}-${genome}-${shortCov}Sx${longCov}L\n" \
 		"mergedShort=${art}/${genome}-short-paired-d${shortCov}-merged.fastq\n" \
 		"short1=${art}/${genome}-short-paired-d${shortCov}1.fastq\n" \
 		"short2=${art}/${genome}-short-paired-d${shortCov}2.fastq\n" \
 		"long=${prefix}/simlord/long-d${longCov}/${genome}-long-d${longCov}.fastq\n" \
-		"outputDir=${prefix}/corrections/${program}/${test}\n" \
+		"outputDir=${prefix}/corrections/${program}/${testName}\n" \
 		"\n"
 	file.write(line)
 
-def writeLordec(file):
+def writeLordec(file, paths):
 	'''
 	Generate LoRDEC pipeline
 	'''
 	line = "lordec=%s\n" % (paths["lordec"])
 	file.write(line)
 
-	line = "output=${outputDir}/${test}.fasta" \
+	line = "output=${outputDir}/${testName}.fasta" \
 		"\n" \
 		"cd ${outputDir}\n" \
 		"$lordec -T ${PBS_NUM_PPN} --trials 5 --branch 200 --errorrate 0.4 " \
 			"-2 ${short1} ${short2} -k 19 -s 3 -i ${long} -o ${output}\n"
 	file.write(line)
 
-def writeJabba(file):
+def writeJabba(file, paths):
 	'''
 	Generate Jabba pipeline.
 	'''
@@ -102,7 +101,7 @@ def writeJabba(file):
 		"rm -r $brownieDir\n"
 	file.write(line)
 
-def writeProovread(file):
+def writeProovread(file, paths):
 	'''
 	Generate Proovread correction commands.
 	'''
@@ -114,7 +113,7 @@ def writeProovread(file):
 		"$proovread -t ${PBS_NUM_PPN} --lr-qv-offset 70 -s $short1 -s $short2 -l $long -p $output\n"
 	file.write(line)
 
-def writeColormap(file):
+def writeColormap(file, paths):
 	'''
 	Generate CoLoRMap correction commands w/o OEA
 	'''
@@ -126,7 +125,7 @@ def writeColormap(file):
 		"$colormap $long $mergedShort $outputDir ${PBS_NUM_PPN}\n" 
 	file.write(line)
 
-def writeColormapOea(file):
+def writeColormapOea(file, paths):
 	'''
 	Generate CoLoRMap correction script w/ OEA
 	'''
@@ -138,27 +137,26 @@ def writeColormapOea(file):
 		"${colormapOea} $long $mergedShort $outputDir ${PBS_NUM_PPN}\n" 
 	file.write(line)
 
-def generateCorrectionJob(testDetails):
+def generateCorrectionJob(testDetails, paths):
 	'''
 	Generates a PBS job script for long read correction.
 	Input
 	- (dict of strings) testDetails: dict of test parameters
+	- (dict of strings) paths: contains the paths to the different program paths
 	'''
 	testName = "%s-%s-%sSx%sL" \
 		% (testDetails["program"], testDetails["genome"], \
 			testDetails["shortCov"], testDetails["longCov"])
 
-	# Reminder: experimentName is a global variable - init in lrcstats.py
 	scriptPath = "%s/scripts/%s/correct/%s/%s-correct.pbs" \
-		% (paths["lrcstats"], experimentName, testDetails["program"], testName)
+		% (paths["lrcstats"], testDetails["experimentName"], testDetails["program"], testName)
 
 	with open(scriptPath,'w') as file:
-		job_header.writeGenericHeader(file)
+		job_header.writeHeader(file, paths)
 
 		# job epilogue output files will be in the same directory as the output data
-		# Reminder: experimentName is a global variable - init in lrcstats.py
-		jobOutputPath = "#PBS -o %s/%s/%s/corrections/%s/%s/%s.out" \
-			% (paths["data"], testDetails["genome"], experimentName,
+		jobOutputPath = "#PBS -o %s/%s/%s/corrections/%s/%s/%s.out\n" \
+			% (paths["data"], testDetails["genome"], testDetails["experimentName"],
 				 testDetails["program"], testName, testName)
 
 		file.write(jobOutputPath)
@@ -167,7 +165,7 @@ def generateCorrectionJob(testDetails):
 		file.write(jobName)
 
 		writeResources(file, testDetails["genome"])
-		writePaths(file, testDetails)
+		writePaths(file, testDetails, paths)
 
 		line = "set -e\n" \
 			"mkdir -p $outputDir\n" \
@@ -177,12 +175,12 @@ def generateCorrectionJob(testDetails):
 		program = testDetails["program"]
 
 		if program == "colormap":
-			writeColormap(file)
+			writeColormap(file, paths)
 		elif program == "colormap_oea":
-			writeColormapOea(file)
+			writeColormapOea(file, paths)
 		elif program == "proovread":
-			writeProovread(file)
+			writeProovread(file, paths)
 		elif program == "lordec":
-			writeLordec(file)
+			writeLordec(file, paths)
 		elif program == "jabba":
-			writeJabba(file)
+			writeJabba(file, paths)

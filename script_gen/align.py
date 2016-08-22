@@ -1,6 +1,6 @@
 import job_header
 
-def writeResources(file, genome):
+def writeResources(file):
         '''
         Write the resource usage into the job script.
         '''
@@ -12,17 +12,17 @@ def writeResources(file, genome):
 
 	file.write('\n')
 
-def writePaths(file, testDetails):
+def writePaths(file, testDetails, paths):
 	'''
 	Write the paths to the data.
 	Inputs:
         - (file object) file
         - (dict of strings) test: dict of test parameters
+	- (dict of strings) paths: contains the paths to the different programs in the user's machines
 	'''
-	# Reminder: experimentName is a global variable - initialized in lrcstats.py
-	experiment = "experiment=%s\n" % (experimentName)
+	experiment = "experiment=%s\n" % (testDetails["experimentName"])
 
-	lrcstats = "lrcstats=%s\n" % (variables["lrcstats"])
+	lrcstats = "lrcstats=%s\n" % (paths["lrcstats"])
 
 	program = "program=%s\n" % (testDetails["program"])
 
@@ -32,19 +32,16 @@ def writePaths(file, testDetails):
 
 	shortCov = "shortCov=%s\n" % (testDetails["shortCov"])
 
-        prefix = "prefix=%s/${genome}/${experiment}\n" % (variables["data"])
+        prefix = "prefix=%s/${genome}/${experiment}\n" % (paths["data"])
 
-	test = "test=${program}-${genome}-${shortCov}Sx${longCov}L\n"
+	test = "testName=${program}-${genome}-${shortCov}Sx${longCov}L\n"
 
-	line = experiment + lrcstats + program + genome + longCov + prefix + test 
+	line = experiment + lrcstats + program + genome + longCov + shortCov + prefix + test 
         file.write(line)
 	
-	line = "outputDir=${prefix}/align/${program}/${test}\n" \
-		"inputDir=${prefix}/correct/${program}/${test}\n" \
+	line = "outputDir=${prefix}/align/${program}/${testName}\n" \
+		"inputDir=${prefix}/correct/${program}/${testName}\n" \
 		"maf=${prefix}/simulate/simlord/long-d${longCov}/${genome}-long-d${longCov}.fastq.sam.maf\n" \
-		"\n" \
-		"set -e\n" \
-		"mkdir -p ${outputDir}\n" \
 		"\n"
 	file.write(line)	
 
@@ -58,7 +55,7 @@ def writeSortFasta(file):
 		"sortfasta=${lrcstats}/src/preprocessing/sortfasta/sortfasta.py\n" \
 		"sortedOutput=${outputDir}/sorted.fasta\n" \
 		"\n" \
-		"python $sortfasta -i $input -o $sortedOutput\n"
+		"python $sortfasta -i $input -o $sortedOutput\n" \
 		"\n" \
 		"input=$sortedOutput\n" \
 		"\n" 
@@ -69,7 +66,7 @@ def writePruneMaf(file):
 	Write the commands to prune the MAF file
 	'''
 	line = "############### Prune the maf file(s) ###########\n" \
-		"echo 'Pruning MAF file(s)...'\n") \
+		"echo 'Pruning MAF file(s)...'\n" \
 		"\n" \
 		"prunemaf=${lrcstats}/src/preprocessing/prunemaf/prunemaf.py\n" \
 		"pruneOutput=${outputDir}/pruned\n" \
@@ -102,22 +99,16 @@ def writeAlignment(file, program):
 	line = "############### Generate three-way alignment ###########\n" \
 		"echo 'Generating three-way alignment...'\n" \
 		"align=${lrcstats}/src/collection/align\n" \
-		"mafOutput=${outputDir}/${test}.maf\n" \
+		"mafOutput=${outputDir}/${testName}.maf\n" \
 		"\n"
 	file.write(line)
 
 	if program in ["jabba", "proovread"]:
-		command = "$align maf -m $maf -c $input -t -o $mafOutput\n" \
-			"\n"
+		command = "$align maf -m $maf -c $input -t -o $mafOutput\n"
 		file.write(command)
 	elif program in ["lordec", "colormap", "colormap_oea"]:
-		command = "$align maf -m $maf -c $input -o $mafOutput\n" \
-			"\n"
+		command = "$align maf -m $maf -c $input -o $mafOutput\n"
 		file.write(command)
-
-	line = "maf=${mafOutput}\n" \
-		"\n"
-	file.write(line)
 
 def writeConvertFastq2Fasta(file):
 	'''
@@ -127,7 +118,7 @@ def writeConvertFastq2Fasta(file):
 		"echo 'Converting FASTQ to FASTA...'\n" \
 		"\n" \
 		"fastq2fasta=${lrcstats}/src/preprocessing/fastq2fasta/fastq2fasta.py\n" \
-		"outputq2a=$outputdir/${test}\n" \
+		"outputq2a=$outputdir/${testName}\n" \
 		"\n" \
 		"python $fastq2fasta -i $input -o $outputq2a\n" \
 		"\n" \
@@ -139,7 +130,7 @@ def writeLordec(file, testDetails):
 	'''
 	Write the commands for lordec alignment
 	'''
-	inputfasta="input=${inputDir}/${test}.fasta\n"
+	inputfasta="input=${inputDir}/${testName}.fasta\n\n"
 	file.write(inputfasta)
 
 	writeSortFasta(file)
@@ -150,10 +141,10 @@ def writeJabba(file, testDetails):
 	'''
 	Write the commands for jabba alignment
 	'''
-	inputFastq="input=${inputDir}/jabba/Jabba-${genome}-long-d${longCov}.fastq\n"
+	inputFastq="input=${inputDir}/jabba/Jabba-${genome}-long-d${longCov}.fastq\n\n"
 	file.write(inputFastq)
 	writeConvertFastq2Fasta(file)
-	writeProcessedTrimmedReads(file)
+	writeProcessTrimmedReads(file)
 	writePruneMaf(file)
 	writeAlignment(file, testDetails["program"])
 
@@ -161,9 +152,9 @@ def writeProovread(file, testDetails):
 	'''
 	Write the commands for proovread alignment
 	'''
-	inputfasta="input=${inputDir}/${test}.trimmed.fa\n"
+	inputFasta="input=${inputDir}/${testName}.trimmed.fa\n\n"
 	file.write(inputFasta)
-	writeProcessedTrimmedReads(file)
+	writeProcessTrimmedReads(file)
 	writePruneMaf(file)
 	writeAlignment(file, testDetails["program"])
 
@@ -171,7 +162,7 @@ def writeColormap(file, testDetails):
 	'''
 	Write the commands for colormap w/o OEA
 	'''
-	inputfasta="input=${inputDir}/${test}_corr.fa\n" 
+	inputFasta="input=${inputDir}/${testName}_corr.fa\n\n" 
 	file.write(inputFasta)
 	writeSortFasta(file)
 	writePruneMaf(file)
@@ -181,48 +172,53 @@ def writeColormapOea(file, testDetails):
 	'''
 	Write the commands for colormap w/ OEA
 	'''
-	inputfasta="input=${inputDir}/${test}_oea.fa\n"
-	file.write(inputfasta)
+	inputFasta="input=${inputDir}/${testName}_oea.fa\n\n"
+	file.write(inputFasta)
 	writeSortFasta(file)
 	writePruneMaf(file)
 	writeAlignment(file, testDetails["program"])
 
-def generateAlignmentJob(testDetails):
+def generateAlignmentJob(testDetails, paths):
 	'''
 	Generates a PBS job script for cLR, uLR and ref alignments.
 	Input
-	- (dict of strings) test: dict of test parameters
+	- (dict of strings) testDetails: dict of test parameters
+	- (dict of strings) paths: contains the paths to the programs on the user's machine
 	'''
 	testName = "%s-%s-%sSx%sL" \
 		% (testDetails["program"], testDetails["genome"], \
 			 testDetails["shortCov"], testDetails["longCov"])
-	scriptPath = "%s/scripts/%s/align/%s/%s-correct.pbs" \
-		% (variables["lrcstats"], experimentName, testDetails["program"], testName)
+
+	scriptPath = "%s/scripts/%s/align/%s/%s-align.pbs" \
+		% (paths["lrcstats"], testDetails["experimentName"], testDetails["program"], testName)
+
 	with open(scriptPath, 'w') as file:
-		job_header.writeHeader(file)
-		jobOutputPath = "#PBS -o %s/%s/%s/align/%s/%s/%s.out" \
-                        % (variables["data"], test["genome"], experimentName, test["program"], testName, testName)
+		job_header.writeHeader(file, paths)
+		jobOutputPath = "#PBS -o %s/%s/%s/align/%s/%s/%s.out\n" \
+                        % (paths["data"], testDetails["genome"], testDetails["experimentName"], \
+				 testDetails["program"], testName, testName)
                 file.write(jobOutputPath)
 
 		jobName = "#PBS -N %s-align\n" % (testName)
                 file.write(jobName)
 
 		writeResources(file)
-		writePaths(file, testDetails)
+		writePaths(file, testDetails, paths)
 		
 		line = "set -e\n" \
-                        "\n"
+			"mkdir -p ${outputDir}\n" \
+			"\n"
                 file.write(line)
 
 		program = testDetails["program"]
 
                 if program == "colormap":
-                        writeColormap(file)
+                        writeColormap(file, testDetails)
                 elif program == "colormap_oea":
-                        writeColormapOea(file)
+                        writeColormapOea(file, testDetails)
                 elif program == "proovread":
-                        writeProovread(file)
+                        writeProovread(file, testDetails)
                 elif program == "lordec":
-                        writeLordec(file)
+                        writeLordec(file, testDetails)
                 elif program == "jabba":
-                        writeJabba(file)
+                        writeJabba(file, testDetails)

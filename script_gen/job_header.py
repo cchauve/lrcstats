@@ -1,4 +1,4 @@
-def writeHeader(file):
+def writeHeader(file, paths):
         '''
         Write the generic header lines for PBS scripts
         '''
@@ -6,11 +6,11 @@ def writeHeader(file):
         file.write(line)
 
         # Specify the location of the epilogue script
-        line = "#PBS -l epilogue=%s/scripts/epilogue.script\n" % (variables["lrcstats"])
+        line = "#PBS -l epilogue=%s/scripts/epilogue.script\n" % (paths["lrcstats"])
         file.write(line)
 
         # Email to send info about jobs
-        line = "#PBS -M %s\n" % ( variables["email"] )
+        line = "#PBS -M %s\n" % ( paths["email"] )
         file.write(line)
 
         # Only send emails when jobs are done or aborted

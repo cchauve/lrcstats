@@ -3,7 +3,10 @@ import argparse
 import sys
 # For os.makedirs
 import os
-from script_gen import * 
+from script_gen import simulate
+from script_gen import correct
+from script_gen import align
+from script_gen import stats
 
 def createBlankConfig():
 	'''
@@ -48,7 +51,8 @@ def createBlankConfig():
 		"long_coverages = [10,20,50,75]\n" \
 		"programs = [proovread,lordec,jabba,colormap,colormap_oea]\n" 
 
-	blankConfigPath = "blank.config"
+	# Reminder: experimentName is a global variable
+	blankConfigPath = "config/%s.config" % (experimentName)
 	with open(blankConfigPath,'w') as file:
 		file.write(config)	
 
@@ -73,6 +77,16 @@ def parseListString(listString):
 	details = listString.split(",")
 
 	return details
+
+def testParseListString():
+	testString = "[proovread,lordec,jabba,colormap,colormap_oea]"
+	actualList = ["proovread", "lordec", "jabba", "colormap", "colormap_oea"]
+	details = parseListString(testString)
+
+	assert actualList == details
+
+	print("Parse list string passed!")
+
 def readConfig(configPath):
 	'''
 	Reads a configuration file and outputs a dict of user variables
@@ -80,19 +94,24 @@ def readConfig(configPath):
 	''' 
 	paths = {}
 	experimentDetails = {} 
+	currentSection = None
+
 	with open(configPath, 'r') as config:
 		for line in config:
 			tokens = line.split()
 			# hashtags are comments
 			if line[0] != "#":
-				if len(tokens) == 1 and line[0] == "[variables]":
-					currentSection = "variables"
-				elif len(tokens) == 1 and line[0] == "[experiment_details]":
+				if len(tokens) == 1 and tokens[0] == "[paths]":
+					currentSection = "paths"
+
+				elif len(tokens) == 1 and tokens[0] == "[experiment_details]":
 					currentSection = "experimentDetails"
-				elif len(tokens) == 3 and currentSection is "variables":
+
+				elif len(tokens) == 3 and currentSection is "paths":
 					key = tokens[0]
 					path = tokens[2]
 					paths[key] = path				
+
 				elif len(tokens) == 3 and currentSection is "experimentDetails":
 					key = tokens[0]
 					details = parseListString(tokens[2])
@@ -100,6 +119,9 @@ def readConfig(configPath):
 
 	configVariables = {"paths": paths, "experimentDetails": experimentDetails}
 	return configVariables
+
+def test():
+	testParseListString()
 
 MAJOR_VERSION = 1
 MINOR_VERSION = 0
@@ -127,15 +149,20 @@ parser.add_argument('-a', '--align', action='store_true', help=
 	"""
 	create three-way alignment scripts
 	""") 
-parser.add_argument('-s', '--stats', action='store_true', help=
+parser.add_argument('-t', '--stats', action='store_true', help=
 	"""
 	create stats scripts
+	""")
+parser.add_argument('-u', '--test', action='store_true', help=
+	"""
+	perform unit tests for this module
 	""")
 
 requiredNamed = parser.add_argument_group('required named arguments')
 requiredNamed.add_argument('-i', '--input_config', metavar='CONFIG', type=str, help=
 	"""
-	path to the configuration file
+	path to the configuration file;
+	required only if -b is not set
 	""")
 requiredNamed.add_argument('-n', '--experiment_name', metavar='NAME', type=str, help=
 	"""
@@ -145,9 +172,8 @@ requiredNamed.add_argument('-n', '--experiment_name', metavar='NAME', type=str, 
 
 args = parser.parse_args()
 
-if args.blank_config:
-	createBlankConfig()
-	print("Created a new blank configuration file in script_gen folder.")
+if args.test:
+	test()
 	sys.exit()
 
 optsIncomplete = False
@@ -158,9 +184,20 @@ else:
 	optsIncomplete = True
 	print("Error; please provide the name of the experiment")
 
+if optsIncomplete:
+	sys.exit(2) 
+
+if args.blank_config:
+	createBlankConfig()
+	print("Created a new blank configuration file in config folder.")
+	sys.exit()
+
+optsIncomplete = False
+
 if args.input_config:
-	configVariables = readConfig( args.input_config )
-	print("Read configuration file.")
+	configPath = args.input_config
+	print( "Reading configuration file at %s..." % (configPath) )
+	configVariables = readConfig(configPath)
 else:
 	optsIncomplete = True
 	print("Error; please provide a configuration file.")
@@ -177,33 +214,40 @@ experimentDetails = configVariables["experimentDetails"]
 
 # experimentDir is a global variable - will be referenced in other modules
 experimentDir = "scripts/%s" % (experimentName)
-os.makedirs(experimentDir)
+
+if not os.path.exists(experimentDir):
+	os.makedirs(experimentDir)
 
 for stage in ["simulate", "correct", "align", "stats"]: 
 	stageDir = "%s/%s" % (experimentDir, stage)
+
 	if not os.path.exists(stageDir):
 		os.makedirs(stageDir)
+
 	for program in experimentDetails["programs"]:
 		programDir = "%s/%s" % (stageDir, program)
-		if not os.path.exists(programDir):
+		if not stage is "simulate" and not os.path.exists(programDir):
 			os.makedirs(programDir)
 
 # Write the actual PBS job scripts
+print("Creating PBS job scripts...")
 
 for program in experimentDetails["programs"]:
 	for genome in experimentDetails["genomes"]:
 		for shortCov in experimentDetails["short_coverages"]:
 			for longCov in experimentDetails["long_coverages"]:
 				if int(shortCov) > int(longCov):
-					testDetails = {"program": program, "genome": genome,
-							"shortCov": shortCov,
-							"longCov": longCov}
+					testDetails = {"program": program, "genome": genome, 
+							"experimentName": experimentName,
+							"shortCov": shortCov, "longCov": longCov}
 					if args.simulate:
-						simulate.simulateArtShortReads(testDetails)
-						simulate.simulateSimlordLongReads(testDetails)
+						simulate.simulateArtShortReads(testDetails,paths)
+						simulate.simulateSimlordLongReads(testDetails,paths)
 					if args.correct:
-						correct.generateCorrectionJob(testDetails)
+						correct.generateCorrectionJob(testDetails,paths)
 					if args.align:
-						align.generateAlignmentJob(testDetails)
+						align.generateAlignmentJob(testDetails,paths)
 					if args.stats:
-						stats.generateStatsJob(testDetails)	
+						stats.generateStatsJob(testDetails,paths)	
+
+print("PBS job scripts are ready - they can be found under `scripts/%s`." % (experimentName))
