@@ -53,7 +53,7 @@ def simulateArtShortReads(testDetails, paths):
 		merge_files = "merge_files=%s/src/preprocessing/merge_files/merge_files.py\n" \
 				% (paths["lrcstats"])
 
-		line = coverage + genome + genomeDir + refPath + artPath + fq2fastqPath + merge_files
+		line = experiment + coverage + genome + genomeDir + refPath + artPath + fq2fastqPath + merge_files
 		file.write(line)
 
 		line = "outputDir=$genomeDir/${experiment}/art/short-d${cov}\n" \
