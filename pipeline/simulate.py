@@ -60,7 +60,7 @@ def simulateArtShortReads(testDetails, paths):
 			"outputPrefix=$outputDir/${genome}-short-paired-d${cov}\n" \
 			"\n" \
 			"mkdir -p $outputDir\n" \
-			"$art -p -i $ref -l 100 -f $cov -o $outputPrefix\n" \
+			"$art -p -i $ref -l 100 -f $cov -m 300 -s 25 -o $outputPrefix\n" \
 			"\n" \
 			"python $fq2fastq -i $outputDir\n" \
 			"\n" \
