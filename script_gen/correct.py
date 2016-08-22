@@ -14,33 +14,33 @@ def writeResources(file, genome):
 		line = "#PBS -l %s\n" % (resource)
 		file.write(line)
 
-def writePaths(file, test):
+def writePaths(file, test_details):
 	'''
 	Write the paths to the file.
 	Inputs:
 	- (file object) file
 	- (dict of strings) test: dict of test parameters
 	'''
- 	program = "program=%s\n" % (test["program"])
+ 	program = "program=%s\n" % (test_details["program"])
 
-	genome = "genome=%s\n" % (test["genome"])
+	genome = "genome=%s\n" % (test_details["genome"])
 
-	shortCov = "shortCov=%s\n" % (test["shortCov"])
+	short_coverage = "short_coverage=%s\n" % (test_details["short_coverage"])
 
-	longCov = "longCov=%s\n" % (test["longCov"])
+	long_coverage = "long_coverage=%s\n" % (test_details["long_coverage"])
 
-	prefix = "prefix=%s/${genome}\n" % (variables["data"])
+	prefix = "prefix=%s/${genome}\n" % (paths["data"])
 
-	art = "art=${prefix}/art/short-paired-d${shortCov}\n"
+	art = "art=${prefix}/art/short-paired-d${short_coverage}\n"
 
-	line = program + genome + shortCov + longCov + prefix + art
+	line = program + genome + short_coverage + long_coverage + prefix + art
 	file.write(line)
 
-	line = "test=${program}-${genome}-${shortCov}Sx${longCov}L\n"
-		"mergedShort=${art}/${genome}-short-paired-d${shortCov}-merged.fastq\n" \
-		"short1=${art}/${genome}-short-paired-d${shortCov}1.fastq\n" \
-		"short2=${art}/${genome}-short-paired-d${shortCov}2.fastq\n" \
-		"long=${prefix}/simlord/long-d${longCov}/${genome}-long-d${longCov}.fastq\n" \
+	line = "test=${program}-${genome}-${short_coverage}Sx${long_coverage}L\n"
+		"mergedShort=${art}/${genome}-short-paired-d${short_coverage}-merged.fastq\n" \
+		"short1=${art}/${genome}-short-paired-d${short_coverage}1.fastq\n" \
+		"short2=${art}/${genome}-short-paired-d${short_coverage}2.fastq\n" \
+		"long=${prefix}/simlord/long-d${long_coverage}/${genome}-long-d${long_coverage}.fastq\n" \
 		"outputDir=${prefix}/corrections/${program}/${test}\n" \
 		"\n"
 	file.write(line)
@@ -61,13 +61,13 @@ def writeJabba(file):
 	'''
 	Generate Jabba pipeline.
 	'''
-	karectPath = "karect=%s\n" % ( variables["karect"] ) 
+	karectPath = "karect=%s\n" % ( paths["karect"] ) 
 	file.write(karectPath)
 
-	browniePath= "brownie=%s\n" % ( variables["brownie"] )
+	browniePath= "brownie=%s\n" % ( paths["brownie"] )
 	file.write(browniePath)
 
-	jabbaPath = "jabba=%s\n" % ( variables["jabba"] )
+	jabbaPath = "jabba=%s\n" % ( paths["jabba"] )
 	file.write(jabbaPath)
 
 	line = "karectDir=$outputDir/karect\n" \
@@ -81,8 +81,8 @@ def writeJabba(file):
 		"$karect -correct -inputfile=$short1 -inputfile=$short2 -resultdir=$karectDir " \
 			"-tempdir=$karectDir -celltype=haploid -matchtype=hamming -threads=${PBS_NUM_PPN}\n" \
 		"\n" \
-		"short1=$karectDir/karect_${genome}-short-paired-d${shortCov}1.fastq\n" \
-		"short2=$karectDir/karect_${genome}-short-paired-d${shortCov}2.fastq\n" \
+		"short1=$karectDir/karect_${genome}-short-paired-d${short_coverage}1.fastq\n" \
+		"short2=$karectDir/karect_${genome}-short-paired-d${short_coverage}2.fastq\n" \
 		"\n" \
 		"$brownie graphCorrection -k 75 -p $short1 $short2 $brownieDir\n" \
 		"\n" \
@@ -99,7 +99,7 @@ def writeProovread(file):
 	'''
 	Generate Proovread correction commands.
 	'''
-	proovread = "proovread=%s\n" % ( variables["proovread"] )
+	proovread = "proovread=%s\n" % ( paths["proovread"] )
 	file.write(proovread)
 
 	line = "output=$outputDir\n" \
@@ -127,26 +127,30 @@ def writeColormapOea(file):
 		"$colormap $long $mergedShort $outputDir ${PBS_NUM_PPN}\n" 
 	file.write(line)
 
-def generateCorrectionJob(test):
+def generateCorrectionJob(test_details):
 	'''
 	Generates a PBS job script for long read correction.
 	Input
 	- (dict of strings) test: dict of test parameters
 	'''
-	testName = "%s-%s-%sSx%sL" % (test["program"], test["genome"], test["shortCov"], test["longCov"])
-	scriptPath = "%s/scripts/correct/%s/%s-correct.pbs" % (variables["lrcstats"], test["program"], testName)
+	test_name = "%s-%s-%sSx%sL" \
+		% (test_details["program"], test_details["genome"], \
+			test_details["short_coverage"], test_details["long_coverage"])
+	scriptPath = "%s/scripts/correct/%s/%s-correct.pbs" \
+		% (paths["lrcstats"], test_details["program"], test_name)
 	with open(scriptPath,'w') as file:
 		job_header.writeGenericHeader(file)
 
 		jobOutputPath = "#PBS -o %s/%s/corrections/%s/%s/%s.out" \
-			% (variables["data"], test["genome"], test["program"], testName, testName)
+			% (paths["data"], test_details["genome"], test_details["program"], \
+				test_name, test_name)
 		file.write(jobOutputPath)
 
-		jobName = "#PBS -N %s-correct\n" % (testName)
+		jobName = "#PBS -N %s-correct\n" % (test_name)
 		file.write(jobName)
 
-		writeResources(file, test["genome"])
-		writePaths(file, test)
+		writeResources(file, test_details["genome"])
+		writePaths(file, test_details)
 
 		line = "set -e\n" \
 			"mkdir -p $outputDir\n" \

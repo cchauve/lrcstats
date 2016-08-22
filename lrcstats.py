@@ -6,7 +6,7 @@ def createBlankConfig():
 	'''
 	Creates a blank configuration file in the current directory.
 	'''
-	config ="[variables]\n" \
+	config ="[paths]\n" \
 		"# For each path, don't include the leading \ please!\n" \
 		"\n" \
 		"# Absolute path to LRCStats dir\n" \
@@ -16,9 +16,10 @@ def createBlankConfig():
 		"art = \n" \
 		"simlord = \n" \
 		"\n" \
-		"# Directories of correction tools and dependencies\n" \
+		"# Path to the correction tools and dependencies\n" \
 		"proovread = \n" \
 		"colormap = \n" \
+		"colormap_oea = \n" \
 		"lordec = \n" \
 		"karect = \n" \
 		"brownie = \n" \
@@ -35,26 +36,69 @@ def createBlankConfig():
 		"\n" \
 		"# Your email address to send PBS job info to\n" \
 		"email = \n" \
+		"\n" \
+		"[experiment_details]\n" \
+		"# No spaces in between items in list please\n" \
+		"# i.e. in the form [item_1,...,item_n]\n" \
+		"genomes = [fly,yeast,ecoli,human]\n" \
+		"short_coverages = []\n" \
+		"long_coverages = []\n" \
+		"programs = []\n" 
 
-	blankConfigPath = "script_gen/blank.config"
+	blankConfigPath = "blank.config"
 	with open(blankConfigPath,'w') as file:
 		file.write(config)	
 
+def parseListString(list_string):
+	'''
+	Given a string of the form "[item_1,...,item_n]",
+	returns a list of the form ["item_1", ... , "item_n"] 
+	'''
+	# Get rid of the braces
+
+	# Reverse the string
+	list_string = list_string[::-1]
+
+	# Get rid of the first left brace
+	list_string = list_string.rstrip("[")
+
+	# Unreverse the string
+	list_string = list_string[::-1]
+
+	# Get rid of the last brace
+	list_string = list_string.rstrip("]")
+
+	# Split that string
+	detail_list = list_string.split(",")
+
+	return detail_list
 def readConfig(configPath):
 	'''
 	Reads a configuration file and outputs a dict of user variables
 	to the necessary programs.
 	''' 
+	paths = {}
+	experiment_details = {} 
 	with open(configPath, 'r') as config:
-		variables = {}
 		for line in config:
 			tokens = line.split()
 			# hashtags are comments
-			if len(tokens) == 3 and line[0] != "#":
-				key = tokens[0]
-				path = tokens[2]
-				variables[key] = path				
-	return variables
+			if line[0] != "#":
+				if len(tokens) == 1 and line[0] == "[variables]":
+					currentSection = "variables"
+				elif len(tokens) == 1 and line[0] == "[experiment_details]":
+					currentSection = "experiment_details"
+				elif len(tokens) == 3 and currentSection is "variables":
+					key = tokens[0]
+					path = tokens[2]
+					paths[key] = path				
+				elif len(tokens) == 3 and currentSection is "experiment_details":
+					key = tokens[0]
+					detail_list = parseListString(tokens[2])
+					experiment_details[key] = detail_list
+
+	configVariables = {"paths": paths, "experiment_details": experiment_details}
+	return configVariables
 
 MAJOR_VERSION = 1
 MINOR_VERSION = 0
@@ -98,8 +142,21 @@ if args.blank_config:
 	sys.exit()
 
 if args.input_config:
-	variables = readConfig( args.input_config )
+	configVariables = readConfig( args.input_config )
 	print("Read configuration file.")
 else:
 	print("Error; please provide a configuration file.")
 	sys.exit(2) 
+
+experiment_details = configVariables["experiment_details"]
+paths = configVariables["paths"]
+
+for program in experiment_details["programs"]:
+	for genome in experiment_details["genomes"]:
+		for short_coverage in experiment_details["short_coverages"]:
+			for long_coverage in experiment_details["long_coverages"]:
+				test_details = {"program": program, "genome": genome, \
+						"short_coverage": short_coverage, \
+						"long_coverage": long_coverage}
+				if args.simulate:
+					stats.generateStatsJob(test_details) 

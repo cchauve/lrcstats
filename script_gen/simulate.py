@@ -9,11 +9,12 @@ def writeResources(file):
 		line = "PBS -l %s\n" % (resource)
 		file.write(line)
 
-def simulateArtShortReads(genome, coverage):
+def simulateArtShortReads(test_details):
 	'''
 	Given the genome and coverage, make PBS script to simulate short reads
 	'''
-	scriptPath = "%s/scripts/simulate/simulate_%s_short_d%s.pbs" % (variables["lrcstats"], genome, coverage) 
+	scriptPath = "%s/scripts/simulate/simulate_%s_short_d%s.pbs" \
+			% (paths["lrcstats"], test_details["genome"], test_details["coverage"]) 
 	with open(scriptPath, 'w') as file:
 		job_header.writeGenericHeader(file)
 
@@ -24,22 +25,24 @@ def simulateArtShortReads(genome, coverage):
 		writeResources(file)
 
 		# Name of the job
-		line = "#PBS -N simulate_%s_short_d%s\n" % (genome, coverage)
+		line = "#PBS -N simulate_%s_short_d%s\n" \
+			% (test_details["genome"], test_details["coverage"])
 		file.write(line)
 
 		file.write('\n')
 
-		coverage = "cov=%s\n" % (coverage)
+		coverage = "cov=%s\n" % (test_details["coverage"])
 
-		genome = "genome=%s\n" % (genome)
+		genome = "genome=%s\n" % (test_details["genome"])
 
-		genomeDir = "genomeDir=%s/${genome}\n" % (variables["data"], genome)
+		genomeDir = "genomeDir=%s/${genome}\n" % (paths["data"], test_details["genome"])
 
-		artPath = "art=%s\n" % (variables["art"])
+		artPath = "art=%s\n" % (paths["art"])
 
-		fq2fastqPath = "fq2fastq=%s/src/preprocessing/fq2fastq.py\n" % (variables["lrcstats"])
+		fq2fastqPath = "fq2fastq=%s/src/preprocessing/fq2fastq.py\n" % (paths["lrcstats"])
 
-		merge_files = "merge_files=%s/src/preprocessing/merge_files/merge_files.py\n" % (variables["lrcstats"])
+		merge_files = "merge_files=%s/src/preprocessing/merge_files/merge_files.py\n" \
+				% (paths["lrcstats"])
 
 		line = coverage + genome + genomeDir + artPath + fq2fastqPath + merge_files
 		file.write(line)
@@ -62,26 +65,28 @@ def simulateArtShortReads(genome, coverage):
 
 def simulateSimlordLongReads(genome, coverage):
 	# Given the genome and coverage, make PBS script to simulate short reads
-	scriptPath = "%s/scripts/simulate/simulate_%s_long_%s.pbs" % (variables["lrcstats"], genome, coverage) 
+	scriptPath = "%s/scripts/simulate/simulate_%s_long_%s.pbs" \
+			% (paths["lrcstats"], test_details["genome"], test_details["coverage"]) 
 	with open(scriptPath, 'w') as file:
 		writeGenericHeader(file, scriptPath)
 
 		# Name of the job
-		line = "#PBS -N simulate_%s_long_%s\n" % (genome, coverage)
+		line = "#PBS -N simulate_%s_long_%s\n" \
+			% (test_details["genome"], test_details["coverage"])
 		file.write(line)
 
 		file.write('\n')
 
 		# Write genome name and coverage
-		coverage = "cov=%s\n" % (coverage)
+		coverage = "cov=%s\n" % (test_details["coverage"])
 
-		genome = "genome=%s\n" % (genome)
+		genome = "genome=%s\n" % (test_details["genome"])
 
-		genomeDir = "genomeDir=%s/${genome}\n" % (variables["data"])
+		genomeDir = "genomeDir=%s/${genome}\n" % (paths["data"])
 
-		simlord = "simlord=%s\n" % ( variables["simlord"] )
+		simlord = "simlord=%s\n" % ( paths["simlord"] )
 
-		lrcstats = "lrcstats=%s\n" % ( variables["lrcstats"] )
+		lrcstats = "lrcstats=%s\n" % ( paths["lrcstats"] )
 
 		line = coverage + genome + genomeDir + simlord + lrcstats
 
@@ -93,8 +98,8 @@ def simulateSimlordLongReads(genome, coverage):
 		file.write(line)
 
 		# Get the name of the real PacBio FASTQ file
-		key = "%s_fastq" % (genome)
-		fastq = variables[key]
+		key = "%s_fastq" % (test_details["genome"])
+		fastq = paths[key]
 
 		fastqPath = "fastq=$genomeDir/%s\n" % (fastq)
 		file.write(fastqPath)
