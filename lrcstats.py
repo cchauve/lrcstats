@@ -1,5 +1,8 @@
 import argparse
+# For sys.exit
 import sys
+# For os.makedirs
+import os
 from script_gen import * 
 
 def createBlankConfig():
@@ -130,7 +133,15 @@ parser.add_argument('-s', '--stats', action='store_true', help=
 	""")
 
 requiredNamed = parser.add_argument_group('required named arguments')
-requiredNamed.add_argument('-i', '--input_config', metavar='CONFIG', type=str, help="path to the configuration file")
+requiredNamed.add_argument('-i', '--input_config', metavar='CONFIG', type=str, help=
+	"""
+	path to the configuration file
+	""")
+requiredNamed.add_argument('-n', '--experiment_name', metavar='NAME', type=str, help=
+	"""
+	name of the experiment; scripts will appear in the folder of this name
+	under the directory `scripts`
+	""")
 
 args = parser.parse_args()
 
@@ -139,23 +150,53 @@ if args.blank_config:
 	print("Created a new blank configuration file in script_gen folder.")
 	sys.exit()
 
+optsIncomplete = False
+
+if args.experiment_name:
+	experimentName = args.experiment_name
+else:
+	optsIncomplete = True
+	print("Error; please provide the name of the experiment")
+
 if args.input_config:
 	configVariables = readConfig( args.input_config )
 	print("Read configuration file.")
 else:
+	optsIncomplete = True
 	print("Error; please provide a configuration file.")
+
+if optsIncomplete:
 	sys.exit(2) 
 
-experimentDetails = configVariables["experimentDetails"]
+# paths is a global variables - will be referenced in other modules
 paths = configVariables["paths"]
+# experimentDetails only referenced in this module
+experimentDetails = configVariables["experimentDetails"]
+
+# Create the necessary directories under `scripts`
+
+# experimentDir is a global variable - will be referenced in other modules
+experimentDir = "scripts/%s" % (experimentName)
+os.makedirs(experimentDir)
+
+for stage in ["simulate", "correct", "align", "stats"]: 
+	stageDir = "%s/%s" % (experimentDir, stage)
+	if not os.path.exists(stageDir):
+		os.makedirs(stageDir)
+	for program in experimentDetails["programs"]:
+		programDir = "%s/%s" % (stageDir, program)
+		if not os.path.exists(programDir):
+			os.makedirs(programDir)
+
+# Write the actual PBS job scripts
 
 for program in experimentDetails["programs"]:
 	for genome in experimentDetails["genomes"]:
 		for shortCov in experimentDetails["short_coverages"]:
 			for longCov in experimentDetails["long_coverages"]:
 				if int(shortCov) > int(longCov):
-					testDetails = {"program": program, "genome": genome, \
-							"shortCov": shortCov, \
+					testDetails = {"program": program, "genome": genome,
+							"shortCov": shortCov,
 							"longCov": longCov}
 					if args.simulate:
 						simulate.simulateArtShortReads(testDetails)

@@ -13,8 +13,9 @@ def simulateArtShortReads(testDetails):
 	'''
 	Given the genome and coverage, make PBS script to simulate short reads
 	'''
-	scriptPath = "%s/scripts/simulate/simulate_%s_short_d%s.pbs" \
-			% (paths["lrcstats"], testDetails["genome"], testDetails["coverage"]) 
+	# Reminder: experimentName is a global variable - initialized in lrcstats.py
+	scriptPath = "%s/scripts/%s/simulate/simulate_%s_short_d%s.pbs" \
+			% (paths["lrcstats"], experimentName, testDetails["genome"], testDetails["coverage"]) 
 	with open(scriptPath, 'w') as file:
 		job_header.writeGenericHeader(file)
 
@@ -30,6 +31,9 @@ def simulateArtShortReads(testDetails):
 		file.write(line)
 
 		file.write('\n')
+
+		# Reminder: experimentName is a global variable - initialized in lrcstats.py
+		experiment = "experiment=%s\n" % (experimentName)
 
 		coverage = "cov=%s\n" % (testDetails["coverage"])
 
@@ -47,7 +51,7 @@ def simulateArtShortReads(testDetails):
 		line = coverage + genome + genomeDir + artPath + fq2fastqPath + merge_files
 		file.write(line)
 
-		line = "outputDir=$genomeDir/art/short-d%{cov}\n" \
+		line = "outputDir=$genomeDir/${experiment}/art/short-d%{cov}\n" \
 			"outputPrefix=$outputDir/${genome}-short-paired-d${cov}\n" \
 			"ref=$genomeDir/${genome}_reference.fasta\n" \
 			"\n" \
@@ -69,8 +73,10 @@ def simulateSimlordLongReads(testDetails):
 	Input
 	- (dict of strings) testDetails: contains the test parameters
 	'''
-	scriptPath = "%s/scripts/simulate/simulate_%s_long_%s.pbs" \
-			% (paths["lrcstats"], testDetails["genome"], testDetails["coverage"]) 
+	# Reminder: experimentName is a global variable - initialized in lrcstats.py
+	scriptPath = "%s/scripts/%s/simulate/simulate_%s_long_%s.pbs" \
+			% (paths["lrcstats"], experimentName, testDetails["genome"], testDetails["coverage"]) 
+
 	with open(scriptPath, 'w') as file:
 		writeGenericHeader(file, scriptPath)
 
@@ -82,6 +88,10 @@ def simulateSimlordLongReads(testDetails):
 		file.write('\n')
 
 		# Write genome name and coverage
+
+		# Reminder: experimentName is a global variable - initialized in lrcstats.py
+		experiment = "experiment=%s\n" % (experimentName)
+
 		coverage = "cov=%s\n" % (testDetails["coverage"])
 
 		genome = "genome=%s\n" % (testDetails["genome"])
@@ -92,20 +102,20 @@ def simulateSimlordLongReads(testDetails):
 
 		lrcstats = "lrcstats=%s\n" % ( paths["lrcstats"] )
 
-		line = coverage + genome + genomeDir + simlord + lrcstats
+		line = experiment + coverage + genome + genomeDir + simlord + lrcstats
 
-		line = "sam2maf=$lrcstats/src/preprocessing/sam2maf/sam2maf.py\n" \
-			"reads4coverage=$lrcstats/src/preprocessing/reads4coverage.py\n" \
-			"outputDir=$genomeDir/simlord/long-d${cov}\n" \
-			"outputPrefix=$outputDir/${genome}-long-d${cov}\n" \
-			"ref=$genomeDir/${genome}_reference.fasta\n" \
+		line = "sam2maf=${lrcstats}/src/preprocessing/sam2maf/sam2maf.py\n" \
+			"reads4coverage=${lrcstats}/src/preprocessing/reads4coverage.py\n" \
+			"outputDir=${genomeDir}/${experiment}/simlord/long-d${cov}\n" \
+			"outputPrefix=${outputDir}/${genome}-long-d${cov}\n" \
+			"ref=${genomeDir}/${genome}_reference.fasta\n" \
 		file.write(line)
 
 		# Get the name of the real PacBio FASTQ file
 		key = "%s_fastq" % (testDetails["genome"])
 		fastq = paths[key]
 
-		fastqPath = "fastq=$genomeDir/%s\n" % (fastq)
+		fastqPath = "fastq=${genomeDir}/%s\n" % (fastq)
 		file.write(fastqPath)
 
 		file.write('\n')

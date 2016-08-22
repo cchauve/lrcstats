@@ -19,6 +19,9 @@ def writePaths(file, testDetails):
         - (file object) file
         - (dict of strings) test: dict of test parameters
 	'''
+	# Reminder: experimentName is a global variable - initialized in lrcstats.py
+	experiment = "experiment=%s\n" % (experimentName)
+
 	lrcstats = "lrcstats=%s\n" % (variables["lrcstats"])
 
 	program = "program=%s\n" % (testDetails["program"])
@@ -29,16 +32,16 @@ def writePaths(file, testDetails):
 
 	shortCov = "shortCov=%s\n" % (testDetails["shortCov"])
 
-        prefix = "prefix=%s/${genome}\n" % (variables["data"])
+        prefix = "prefix=%s/${genome}/${experiment}\n" % (variables["data"])
 
 	test = "test=${program}-${genome}-${shortCov}Sx${longCov}L\n"
 
-	line = lrcstats + program + genome + longCov + prefix + test 
+	line = experiment + lrcstats + program + genome + longCov + prefix + test 
         file.write(line)
 	
-	line = "outputDir=${prefix}/alignments/${program}/${test}\n" \
-		"inputDir=${prefix}/corrections/${program}/${test}\n" \
-		"maf=${prefix}/simlord/long-d${longCov}/${genome}-long-d${longCov}.fastq.sam.maf\n" \
+	line = "outputDir=${prefix}/align/${program}/${test}\n" \
+		"inputDir=${prefix}/correct/${program}/${test}\n" \
+		"maf=${prefix}/simulate/simlord/long-d${longCov}/${genome}-long-d${longCov}.fastq.sam.maf\n" \
 		"\n" \
 		"set -e\n" \
 		"mkdir -p ${outputDir}\n" \
@@ -52,8 +55,8 @@ def writeSortFasta(file):
 	line = "############### Sort FASTA ###########\n" \
 		"echo 'Sorting FASTA file...'\n" \
 		"\n" \
-		"sortfasta=$lrcstats/src/preprocessing/sortfasta/sortfasta.py\n" \
-		"sortedOutput=$outputDir/sorted.fasta\n" \
+		"sortfasta=${lrcstats}/src/preprocessing/sortfasta/sortfasta.py\n" \
+		"sortedOutput=${outputDir}/sorted.fasta\n" \
 		"\n" \
 		"python $sortfasta -i $input -o $sortedOutput\n"
 		"\n" \
@@ -68,7 +71,7 @@ def writePruneMaf(file):
 	line = "############### Prune the maf file(s) ###########\n" \
 		"echo 'Pruning MAF file(s)...'\n") \
 		"\n" \
-		"prunemaf=${lrcstats}/src/preprocess/prunemaf/prunemaf.py\n" \
+		"prunemaf=${lrcstats}/src/preprocessing/prunemaf/prunemaf.py\n" \
 		"pruneOutput=${outputDir}/pruned\n" \
 		"python $prunemaf -f $input -m $maf -o $pruneOutput\n" \
 		"\n" \
@@ -83,11 +86,11 @@ def writeProcessTrimmedReads(file):
 	line = "############### Processing Trimmed Reads ###########\n" \
 		"echo 'Processing trimmed reads...'\n" \
 		"concatenate=${lrcstats}/src/preprocessing/concatenate_trimmed/concatenate_trimmed.py\n" \
-		"concatenated_output=$outputdir/concatenated.fasta\n" \
+		"concatenated_output=${outputDir}/concatenated.fasta\n" \
 		"\n" \
-		"python $concatenate -i $input -o $concatenated_output\n" \
+		"python $concatenate -i $input -o ${concatenated_output}\n" \
 		"\n" \
-		"input=$concatenated_output\n" \
+		"input=${concatenated_output}\n" \
 		"\n"
 	file.write(line)
 
@@ -98,17 +101,17 @@ def writeAlignment(file, program):
 	'''
 	line = "############### Generate three-way alignment ###########\n" \
 		"echo 'Generating three-way alignment...'\n" \
-		"lrcstats=/home/seanla/Projects/lrcstats/src/collection/lrcstats\n" \
+		"align=${lrcstats}/src/collection/align\n" \
 		"mafOutput=${outputDir}/${test}.maf\n" \
 		"\n"
 	file.write(line)
 
 	if program in ["jabba", "proovread"]:
-		command = "$lrcstats maf -m $maf -c $input -t -o $mafOutput\n" \
+		command = "$align maf -m $maf -c $input -t -o $mafOutput\n" \
 			"\n"
 		file.write(command)
 	elif program in ["lordec", "colormap", "colormap_oea"]:
-		command = "$lrcstats maf -m $maf -c $input -o $mafOutput\n" \
+		command = "$align maf -m $maf -c $input -o $mafOutput\n" \
 			"\n"
 		file.write(command)
 
@@ -123,7 +126,7 @@ def writeConvertFastq2Fasta(file):
 	line = "############### Convert FASTQ to FASTA ###########\n" \
 		"echo 'Converting FASTQ to FASTA...'\n" \
 		"\n" \
-		"fastq2fasta=$preprocesspath/fastq2fasta/fastq2fasta.py\n" \
+		"fastq2fasta=${lrcstats}/src/preprocessing/fastq2fasta/fastq2fasta.py\n" \
 		"outputq2a=$outputdir/${test}\n" \
 		"\n" \
 		"python $fastq2fasta -i $input -o $outputq2a\n" \
@@ -193,12 +196,12 @@ def generateAlignmentJob(testDetails):
 	testName = "%s-%s-%sSx%sL" \
 		% (testDetails["program"], testDetails["genome"], \
 			 testDetails["shortCov"], testDetails["longCov"])
-	scriptPath = "%s/scripts/align/%s/%s-correct.pbs" \
-		% (variables["lrcstats"], testDetails["program"], testName)
+	scriptPath = "%s/scripts/%s/align/%s/%s-correct.pbs" \
+		% (variables["lrcstats"], experimentName, testDetails["program"], testName)
 	with open(scriptPath, 'w') as file:
 		job_header.writeHeader(file)
-		jobOutputPath = "#PBS -o %s/%s/alignments/%s/%s/%s.out" \
-                        % (variables["data"], test["genome"], test["program"], testName, testName)
+		jobOutputPath = "#PBS -o %s/%s/%s/align/%s/%s/%s.out" \
+                        % (variables["data"], test["genome"], experimentName, test["program"], testName, testName)
                 file.write(jobOutputPath)
 
 		jobName = "#PBS -N %s-align\n" % (testName)

@@ -21,19 +21,24 @@ def writePaths(file, testDetails):
 	- (file object) file
 	- (dict of strings) testDetails: dict of test parameters
 	'''
+
+	# Reminder: experimentName is a global variable - initialized in lrcstats.py
+
  	program = "program=%s\n" % (testDetails["program"])
 
 	genome = "genome=%s\n" % (testDetails["genome"])
+
+	experiment = "experiment=%s\n" % (experimentName)
 
 	shortCov = "shortCov=%s\n" % (testDetails["shortCov"])
 
 	longCov = "longCov=%s\n" % (testDetails["longCov"])
 
-	prefix = "prefix=%s/${genome}\n" % (paths["data"])
+	prefix = "prefix=%s/${genome}/${experiment}\n" % (paths["data"])
 
 	art = "art=${prefix}/art/short-paired-d${shortCov}\n"
 
-	line = program + genome + shortCov + longCov + prefix + art
+	line = experiment + program + genome + shortCov + longCov + prefix + art
 	file.write(line)
 
 	line = "test=${program}-${genome}-${shortCov}Sx${longCov}L\n"
@@ -49,10 +54,12 @@ def writeLordec(file):
 	'''
 	Generate LoRDEC pipeline
 	'''
-	line = "output=${output}/${test}.fasta" \
-		"cd ${outputDir}\n" \
+	line = "lordec=%s\n" % (paths["lordec"])
+	file.write(line)
+
+	line = "output=${outputDir}/${test}.fasta" \
 		"\n" \
-		"lordec=/home/seanla/Software/LoRDEC-0.6/lordec-correct\n" \
+		"cd ${outputDir}\n" \
 		"$lordec -T ${PBS_NUM_PPN} --trials 5 --branch 200 --errorrate 0.4 " \
 			"-2 ${short1} ${short2} -k 19 -s 3 -i ${long} -o ${output}\n"
 	file.write(line)
@@ -111,8 +118,10 @@ def writeColormap(file):
 	'''
 	Generate CoLoRMap correction commands w/o OEA
 	'''
-	line = "colormap=/home/seanla/Software/colormap/runCorr.sh\n" \
-		"\n" \
+	line = "colormap=%s\n" % ( paths["colormap"] ) 
+	file.write(line)
+
+	line = 	"\n" \
 		"cd $outputDir\n" \
 		"$colormap $long $mergedShort $outputDir ${PBS_NUM_PPN}\n" 
 	file.write(line)
@@ -121,10 +130,12 @@ def writeColormapOea(file):
 	'''
 	Generate CoLoRMap correction script w/ OEA
 	'''
-	line = "colormap=/home/seanla/Software/colormap/runOea.sh\n" \
-		"\n" \
+	line = "colormapOea=%s\n" % ( paths["colormap_oea"] ) 
+	file.write(line)
+
+	line = 	"\n" \
 		"cd $outputDir\n" \
-		"$colormap $long $mergedShort $outputDir ${PBS_NUM_PPN}\n" 
+		"${colormapOea} $long $mergedShort $outputDir ${PBS_NUM_PPN}\n" 
 	file.write(line)
 
 def generateCorrectionJob(testDetails):
@@ -136,14 +147,20 @@ def generateCorrectionJob(testDetails):
 	testName = "%s-%s-%sSx%sL" \
 		% (testDetails["program"], testDetails["genome"], \
 			testDetails["shortCov"], testDetails["longCov"])
-	scriptPath = "%s/scripts/correct/%s/%s-correct.pbs" \
-		% (paths["lrcstats"], testDetails["program"], testName)
+
+	# Reminder: experimentName is a global variable - init in lrcstats.py
+	scriptPath = "%s/scripts/%s/correct/%s/%s-correct.pbs" \
+		% (paths["lrcstats"], experimentName, testDetails["program"], testName)
+
 	with open(scriptPath,'w') as file:
 		job_header.writeGenericHeader(file)
 
-		jobOutputPath = "#PBS -o %s/%s/corrections/%s/%s/%s.out" \
-			% (paths["data"], testDetails["genome"], testDetails["program"], \
-				testName, testName)
+		# job epilogue output files will be in the same directory as the output data
+		# Reminder: experimentName is a global variable - init in lrcstats.py
+		jobOutputPath = "#PBS -o %s/%s/%s/corrections/%s/%s/%s.out" \
+			% (paths["data"], testDetails["genome"], experimentName,
+				 testDetails["program"], testName, testName)
+
 		file.write(jobOutputPath)
 
 		jobName = "#PBS -N %s-correct\n" % (testName)
