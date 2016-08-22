@@ -1,5 +1,5 @@
-import getopt, sys, math
 from __future__ import division
+import getopt, sys, math
 
 def findMeanReadLength(longReadPath):
 	'''
