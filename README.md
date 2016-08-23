@@ -1,14 +1,18 @@
 # LRCStats: Long Read Correction Statistics #
 
-### Dependencies ###
+## Dependencies ##
 * Python 2.7.2
 * g++ 5.1.0 (though this should technically work with any g++ version with c++11 support)
-### Installation ###
+
+## Installation ##
+The only component of the pipeline that needs to be compiled is the aligner, which can be done with the following commands:
 ```
 cd src/collection
 make
 ```
-### Usage ###
+Otherwise, the rest of the pipeline is written in Python so you just need to make sure your version of Python run by the command `python` is Python 2.7.2.
+
+## Usage ##
 1. Create your own configuration file with `python lrcstats.py --blank_config [CONFIG NAME HERE]`. The configuration file will appear under `config/[CONFIG NAME HERE].config`.
 2. Modify the configuration file to contain the paths to the necessary programs on your system and the details of your experiment.
 3. Construct the pipelie scripts with the following command. They will appear under the directory `scripts`.
