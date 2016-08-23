@@ -22,14 +22,14 @@ def simulateArtShortReads(testDetails, paths):
 	with open(scriptPath, 'w') as file:
 		job_header.writeHeader(file, paths)
 
-		line = "#PBS -o %s/%s/%s/simulate/simlord/short-d%s.out\n" \
-			% (paths["lrcstats"], testDetails["genome"], testDetails["experimentName"], testDetails["shortCov"])
+		line = "#PBS -o %s/%s/simulate/simlord/short-d%s/short-d%s.out\n" \
+			% (paths["data"], testDetails["experimentName"], testDetails["shortCov"], testDetails["shortCov"])
 		file.write(line)
 
 		writeResources(file)
 
 		# Name of the job
-		line = "#PBS -N simulate_%s_short_d%s\n" \
+		line = "#PBS -N simulate-%s-short-d%s\n" \
 			% (testDetails["genome"], testDetails["shortCov"])
 		file.write(line)
 
@@ -85,12 +85,13 @@ def simulateSimlordLongReads(testDetails, paths):
 		job_header.writeHeader(file, paths)
 		writeResources(file)
 
-		line = "#PBS -o %s/%s/%s/simulate/simlord/long-d%s.out\n" \
-			% (paths["lrcstats"], testDetails["genome"], testDetails["experimentName"], testDetails["longCov"])
+		line = "#PBS -o %s/%s/simulate/simlord/long-d%s/long-d%s.out\n" \
+			% (paths["data"], testDetails["experimentName"], \
+			testDetails["longCov"], testDetails["longCov"])
 		file.write(line)
 
 		# Name of the job
-		line = "#PBS -N simulate_%s_long_%s\n" \
+		line = "#PBS -N simulate-%s-long-%s\n" \
 			% (testDetails["genome"], testDetails["longCov"])
 		file.write(line)
 
