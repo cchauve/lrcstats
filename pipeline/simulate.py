@@ -17,7 +17,7 @@ def simulateArtShortReads(testDetails, paths):
 	- (dict of strings) paths: contains the program paths for the users systems
 	'''
 	# Reminder: experimentName is a global variable - initialized in lrcstats.py
-	scriptPath = "%s/scripts/%s/simulate/simulate-%s-short-d%s.pbs" \
+	scriptPath = "%s/scripts/%s/simulate/art/simulate-%s-short-d%s.pbs" \
 			% (paths["lrcstats"], testDetails["experimentName"], testDetails["genome"], testDetails["shortCov"]) 
 	with open(scriptPath, 'w') as file:
 		job_header.writeHeader(file, paths)
@@ -78,7 +78,7 @@ def simulateSimlordLongReads(testDetails, paths):
 	- (dict of strings) testDetails: contains the test parameters
 	- (dict of strings) paths: contains the program paths for the users systems
 	'''
-	scriptPath = "%s/scripts/%s/simulate/simulate-%s-long-d%s.pbs" \
+	scriptPath = "%s/scripts/%s/simulate/simlord/simulate-%s-long-d%s.pbs" \
 			% (paths["lrcstats"], testDetails["experimentName"], testDetails["genome"], testDetails["longCov"]) 
 
 	with open(scriptPath, 'w') as file:

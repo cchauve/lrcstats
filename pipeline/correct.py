@@ -158,7 +158,6 @@ def generateCorrectionJob(testDetails, paths):
 		jobOutputPath = "#PBS -o %s/%s/correct/%s/%s/%s.out\n" \
 			% (paths["data"], testDetails["experimentName"],
 				 testDetails["program"], testName, testName)
-
 		file.write(jobOutputPath)
 
 		jobName = "#PBS -N %s-correct\n" % (testName)

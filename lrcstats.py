@@ -233,8 +233,7 @@ for stage in ["simulate", "correct", "align", "stats"]:
 		if not stage is "simulate" and not os.path.exists(programDir):
 			os.makedirs(programDir)
 
-# Write the actual PBS job scripts
-print("Creating PBS job scripts...")
+tests = []
 
 for program in experimentDetails["programs"]:
 	for genome in experimentDetails["genomes"]:
@@ -244,14 +243,34 @@ for program in experimentDetails["programs"]:
 					testDetails = {"program": program, "genome": genome, 
 							"experimentName": experimentName,
 							"shortCov": shortCov, "longCov": longCov}
-					if args.simulate:
-						simulate.simulateArtShortReads(testDetails,paths)
-						simulate.simulateSimlordLongReads(testDetails,paths)
-					if args.correct:
-						correct.generateCorrectionJob(testDetails,paths)
-					if args.align:
-						align.generateAlignmentJob(testDetails,paths)
-					if args.stats:
-						stats.generateStatsJob(testDetails,paths)	
+					tests.append(testDetails)
+
+
+# Create the actual scripts
+print("Creating PBS job scripts...")
+
+for testDetails in tests:
+	if args.simulate:
+		simulate.simulateArtShortReads(testDetails,paths)
+		simulate.simulateSimlordLongReads(testDetails,paths)
+	if args.correct:
+		correct.generateCorrectionJob(testDetails,paths)
+	if args.align:
+		align.generateAlignmentJob(testDetails,paths)
+	if args.stats:
+		stats.generateStatsJob(testDetails,paths)	
+
+# Create shell scripts to submit all jobs at once
+print("Creating quick-qsub scripts...")
+
+if args.simulate:
+	simulate.createQuickQsubArtScript(tests,paths)
+	simulate.createQuickQsubSimlordScript(tests,paths)
+if args.correct:
+	correct.createQuickQsubScript(tests,paths)
+if args.align:
+	align.createQuickQsubScript(tests,paths)
+if args.stats:
+	stats.createQuickQsubScript(tests,paths)	
 
 print("PBS job scripts are ready - they can be found under `scripts/%s`." % (experimentName))
