@@ -88,6 +88,5 @@ if optsIncomplete:
 
 reads = getReads(inputPath)
 # Sort reads based on read number
-print reads
 reads = sorted(reads, key=itemgetter(0))
 writeFasta(outputPath, reads)
