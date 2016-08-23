@@ -15,7 +15,7 @@ Otherwise, the rest of the pipeline is written in Python so you just need to mak
 ## Usage ##
 1. Create your own configuration file with `python lrcstats.py --blank_config [CONFIG NAME HERE]`. The configuration file will appear under `config/[CONFIG NAME HERE].config`.
 2. Modify the configuration file to contain the paths to the necessary programs on your system and the details of your experiment.
-3. Construct the pipelie scripts with the following command. They will appear under the directory `scripts`.
+3. Construct the pipeline scripts with the following command
 ```
 python lrcstats.py -i config/[CONFIG NAME HERE].config -n [NAME OF THE EXPERIMENT] --simulate --correct --align --stats
 ```
