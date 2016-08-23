@@ -24,6 +24,7 @@ def getReads(inputPath):
 				sequence = ""
 			else:
 				sequence += line.rstrip('\n')
+		reads.append( (readNum, sequence, header) )
 	return reads
 
 def writeFasta(outputPath, reads):
@@ -87,5 +88,6 @@ if optsIncomplete:
 
 reads = getReads(inputPath)
 # Sort reads based on read number
+print reads
 reads = sorted(reads, key=itemgetter(0))
 writeFasta(outputPath, reads)
