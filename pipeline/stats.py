@@ -8,7 +8,7 @@ def writeRemoveExtended(file):
 	line = "############### Removing extended regions #############\n" \
 		"echo 'Removing extended regions...'\n" \
 		"unextend=${lrcstats}/src/preprocessing/unextend_alignments/unextend_alignments.py\n" \
-		"unextendOutput=$outputdir/${testName}_unextended.maf\n" \
+		"unextendOutput=$outputDir/${testName}_unextended.maf\n" \
 		"python $unextend -i $maf -m $unextendOutput\n" \
 		"maf=$unextendOutput\n" \
 		"\n" 
@@ -59,14 +59,14 @@ def generateStatsJob(testDetails, paths):
 		
 		shortCov = "shortCov=%s\n" % (testDetails["shortCov"])
 
-		prefix = "prefix=%s/${genome}/${experiment}\n" % (paths["data"])
+		prefix = "prefix=%s/${experiment}\n" % (paths["data"])
 
 		test = "testName=${program}-${genome}-${shortCov}Sx${longCov}L\n"
 
-		line = lrcstats + program + genome + longCov + prefix + test 
+		line = experiment + lrcstats + program + genome + longCov + shortCov + prefix + test 
 		file.write(line)
 
-		line = "input=${prefix}/align/${testName}/${testName}.maf\n" \
+		line = "maf=${prefix}/align/${program}/${testName}/${testName}.maf\n" \
 			"outputDir=${prefix}/stats/${program}/${testName}\n" \
 			"\n"
 		file.write(line)
@@ -98,18 +98,19 @@ def generateStatsJob(testDetails, paths):
 			"\n"
 		file.write(line)
 
-		line = "############## Finding global statistics ############\n" \
-			"echo 'Finding global statistics...'\n" \
+		line = "############## Summarizing statistics ############\n" \
+			"echo 'Summarizing statistics...'\n" \
 			"\n" \
 			"summarize_stats=${lrcstats}/src/statistics/summarize_stats.py\n" \
 			"statsOutput=${prefix}/stats/${program}/${testName}/${testName}_stats.txt\n" \
 			"\n"
+		file.write(line)
 
 		program = testDetails["program"]
 
 		if program in ["proovread", "jabba"]:
-			line = "python ${summarize_stats} -i ${input} -b -o ${statsOutput}\n"
-		elif program in ["lordec", "colormap", "colormap_oea"]:
 			line = "python ${summarize_stats} -i ${input} -o ${statsOutput}\n"
+		elif program in ["lordec", "colormap", "colormap_oea"]:
+			line = "python ${summarize_stats} -i ${input} -b -o ${statsOutput}\n"
 
 		file.write(line)
