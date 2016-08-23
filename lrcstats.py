@@ -209,14 +209,10 @@ else:
 if optsIncomplete:
 	sys.exit(2) 
 
-# paths is a global variables - will be referenced in other modules
 paths = configVariables["paths"]
-# experimentDetails only referenced in this module
 experimentDetails = configVariables["experimentDetails"]
 
 # Create the necessary directories under `scripts`
-
-# experimentDir is a global variable - will be referenced in other modules
 experimentDir = "scripts/%s" % (experimentName)
 
 if not os.path.exists(experimentDir):
@@ -224,15 +220,29 @@ if not os.path.exists(experimentDir):
 
 for stage in ["simulate", "correct", "align", "stats"]: 
 	stageDir = "%s/%s" % (experimentDir, stage)
-
 	if not os.path.exists(stageDir):
 		os.makedirs(stageDir)
-
 	for program in experimentDetails["programs"]:
 		programDir = "%s/%s" % (stageDir, program)
 		if not stage is "simulate" and not os.path.exists(programDir):
 			os.makedirs(programDir)
 
+print("Creating PBS job scripts...")
+
+simulations = []
+# Make the short and long read simulation scripts
+if args.simulate:
+	for genome in experimentDetails["genomes"]:
+		for shortCov in experimentDetails["short_coverages"]:
+			testDetails = {"genome": genome, "experimentName": experimentName, "shortCov": shortCov}
+			simulate.simulateArtShortReads(testDetails,paths)		
+			simulations.append(testDetails)
+		for longCov in experimentDetails["long_coverages"]:
+			testDetails = {"genome": genome, "experimentName": experimentName, "longCov": longCov}
+			simulate.simulateSimlordLongReads(testDetails,paths)		
+			simulations.append(testDetails)
+
+# Find all test cases
 tests = []
 
 for program in experimentDetails["programs"]:
@@ -245,14 +255,8 @@ for program in experimentDetails["programs"]:
 							"shortCov": shortCov, "longCov": longCov}
 					tests.append(testDetails)
 
-
-# Create the actual scripts
-print("Creating PBS job scripts...")
-
+# Create the rest of the pipeline
 for testDetails in tests:
-	if args.simulate:
-		simulate.simulateArtShortReads(testDetails,paths)
-		simulate.simulateSimlordLongReads(testDetails,paths)
 	if args.correct:
 		correct.generateCorrectionJob(testDetails,paths)
 	if args.align:
@@ -264,13 +268,12 @@ for testDetails in tests:
 print("Creating quick-qsub scripts...")
 
 if args.simulate:
-	simulate.createQuickQsubArtScript(tests,paths)
-	simulate.createQuickQsubSimlordScript(tests,paths)
+	simulate.createQuickQsubScript(simulations, paths, experimentName)
 if args.correct:
-	correct.createQuickQsubScript(tests,paths)
+	correct.createQuickQsubScript(tests, paths, experimentName)
 if args.align:
-	align.createQuickQsubScript(tests,paths)
+	align.createQuickQsubScript(tests, paths, experimentName)
 if args.stats:
-	stats.createQuickQsubScript(tests,paths)	
+	stats.createQuickQsubScript(tests, paths, experimentName)	
 
 print("PBS job scripts are ready - they can be found under `scripts/%s`." % (experimentName))

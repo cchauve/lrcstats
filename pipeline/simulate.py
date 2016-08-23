@@ -142,3 +142,24 @@ def simulateSimlordLongReads(testDetails, paths):
 			"\n" \
 			"python $sam2maf -r $ref -s $sam -o $maf\n"
 		file.write(line)
+
+def createQuickQsubArtScripts(simulations, paths, experimentName):
+	'''
+	Create quick qsub script for simlord sim
+	'''
+	scriptPaths = []
+	for testDetails in simulations:
+		# Add the path to the short read sim
+		scriptPath = "%s/scripts/%s/simulate/simlord/simulate-%s-long-d%s.pbs" \
+			% (paths["lrcstats"], testDetails["experimentName"], testDetails["genome"], testDetails["longCov"]) 
+		scriptPaths.append(scriptPath)
+
+		scriptPath = "%s/scripts/%s/simulate/art/simulate-%s-short-d%s.pbs" \
+			% (paths["lrcstats"], testDetails["experimentName"], testDetails["genome"], testDetails["shortCov"]) 
+		scriptPaths.append(scriptPath)
+
+	path = "%s/scripts/%s/quick-qsub-simulate.sh" % (paths["lrcstats"], experimentName)
+	with open(path,'w') as file:
+		for scriptPath in scriptPaths:
+			line = "qsub %s\n" % (scriptPath)
+			file.write(line)
