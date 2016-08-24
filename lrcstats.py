@@ -185,7 +185,7 @@ if args.test:
 
 if args.blank_config:
 	createBlankConfig(args.blank_config)
-	print("Created a new blank configuration file in config folder.")
+	print("Created a new configuration file in config folder.")
 	sys.exit()
 
 # If blank_config not checked, then do the rest of the pipeline
