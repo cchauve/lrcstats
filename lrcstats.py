@@ -52,12 +52,15 @@ def createBlankConfig(configName):
 		"[experiment_details]\n" \
 		"# No spaces in between items in list please\n" \
 		"# i.e. in the form [item_1,...,item_n]\n" \
+		"\n" \
+		"# for every genome you include in the list below,\n" \
+		"# make sure you also include the paths to the reference\n" \
+		"# fasta file and the real PacBio long read FASTQ file above!\n" \
 		"genomes = [ecoli]\n" \
 		"short_coverages = [50,100,200]\n" \
 		"long_coverages = [10,20,50,75]\n" \
 		"programs = [proovread,lordec,jabba,colormap,colormap_oea]\n" 
 
-	# Reminder: experimentName is a global variable
 	blankConfigPath = "config/%s.config" % (configName)
 	with open(blankConfigPath,'w') as file:
 		file.write(config)	
