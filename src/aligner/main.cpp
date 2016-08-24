@@ -5,7 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <cassert>
-#include <thread>
 
 #include "data/data.hpp"
 #include "alignments/alignments.hpp"
