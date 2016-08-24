@@ -162,6 +162,7 @@ def createQuickQsubScript(shortTestDetails, longTestDetails, paths, experimentNa
 
 	path = "%s/scripts/%s/quick-qsub-simulate.sh" % (paths["lrcstats"], experimentName)
 	with open(path,'w') as file:
+		file.write("#!/bin/bash\n")
 		for scriptPath in scriptPaths:
 			line = "qsub %s\n" % (scriptPath)
 			file.write(line)
