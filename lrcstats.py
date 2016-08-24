@@ -8,12 +8,14 @@ from pipeline import correct
 from pipeline import align
 from pipeline import stats
 
-def createBlankConfig():
+def createBlankConfig(configName):
 	'''
 	Creates a blank configuration file in the current directory.
 	'''
 	config ="[paths]\n" \
+		"# Make sure there are spaces around each '='\n" \
 		"# For each path, don't include the ending / please!\n" \
+		"# Don't put quotation marks around each item\n" \
 		"\n" \
 		"# Absolute path to LRCStats dir\n" \
 		"lrcstats = \n" \
@@ -45,7 +47,7 @@ def createBlankConfig():
 		"fly_fastq = \n" \
 		"\n" \
 		"# Your email address to send PBS job info to\n" \
-		"email = \n" \
+		"email = email@example.com\n" \
 		"\n" \
 		"[experiment_details]\n" \
 		"# No spaces in between items in list please\n" \
@@ -56,7 +58,7 @@ def createBlankConfig():
 		"programs = [proovread,lordec,jabba,colormap,colormap_oea]\n" 
 
 	# Reminder: experimentName is a global variable
-	blankConfigPath = "config/%s.config" % (experimentName)
+	blankConfigPath = "config/%s.config" % (configName)
 	with open(blankConfigPath,'w') as file:
 		file.write(config)	
 
@@ -136,10 +138,11 @@ parser = argparse.ArgumentParser(description='''
 	Version %d.%d
 	''' % (MAJOR_VERSION, MINOR_VERSION))
 
-parser.add_argument('-b', '--blank_config', action='store_true', help=
+parser.add_argument('-b', '--blank_config', metavar='CONFIG_NAME', type=str, help=
 	"""
 	create a new blank configuration file in the current directory 
-	to construct your own testing pipeline and exit the program
+	to construct your own testing pipeline and exit the program with 
+	the given CONFIG_NAME
 	""")
 parser.add_argument('-s', '--simulate', action='store_true', help=
 	"""
@@ -180,6 +183,13 @@ if args.test:
 	test()
 	sys.exit()
 
+if args.blank_config:
+	createBlankConfig(args.blank_config)
+	print("Created a new blank configuration file in config folder.")
+	sys.exit()
+
+# If blank_config not checked, then do the rest of the pipeline
+
 optsIncomplete = False
 
 if args.experiment_name:
@@ -187,16 +197,6 @@ if args.experiment_name:
 else:
 	optsIncomplete = True
 	print("Error; please provide the name of the experiment")
-
-if optsIncomplete:
-	sys.exit(2) 
-
-if args.blank_config:
-	createBlankConfig()
-	print("Created a new blank configuration file in config folder.")
-	sys.exit()
-
-optsIncomplete = False
 
 if args.input_config:
 	configPath = args.input_config
