@@ -98,16 +98,16 @@ def writeAlignment(file, program):
 	'''
 	line = "############### Generate three-way alignment ###########\n" \
 		"echo 'Generating three-way alignment...'\n" \
-		"align=${lrcstats}/src/collection/align\n" \
+		"aligner=${lrcstats}/src/aligner/aligner\n" \
 		"mafOutput=${outputDir}/${testName}.maf\n" \
 		"\n"
 	file.write(line)
 
 	if program in ["jabba", "proovread"]:
-		command = "$align maf -m $maf -c $input -t -o $mafOutput\n"
+		command = "$aligner maf -m $maf -c $input -t -o $mafOutput\n"
 		file.write(command)
 	elif program in ["lordec", "colormap", "colormap_oea"]:
-		command = "$align maf -m $maf -c $input -o $mafOutput\n"
+		command = "$aligner maf -m $maf -c $input -o $mafOutput\n"
 		file.write(command)
 
 def writeConvertFastq2Fasta(file):
