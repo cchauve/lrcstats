@@ -222,25 +222,37 @@ for stage in ["simulate", "correct", "align", "stats"]:
 	stageDir = "%s/%s" % (experimentDir, stage)
 	if not os.path.exists(stageDir):
 		os.makedirs(stageDir)
-	for program in experimentDetails["programs"]:
-		programDir = "%s/%s" % (stageDir, program)
-		if not stage is "simulate" and not os.path.exists(programDir):
-			os.makedirs(programDir)
 
-print("Creating PBS job scripts...")
+	if stage is "simulate":
+		programs = ["simlord", "art"]
+	else:
+		programs = experimentDetails["programs"]	
 
-simulations = []
-# Make the short and long read simulation scripts
+	for program in programs:
+			programDir = "%s/%s" % (stageDir, program)
+			if not os.path.exists(programDir):
+				os.makedirs(programDir)
+
+print("Creating PBS job scripts and quick-qsub scripts...")
+
 if args.simulate:
+	# Make the short and long read simulation scripts
+	longTestDetails = []
+	shortTestDetails = []
+
 	for genome in experimentDetails["genomes"]:
 		for shortCov in experimentDetails["short_coverages"]:
-			testDetails = {"genome": genome, "experimentName": experimentName, "shortCov": shortCov}
-			simulate.simulateArtShortReads(testDetails,paths)		
-			simulations.append(testDetails)
+			testDetail = {"genome": genome, "experimentName": experimentName, "shortCov": shortCov}
+			simulate.simulateArtShortReads(testDetail,paths)		
+			shortTestDetails.append(testDetail)	
+
 		for longCov in experimentDetails["long_coverages"]:
-			testDetails = {"genome": genome, "experimentName": experimentName, "longCov": longCov}
-			simulate.simulateSimlordLongReads(testDetails,paths)		
-			simulations.append(testDetails)
+			testDetail = {"genome": genome, "experimentName": experimentName, "longCov": longCov}
+			simulate.simulateSimlordLongReads(testDetail,paths)		
+			longTestDetails.append(testDetail)
+
+	# make the quick-qsub scripts for all the sim scripts
+	simulate.createQuickQsubScript(shortTestDetails, longTestDetails, paths, experimentName)	
 
 # Find all test cases
 tests = []
@@ -256,24 +268,19 @@ for program in experimentDetails["programs"]:
 					tests.append(testDetails)
 
 # Create the rest of the pipeline
-for testDetails in tests:
-	if args.correct:
-		correct.generateCorrectionJob(testDetails,paths)
-	if args.align:
-		align.generateAlignmentJob(testDetails,paths)
-	if args.stats:
-		stats.generateStatsJob(testDetails,paths)	
-
-# Create shell scripts to submit all jobs at once
-print("Creating quick-qsub scripts...")
-
-if args.simulate:
-	simulate.createQuickQsubScript(simulations, paths, experimentName)
 if args.correct:
+	for testDetails in tests:
+		correct.generateCorrectionJob(testDetails,paths)
 	correct.createQuickQsubScript(tests, paths, experimentName)
+
 if args.align:
+	for testDetails in tests:
+		align.generateAlignmentJob(testDetails,paths)
 	align.createQuickQsubScript(tests, paths, experimentName)
+
 if args.stats:
+	for testDetails in tests:
+		stats.generateStatsJob(testDetails,paths)	
 	stats.createQuickQsubScript(tests, paths, experimentName)	
 
-print("PBS job scripts are ready - they can be found under `scripts/%s`." % (experimentName))
+print("PBS job and quick-qsub scripts are ready - they can be found under `scripts/%s`." % (experimentName))

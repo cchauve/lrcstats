@@ -15,6 +15,6 @@ def writeHeader(file, paths):
 
         # Only send emails when jobs are done or aborted
         # Epilogue info all in one file
-        line = "#PBS -m ea\n" \
+        line = "#PBS -m bea\n" \
                 "#PBS -j oe\n"
         file.write(line)

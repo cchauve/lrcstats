@@ -114,3 +114,21 @@ def generateStatsJob(testDetails, paths):
 			line = "python ${summarize_stats} -i ${input} -b -o ${statsOutput}\n"
 
 		file.write(line)
+
+def createQuickQsubScript(testDetails, paths, experimentName):
+	'''
+	Create a quick-qsub script for the alignment jobs
+	'''
+	scriptPaths = []
+        for testDetail in testDetails:
+		testName = "%s-%s-%sSx%sL" \
+			% (testDetail["program"], testDetail["genome"], testDetail["shortCov"], testDetail["longCov"])
+	        scriptPath = "%s/scripts/%s/stats/%s/%s-stats.pbs" \
+			% (paths["lrcstats"], testDetail["experimentName"], testDetail["program"], testName)
+		scriptPaths.append(scriptPath)
+
+        path = "%s/scripts/%s/quick-qsub-stats.sh" % (paths["lrcstats"], experimentName)
+        with open(path,'w') as file:
+                for scriptPath in scriptPaths:
+                        line = "qsub %s\n" % (scriptPath)
+                        file.write(line)	
