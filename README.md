@@ -6,6 +6,8 @@
 * Computing cluster with TORQUE and Moab software
 
 ## Installation ##
+Clone this repository with the command `git clone https://github.com/thefantasticdron/lrcstats.git`.
+
 The only component of the pipeline that needs to be compiled is the aligner, which can be done with the following commands:
 ```
 cd src/aligner
