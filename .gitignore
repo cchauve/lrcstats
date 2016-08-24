@@ -2,4 +2,4 @@ scripts/*
 *.config
 *.DS_store
 *.pyc
-src/collection/align
+src/aligner/aligner
