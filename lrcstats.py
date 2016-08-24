@@ -140,9 +140,7 @@ parser = argparse.ArgumentParser(description='''
 
 parser.add_argument('-b', '--blank_config', metavar='CONFIG_NAME', type=str, help=
 	"""
-	create a new blank configuration file in the current directory 
-	to construct your own testing pipeline and exit the program with 
-	the given CONFIG_NAME
+	create a new configuration file 
 	""")
 parser.add_argument('-s', '--simulate', action='store_true', help=
 	"""
@@ -168,8 +166,7 @@ parser.add_argument('-u', '--test', action='store_true', help=
 requiredNamed = parser.add_argument_group('required named arguments')
 requiredNamed.add_argument('-i', '--input_config', metavar='CONFIG', type=str, help=
 	"""
-	path to the configuration file;
-	required only if -b is not set
+	path to the configuration file
 	""")
 requiredNamed.add_argument('-n', '--experiment_name', metavar='NAME', type=str, help=
 	"""
