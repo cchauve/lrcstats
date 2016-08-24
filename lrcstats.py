@@ -266,7 +266,6 @@ for program in experimentDetails["programs"]:
 							"experimentName": experimentName,
 							"shortCov": shortCov, "longCov": longCov}
 					tests.append(testDetails)
-
 # Create the rest of the pipeline
 if args.correct:
 	for testDetails in tests:
