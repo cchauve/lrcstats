@@ -5,6 +5,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <cassert>
+// For multithreading
+#include <thread>
+#include <future>
 
 #include "data/data.hpp"
 #include "alignments/alignments.hpp"
@@ -92,6 +95,7 @@ std::vector< RawRead_t > getReadsFromMafAndFasta()
 
 		reads.push_back(read);
 	}
+
 	mafInput.close();
 	clrInput.close();
 
@@ -155,14 +159,37 @@ std::vector< AlignedTrimmedReads_t > alignTrimmedReads( std::vector<RawRead_t> r
 
 void generateMaf()
 {
-	// First, read the MAF and cLR FASTA file
+	// Read the MAF and cLR FASTA file
 	std::vector< RawRead_t > reads = getReadsFromMafAndFasta(); 
 
-	// Next, split the reads vector into g_threads equally sized partition(s)
-	// contained in a vector of RawRead_t vectors
+	// Split the reads vector into g_threads equally sized partition(s) contained in a vector of 
+	// RawRead_t vectors
 	std::vector< std::vector<RawRead_t> > partitions = partitionReads(reads);
 
-	//  
+	// Process each partition separately in its own thread 
+	std::vector< std::future<std::vector<AlignedUntrimmedReads_t>> > partitionThread;
+	
+	for (int64_t i = 0; i < partitions.size(); i++) {
+		partitionThread.push_back() = std::async( &alignUntrimmedReads, partitions.at(i) );
+	} 
+
+	// Once the threads have finished doing their thing, get all the aligned partitions of reads
+	std::vector< std::vector<AlignedUntrimmedReads_t> > alignedPartitions;
+
+	for (int64_t i = 0; i < partitionThread.size(); i++) {
+		alignedPartitions.push_back() = partitionThread.at(i).get();
+	}
+
+	// Write the alignments to MAF file
+	MafFile mafOutput(outputPath);
+
+	for (int64_t vectorIndex = 0; vectorIndex < alignedPartitions.size(); vectorIndex++) {
+		std::vector< AlignedUntrimmedReads_t > partition = alignedPartitions.at(vectorIndex);	
+		for (int64_t partitionIndex` = 0; partitionIndex < partition.size(); partitionIndex++) {
+			AlignedUntrimmedReads_t read = partition.at(partitionIndex);
+			mafOutput.addReads( read.alignment, read.readInfo );
+		} 
+	}
 }
 
 void generateUntrimmedMaf(std::string mafInputName, std::string clrName, std::string outputPath)
@@ -652,7 +679,7 @@ int main(int argc, char *argv[])
 				displayUsage();
 				return 0;
 			case 'p':
-				::g_threads = int(optarg);
+				g_threads = int(optarg);
 				break;
 			default:
 				std::cerr << "Error: unrecognized option.\n";
