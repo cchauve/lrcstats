@@ -22,7 +22,7 @@ def simulateArtShortReads(testDetails, paths):
 	with open(scriptPath, 'w') as file:
 		job_header.writeHeader(file, paths)
 
-		line = "#PBS -o %s/%s/simulate/simlord/short-d%s/short-d%s.out\n" \
+		line = "#PBS -o %s/%s/simulate/art/short-d%s/short-d%s.out\n" \
 			% (paths["data"], testDetails["experimentName"], testDetails["shortCov"], testDetails["shortCov"])
 		file.write(line)
 
