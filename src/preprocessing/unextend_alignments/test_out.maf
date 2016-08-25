@@ -1,0 +1,12 @@
+##maf version=1
+
+a
+s 1.reference 14 4 + 1000000 -ACG-A
+s 1.uncorrected 0 4 + 4 -ACG-A
+s 1.corrected 0 4 + 4 XACGXA
+
+a
+s 1.reference 14 4 + 1000000 -ACG-A
+s 1.uncorrected 0 4 + 4 -ACG-A
+s 1.corrected 0 4 + 4 XACGXA
+
