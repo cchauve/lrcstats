@@ -200,8 +200,6 @@ void generateUntrimmedMaf()
 	std::vector< Read_t > reads = getReadsFromMafAndFasta(); 
 	std::cout << " finished.\n";
 
-	std::cout << "Number of reads = " << reads.size() << "\n";
-
 	// Split the reads vector into g_threads equally sized partition(s) contained in a vector of 
 	// Read_t vectors
 	std::cout << "Partitioning reads...";
