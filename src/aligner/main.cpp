@@ -91,7 +91,7 @@ std::vector< Read_t > getReadsFromMafAndFasta()
 	return reads;
 }
 
-std::vector< std::vector<Read_t> > partitionReads( std::vector< Read_t > reads ) 
+std::vector< std::vector<Read_t> > partitionReads( std::vector< Read_t > &reads ) 
 {
 	std::vector< Read_t >::iterator iter = reads.begin();
 	
@@ -112,7 +112,7 @@ std::vector< std::vector<Read_t> > partitionReads( std::vector< Read_t > reads )
 	return partitions;
 }
 
-std::vector< Read_t > alignUntrimmedReads( std::vector<Read_t> reads )
+std::vector< Read_t > alignUntrimmedReads( std::vector<Read_t> &reads )
 {
 	std::vector< Read_t > alignments;
 
@@ -131,7 +131,7 @@ std::vector< Read_t > alignUntrimmedReads( std::vector<Read_t> reads )
 	return alignments;
 }
 
-std::vector< Read_t > alignTrimmedReads( std::vector<Read_t> reads )
+std::vector< Read_t > alignTrimmedReads( std::vector<Read_t> &reads )
 {
 	std::vector< Read_t > alignments;
 
