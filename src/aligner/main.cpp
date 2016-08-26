@@ -19,39 +19,22 @@ int64_t g_threads = 1;
 std::string g_mafInputName = "";
 std::string g_clrName = "";
 std::string g_outputPath = "";
-CorrectedReadType g_cReadType = Untrimmed;
 
-struct RawRead_t {
-	std::string ref;
-	std::string ulr;
-	std::string clr;
-	ReadInfo readInfo;	
-};
 
-struct AlignedTrimmedReads_t {
-	TrimmedAlignment alignment;
-	ReadInfo readInfo;	
-};
-
-struct AlignedUntrimmedReads_t {
-	UntrimmedAlignment alignment;
-	ReadInfo readInfo;
-};
-
-std::vector< RawRead_t > getReadsFromMafAndFasta()
+std::vector< Read_t > getReadsFromMafAndFasta()
 {
 	std::ifstream mafInput (g_mafInputName, std::ios::in);
 	std::ifstream clrInput (g_clrName, std::ios::in);
 
 	if (!mafInput.is_open() || !clrInput.is_open()) {
 		std::cerr << "Unable to open either maf input or corrected long reads file\n";
-		return; 
+		// Insert exit statement here
 	}	
 
 	std::string mafLine;
 	std::string clrLine;
 
-	std::vector< RawRead_t > reads;
+	std::vector< Read_t > reads;
 
 	// First, collect all the reads from the FASTA and MAF files
 	while (std::getline(mafInput, mafLine) && std::getline(clrInput, clrLine)) {
@@ -70,7 +53,7 @@ std::vector< RawRead_t > getReadsFromMafAndFasta()
 		// Read ulr line
 		std::getline(mafInput, mafLine);
 
-		std::vector<std::string> mafTokens = split(mafLine);	
+		mafTokens = split(mafLine);	
 
 		assert( mafTokens.size() == 7 );
 
@@ -82,12 +65,18 @@ std::vector< RawRead_t > getReadsFromMafAndFasta()
 		//Skip line 
 		std::getline(mafInput, mafLine); 
 
-		ReadInfo readInfo(readName, refOrient, readOrient, start, srcSize);	
+		ReadInfo readInfo;
+
+		readInfo.name = readName;
+		readInfo.refOrient = refOrient;
+		readInfo.readOrient = readOrient;
+		readInfo.start = start;
+		readInfo.srcSize = srcSize;
 
 		std::getline(clrInput, clrLine);
 		std::string clr = clrLine;
 
-		RawRead_t read;
+		Read_t read;
 		read.ref = ref;	
 		read.ulr = ulr;
 		read.clr = clr;
@@ -102,13 +91,13 @@ std::vector< RawRead_t > getReadsFromMafAndFasta()
 	return reads;
 }
 
-std::vector< std::vector<RawRead_t> > partitionReads( std::vector< RawRead_t > reads ) 
+std::vector< std::vector<Read_t> > partitionReads( std::vector< Read_t > reads ) 
 {
-	std::vector< RawRead_t >::iterator iter = reads.begin();
+	std::vector< Read_t >::iterator iter = reads.begin();
 	
 	int64_t partitionSize = reads.size() / g_threads;
-	std::vector< RawRead_t > readsPartition;
-	std::vector< std::vector<RawRead_t> > partitions;
+	std::vector< Read_t > readsPartition;
+	std::vector< std::vector<Read_t> > partitions;
 
 	do {
 		if (reads.end() - iter > partitionSize) {
@@ -123,265 +112,112 @@ std::vector< std::vector<RawRead_t> > partitionReads( std::vector< RawRead_t > r
 	return partitions;
 }
 
-std::vector< AlignedUntrimmedReads_t > alignUntrimmedReads( std::vector<RawRead_t> reads )
+std::vector< Read_t > alignUntrimmedReads( std::vector<Read_t> reads )
 {
-	std::vector< UntrimmedAlignments > alignments;
+	std::vector< Read_t > alignments;
 
 	for (int64_t i = 0; i < reads.size(); i++) {
-		read = reads.at(i);
-		Alignment alignment(read.ref, read.ulr, read.clr);
+		Read_t unalignedReads = reads.at(i);
+		UntrimmedAlignments alignment(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
 
-		AlignedUntrimmedReads_t aligned;
-		aligned.alignment = alignment;
-		aligned.readInfo = read.readInfo;
-		alignments.push_back(alignments);		
+		Read_t alignedReads;
+		alignedReads.ref = alignment.getRef();
+		alignedReads.clr = alignment.getClr();
+		alignedReads.ulr = alignment.getUlr();
+		alignedReads.readInfo = unalignedReads.readInfo;
+		alignments.push_back(alignedReads);		
 	}
 	
 	return alignments;
 }
 
-std::vector< AlignedTrimmedReads_t > alignTrimmedReads( std::vector<RawRead_t> reads )
+std::vector< Read_t > alignTrimmedReads( std::vector<Read_t> reads )
 {
-	std::vector< UntrimmedAlignments > alignments;
+	std::vector< Read_t > alignments;
 
 	for (int64_t i = 0; i < reads.size(); i++) {
-		read = reads.at(i);
-		Alignment alignment(read.ref, read.ulr, read.clr);
+		Read_t unalignedReads = reads.at(i);
+		TrimmedAlignments alignment(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
 
-		AlignedTrimmedReads_t aligned;
-		aligned.alignment = alignment;
-		aligned.readInfo = read.readInfo;
-		alignments.push_back(alignments);		
+		Read_t alignedReads;
+		alignedReads.ref = alignment.getRef();
+		alignedReads.clr = alignment.getClr();
+		alignedReads.ulr = alignment.getUlr();
+		alignedReads.readInfo = unalignedReads.readInfo;
+		alignments.push_back(alignedReads);		
 	}
 	
 	return alignments;
 }
 
-void generateMaf()
+void generateTrimmedMaf()
 {
 	// Read the MAF and cLR FASTA file
-	std::vector< RawRead_t > reads = getReadsFromMafAndFasta(); 
+	std::vector< Read_t > reads = getReadsFromMafAndFasta(); 
 
 	// Split the reads vector into g_threads equally sized partition(s) contained in a vector of 
-	// RawRead_t vectors
-	std::vector< std::vector<RawRead_t> > partitions = partitionReads(reads);
+	// Read_t vectors
+	std::vector< std::vector<Read_t> > partitions = partitionReads(reads);
 
 	// Process each partition separately in its own thread 
-	std::vector< std::future<std::vector<AlignedUntrimmedReads_t>> > partitionThread;
+	std::vector< std::future<std::vector<Read_t>> > partitionThread;
 	
 	for (int64_t i = 0; i < partitions.size(); i++) {
-		partitionThread.push_back() = std::async( &alignUntrimmedReads, partitions.at(i) );
+		partitionThread.push_back( std::async( &alignTrimmedReads, partitions.at(i) ) );
 	} 
 
 	// Once the threads have finished doing their thing, get all the aligned partitions of reads
-	std::vector< std::vector<AlignedUntrimmedReads_t> > alignedPartitions;
+	std::vector< std::vector<Read_t> > alignedPartitions;
 
 	for (int64_t i = 0; i < partitionThread.size(); i++) {
-		alignedPartitions.push_back() = partitionThread.at(i).get();
+		alignedPartitions.push_back( partitionThread.at(i).get() );
 	}
 
 	// Write the alignments to MAF file
-	MafFile mafOutput(outputPath);
+	MafFile mafOutput(g_outputPath);
 
 	for (int64_t vectorIndex = 0; vectorIndex < alignedPartitions.size(); vectorIndex++) {
-		std::vector< AlignedUntrimmedReads_t > partition = alignedPartitions.at(vectorIndex);	
-		for (int64_t partitionIndex` = 0; partitionIndex < partition.size(); partitionIndex++) {
-			AlignedUntrimmedReads_t read = partition.at(partitionIndex);
-			mafOutput.addReads( read.alignment, read.readInfo );
+		std::vector< Read_t > partition = alignedPartitions.at(vectorIndex);	
+		for (int64_t partitionIndex = 0; partitionIndex < partition.size(); partitionIndex++) {
+			Read_t reads = partition.at(partitionIndex);
+			mafOutput.addReads( reads );
 		} 
 	}
 }
 
-void generateUntrimmedMaf(std::string mafInputName, std::string clrName, std::string outputPath)
-/* Generates a 3-way maf file from data contained in input maf file and cLR file */
+void generateUntrimmedMaf()
 {
-	std::ifstream mafInput (mafInputName, std::ios::in);
-	std::ifstream clrInput (clrName, std::ios::in);
-	MafFile mafOutput (outputPath);
+	// Read the MAF and cLR FASTA file
+	std::vector< Read_t > reads = getReadsFromMafAndFasta(); 
 
-	if (!mafInput.is_open() || !clrInput.is_open()) {
-		std::cerr << "Unable to open either maf input or corrected long reads file\n";
-		return; 
-	}	
+	// Split the reads vector into g_threads equally sized partition(s) contained in a vector of 
+	// Read_t vectors
+	std::vector< std::vector<Read_t> > partitions = partitionReads(reads);
 
-	std::string mafLine;
-	std::string clrLine;
+	// Process each partition separately in its own thread 
+	std::vector< std::future<std::vector<Read_t>> > partitionThread;
+	
+	for (int64_t i = 0; i < partitions.size(); i++) {
+		partitionThread.push_back( std::async( &alignUntrimmedReads, partitions.at(i) ) );
+	} 
 
-	std::vector<std::string> mafTokens;
+	// Once the threads have finished doing their thing, get all the aligned partitions of reads
+	std::vector< std::vector<Read_t> > alignedPartitions;
 
-	std::string ref = "";
-	std::string ulr = "";
-	std::string clr = "";
-
-	std::string readName = "";
-	std::string refOrient = "";
-	std::string readOrient = "";
-	std::string start = "";
-	std::string srcSize = "";
-
-	bool refNonEmpty;
-	bool ulrNonEmpty;
-
-	UntrimmedAlignments alignments(ref, ulr, clr);
-	ReadInfo readInfo(readName, refOrient, readOrient, start, srcSize);	
-
-	// Skip first line in maf file
-	while (std::getline(mafInput, mafLine) && std::getline(clrInput, clrLine)) {
-		//std::cout << mafLine << "\n";
-		// Read ref line
-		std::getline(mafInput, mafLine);
-		//std::cout << mafLine << "\n";
-
-		mafTokens = split(mafLine);	
-
-		assert( mafTokens.size() == 7 );
-
-		ref = mafTokens.at(6);			
-		refOrient = mafTokens.at(4);
-		start = mafTokens.at(2);
-		srcSize = mafTokens.at(5);
-
-		// Read ulr line
-		std::getline(mafInput, mafLine);
-		//std::cout << mafLine << "\n";
-
-		mafTokens = split(mafLine);	
-
-		assert( mafTokens.size() == 7 );
-
-		ulr = mafTokens.at(6);
-		readName = mafTokens.at(1);
-		int64_t readMafNum = atoi( readName.c_str() );
-		readOrient = mafTokens.at(4);
-
-		//Skip line again
-		std::getline(mafInput, mafLine); 
-		//std::cout << mafLine << "\n\n";
-
-		readInfo.reset(readName, refOrient, readOrient, start, srcSize);
-
-		// Next, read from clr file
-		//std::cout << clrLine << "\n";
-
-		/*
-		std::string fastaHeader;
-		fastaHeader = clrLine.substr(1, clrLine.npos);
-		int64_t readFastaNum = atoi( fastaHeader.c_str() );
-		*/
-		std::cout << "Aligning read " << readMafNum << "...\n";
-		/*
-		if ( readFastaNum != readMafNum ) {
-			std::cout << "Error; FASTA read number does not equal MAF read number.\n";
-			std::cout << "FASTA read number is " << readFastaNum << "\n";
-			std::cout << "MAF read number is " << readMafNum << "\n";
-			assert( readFastaNum == readMafNum );
-		}
-		*/
-
-		std::getline(clrInput, clrLine);
-		clr = clrLine;
-		
-		alignments.reset(ref, ulr, clr);
-
-		// Write info into maf file
-
-		mafOutput.addReads(alignments, readInfo);
+	for (int64_t i = 0; i < partitionThread.size(); i++) {
+		alignedPartitions.push_back( partitionThread.at(i).get() );
 	}
 
-	mafInput.close();
-	clrInput.close();
-}
+	// Write the alignments to MAF file
+	MafFile mafOutput(g_outputPath);
 
-void generateTrimmedMaf(std::string mafInputName, std::string clrName, std::string outputPath)
-/* Generates a 3-way maf file from data contained in input maf file and cLR file */
-{
-	std::ifstream mafInput (mafInputName, std::ios::in);
-	std::ifstream clrInput (clrName, std::ios::in);
-	MafFile mafOutput (outputPath);
-
-	if (!mafInput.is_open() || !clrInput.is_open()) {
-		std::cerr << "Unable to open either maf input or corrected long reads file\n";
-		return; 
-	}	
-
-	std::string mafLine;
-	std::string clrLine;
-
-	std::vector<std::string> mafTokens;
-
-	std::string ref = "";
-	std::string ulr = "";
-	std::string clr = "";
-
-	std::string readName = "";
-	std::string refOrient = "";
-	std::string readOrient = "";
-	std::string start = "";
-	std::string srcSize = "";
-
-	bool refNonEmpty;
-	bool ulrNonEmpty;
-
-	TrimmedAlignments alignments(ref, ulr, clr);
-	ReadInfo readInfo(readName, refOrient, readOrient, start, srcSize);	
-
-	// Skip first line in maf file
-	while (std::getline(mafInput, mafLine) && std::getline(clrInput, clrLine)) {
-		//std::cout << mafLine << "\n";
-		// Read ref line
-		std::getline(mafInput, mafLine);
-		//std::cout << mafLine << "\n";
-
-		mafTokens = split(mafLine);	
-
-		assert( mafTokens.size() == 7 );
-
-		ref = mafTokens.at(6);			
-		refOrient = mafTokens.at(4);
-		start = mafTokens.at(2);
-		srcSize = mafTokens.at(5);
-
-		// Read ulr line
-		std::getline(mafInput, mafLine);
-		//std::cout << mafLine << "\n";
-
-		mafTokens = split(mafLine);	
-
-		assert( mafTokens.size() == 7 );
-
-		ulr = mafTokens.at(6);
-		readName = mafTokens.at(1);
-		int64_t readMafNum = atoi( readName.c_str() );
-		readOrient = mafTokens.at(4);
-
-		//Skip line again
-		std::getline(mafInput, mafLine); 
-		//std::cout << mafLine << "\n\n";
-
-		readInfo.reset(readName, refOrient, readOrient, start, srcSize);
-
-		// Next, read from clr file
-		//std::cout << clrLine << "\n";
-
-		std::string fastaHeader;
-		fastaHeader = clrLine.substr(1, clrLine.npos);
-		int64_t readFastaNum = atoi( fastaHeader.c_str() );
-
-		std::cout << "Aligning read " << readMafNum << "...\n";
-		//assert( readFastaNum == readMafNum );
-
-		std::getline(clrInput, clrLine);
-		clr = clrLine;
-		
-		alignments.reset(ref, ulr, clr);
-
-		// Write info into maf file
-
-		mafOutput.addReads(alignments, readInfo);
+	for (int64_t vectorIndex = 0; vectorIndex < alignedPartitions.size(); vectorIndex++) {
+		std::vector< Read_t > partition = alignedPartitions.at(vectorIndex);	
+		for (int64_t partitionIndex = 0; partitionIndex < partition.size(); partitionIndex++) {
+			Read_t read = partition.at(partitionIndex);
+			mafOutput.addReads( read );
+		} 
 	}
-
-	mafInput.close();
-	clrInput.close();
 }
 
 std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int64_t cSize, std::string uRead, int64_t uSize)
@@ -456,12 +292,12 @@ std::vector<int64_t> trimmedReadStats(CorrespondingSegments segments)
 	return statistics;
 }
 
-void createUntrimmedStat(std::string mafName, std::string outputPath)
+void createUntrimmedStat()
 /* Given a 3-way MAF file between cLR, uLR and ref sequences, outputs a
  */
 {
-	std::ifstream mafFile (mafName, std::ios::in);
-	std::ofstream output (outputPath, std::ios::out);
+	std::ifstream mafFile (g_mafInputName, std::ios::in);
+	std::ofstream output (g_outputPath, std::ios::out);
 	std::string line = "";
 
 	// Indices where each respective information lies in the MAF file line
@@ -534,12 +370,12 @@ void createUntrimmedStat(std::string mafName, std::string outputPath)
 	output.close();
 }
 
-void createTrimmedStat(std::string mafName, std::string outputPath)
+void createTrimmedStat()
 /* Given a 3-way MAF file between cLR, uLR and ref sequences, outputs a
  */
 {
-	std::ifstream mafFile (mafName, std::ios::in);
-	std::ofstream output (outputPath, std::ios::out);
+	std::ifstream mafFile (g_mafInputName, std::ios::in);
+	std::ofstream output (g_outputPath, std::ios::out);
 	std::string line = "";
 
 	// Indices where each respective information lies in the MAF file line
@@ -671,7 +507,7 @@ int main(int argc, char *argv[])
 				break;
 			case 't':
 				// Whether the corrected long reads are trimmed or not
-				g_cReadType = Trimmed;	
+				cReadType = Trimmed;	
 				break;
 			case 'h':
 				// Displays usage
@@ -679,7 +515,7 @@ int main(int argc, char *argv[])
 				displayUsage();
 				return 0;
 			case 'p':
-				g_threads = int(optarg);
+				g_threads = atoi(optarg);
 				break;
 			default:
 				std::cerr << "Error: unrecognized option.\n";
@@ -692,15 +528,15 @@ int main(int argc, char *argv[])
 
 	// Pass an error if essential option is not set
 	
-	if (mafInputName == "") {
+	if (g_mafInputName == "") {
 		std::cerr << "ERROR: MAF input path required\n";
 		optionsPresent = false;
 	}
-	if (outputPath == "") {
+	if (g_outputPath == "") {
 		std::cerr << "ERROR: Output path required\n";
 		optionsPresent = false;
 	}
-	if (mode == "maf" && clrName == "") {
+	if (mode == "maf" && g_clrName == "") {
 		std::cerr << "ERROR: cLR input path required\n";
 		optionsPresent = false;
 	}
@@ -711,9 +547,13 @@ int main(int argc, char *argv[])
 	}
 
 	if (mode == "maf") {
-		generateMaf();
+		if (cReadType == Trimmed) {
+			generateTrimmedMaf();
+		} else {
+			generateUntrimmedMaf();
+		}
 	} else {
-		if (g_cReadType == Trimmed) {
+		if (cReadType == Trimmed) {
 			createTrimmedStat();				
 		} else {
 			createUntrimmedStat();

@@ -9,25 +9,21 @@ std::vector<std::string> split(const std::string &str);
 int64_t gaplessLength(std::string read);
 /* Returns the length of a sequence without gaps. */
 
-class ReadInfo
-/* Carries information about uLR and reference parsed from source MAF file */
+struct ReadInfo
 {
-        public:
-                ReadInfo(std::string readName, std::string refOrientation, std::string readOrientation, 
-				std::string refStart, std::string refSrcSize);
-		void reset(std::string readName, std::string refOrientation, std::string readOrientation,
-				std::string refStart, std::string refSrcSize);
-                std::string getName();
-                std::string getRefOrient();
-                std::string getReadOrient();
-                std::string getStart();
-                std::string getSrcSize();
-        private:
-                std::string name;
-                std::string refOrient;
-                std::string readOrient;
-                std::string start;
-                std::string srcSize;
+	std::string name;
+	std::string refOrient;
+	std::string readOrient;
+	std::string start;
+	std::string srcSize;
+};
+
+struct Read_t
+{
+	std::string ref;
+	std::string ulr;
+	std::string clr;
+	ReadInfo readInfo;
 };
 
 class MafFile
@@ -35,8 +31,7 @@ class MafFile
 {
 	public:
 		MafFile(std::string fileName);
-		void addReads(TrimmedAlignments alignments, ReadInfo readInfo);
-		void addReads(UntrimmedAlignments alignments, ReadInfo readInfo);
+		void addReads(Read_t reads);
 	private:
 		std::string filename;
 };
