@@ -15,7 +15,7 @@
 
 enum CorrectedReadType {Trimmed,Untrimmed};
 
-int64_t g_threads = 1;
+int64_t g_threads = std::thread::hardware_concurrency();
 std::string g_mafInputName = "";
 std::string g_clrName = "";
 std::string g_outputPath = "";
@@ -95,7 +95,7 @@ std::vector< std::vector<Read_t> > partitionReads( std::vector< Read_t > reads )
 {
 	std::vector< Read_t >::iterator iter = reads.begin();
 	
-	int64_t partitionSize = reads.size() / g_threads;
+	int64_t partitionSize = reads.size() / ::g_threads;
 	std::vector< Read_t > readsPartition;
 	std::vector< std::vector<Read_t> > partitions;
 
@@ -153,13 +153,18 @@ std::vector< Read_t > alignTrimmedReads( std::vector<Read_t> reads )
 void generateTrimmedMaf()
 {
 	// Read the MAF and cLR FASTA file
+	std::cout << "Reading MAF and FASTA files...";
 	std::vector< Read_t > reads = getReadsFromMafAndFasta(); 
+	std::cout << " finished.\n";
 
 	// Split the reads vector into g_threads equally sized partition(s) contained in a vector of 
 	// Read_t vectors
+	std::cout << "Partitioning reads...";
 	std::vector< std::vector<Read_t> > partitions = partitionReads(reads);
+	std::cout << " finished.\n";
 
 	// Process each partition separately in its own thread 
+	std::cout << "Aligning " << ::g_threads << " partitions of reads concurrently...";
 	std::vector< std::future<std::vector<Read_t>> > partitionThread;
 	
 	for (int64_t i = 0; i < partitions.size(); i++) {
@@ -172,8 +177,10 @@ void generateTrimmedMaf()
 	for (int64_t i = 0; i < partitionThread.size(); i++) {
 		alignedPartitions.push_back( partitionThread.at(i).get() );
 	}
+	std::cout << " finished.\n";
 
 	// Write the alignments to MAF file
+	std::cout << "Writing alignments to MAF file...";
 	MafFile mafOutput(g_outputPath);
 
 	for (int64_t vectorIndex = 0; vectorIndex < alignedPartitions.size(); vectorIndex++) {
@@ -183,18 +190,26 @@ void generateTrimmedMaf()
 			mafOutput.addReads( reads );
 		} 
 	}
+	std::cout << " finished.\n";
 }
 
 void generateUntrimmedMaf()
 {
 	// Read the MAF and cLR FASTA file
+	std::cout << "Reading MAF and FASTA files...";
 	std::vector< Read_t > reads = getReadsFromMafAndFasta(); 
+	std::cout << " finished.\n";
+
+	std::cout << "Number of reads = " << reads.size() << "\n";
 
 	// Split the reads vector into g_threads equally sized partition(s) contained in a vector of 
 	// Read_t vectors
+	std::cout << "Partitioning reads...";
 	std::vector< std::vector<Read_t> > partitions = partitionReads(reads);
+	std::cout << " finished.\n";
 
 	// Process each partition separately in its own thread 
+	std::cout << "Aligning partitions of reads concurrently...";
 	std::vector< std::future<std::vector<Read_t>> > partitionThread;
 	
 	for (int64_t i = 0; i < partitions.size(); i++) {
@@ -207,8 +222,10 @@ void generateUntrimmedMaf()
 	for (int64_t i = 0; i < partitionThread.size(); i++) {
 		alignedPartitions.push_back( partitionThread.at(i).get() );
 	}
+	std::cout << " finished.\n";
 
 	// Write the alignments to MAF file
+	std::cout << "Writing alignments to MAF file...";
 	MafFile mafOutput(g_outputPath);
 
 	for (int64_t vectorIndex = 0; vectorIndex < alignedPartitions.size(); vectorIndex++) {
@@ -218,6 +235,7 @@ void generateUntrimmedMaf()
 			mafOutput.addReads( read );
 		} 
 	}
+	std::cout << " finished.\n";
 }
 
 std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int64_t cSize, std::string uRead, int64_t uSize)
@@ -459,7 +477,7 @@ void displayHelp()
 void displayUsage()
 {
 		std::cout << "Usage: aligner [mode] [-m MAF input path] [-c cLR input path] [-t cLR are trimmed] "
-		      	  << "[-o output path] [-g perform global statistics] [-p number of threads]\n";
+		      	  << "[-o output path] [-p number of threads]\n";
 		std::cout << "aligner maf to create 3-way MAF file\n";
 		std::cout << "aligner stats to perform statistics on MAF file\n";
 }
@@ -476,7 +494,7 @@ int main(int argc, char *argv[])
 
 		std::string mode = argv[1];
 		
-		if (mode != "maf" && mode != "stats") {
+		if (mode != "maf" and mode != "stats") {
 			std::cerr << "Please select a mode\n";
 			displayUsage();
 			return 1;
@@ -515,7 +533,7 @@ int main(int argc, char *argv[])
 				displayUsage();
 				return 0;
 			case 'p':
-				g_threads = atoi(optarg);
+				::g_threads = atoi(optarg);
 				break;
 			default:
 				std::cerr << "Error: unrecognized option.\n";
@@ -536,7 +554,7 @@ int main(int argc, char *argv[])
 		std::cerr << "ERROR: Output path required\n";
 		optionsPresent = false;
 	}
-	if (mode == "maf" && g_clrName == "") {
+	if (mode == "maf" and g_clrName == "") {
 		std::cerr << "ERROR: cLR input path required\n";
 		optionsPresent = false;
 	}
@@ -545,6 +563,8 @@ int main(int argc, char *argv[])
 		displayUsage();
 		return 1;
 	}
+
+	std::cout << "Number of theads: " << ::g_threads << ".\n";
 
 	if (mode == "maf") {
 		if (cReadType == Trimmed) {
