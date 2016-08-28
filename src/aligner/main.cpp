@@ -105,9 +105,10 @@ std::vector< std::vector<Read_t> > partitionReads( std::vector< Read_t > &reads 
 			iter += partitionSize;
 		} else {
 			readsPartition.assign(iter, reads.end());
+			iter = reads.end();
 		}
 		partitions.push_back(readsPartition);	
-	} while ( !reads.empty() );
+	} while ( iter != reads.end() );
 
 	return partitions;
 }
