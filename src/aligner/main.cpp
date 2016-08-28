@@ -93,11 +93,12 @@ std::vector< Read_t > getReadsFromMafAndFasta()
 
 std::vector< std::vector<Read_t> > partitionReads( std::vector< Read_t > &reads ) 
 {
-	std::vector< Read_t >::iterator iter = reads.begin();
 	
 	int64_t partitionSize = reads.size() / ::g_threads;
 	std::vector< Read_t > readsPartition;
 	std::vector< std::vector<Read_t> > partitions;
+
+	std::vector< Read_t >::iterator iter = reads.begin();
 
 	do {
 		if (reads.end() - iter > partitionSize) {
