@@ -41,7 +41,7 @@ def makeLengthIdentityScatterPlot(accuracyRates, lengths, datasetName, outputPre
         axes.scatter(lengths, accuracyRates)
 
         # Add labels
-        axes.set_ylabel("Accuracy of Read")
+        axes.set_ylabel("Identity of Read")
         axes.set_xlabel("Length of Read")
         axes.set_title("Length vs Identity of Dataset %s" % (datasetName))
 
@@ -127,7 +127,7 @@ with open(inputPath,'r') as input:
 				accuracyRate = identity/length
 				accuracyRates.append(accuracyRate)
 
-makeLengthAccuracyScatterPlot(accuracyRates, lengths, datasetName, outputPrefix) 
+makeLengthIdentityScatterPlot(accuracyRates, lengths, datasetName, outputPrefix) 
 
 meanIdentity = totalIdentity/alignedReads 
 print( "Mean Identity = %d\n" % (meanIdentity) )
