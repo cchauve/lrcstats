@@ -50,7 +50,7 @@ def simulateArtShortReads(testDetails, paths):
 
 		fq2fastqPath = "fq2fastq=%s/src/preprocessing/fq2fastq.py\n" % (paths["lrcstats"])
 
-		merge_files = "merge_files=%s/src/preprocessing/merge_files/merge_files.py\n" \
+		merge_files = "merge_files=%s/src/preprocessing/utils/fastUtils\n" \
 				% (paths["lrcstats"])
 
 		line = experiment + coverage + genome + genomeDir + refPath + artPath + fq2fastqPath + merge_files
@@ -68,7 +68,7 @@ def simulateArtShortReads(testDetails, paths):
 			"short2=${outputPrefix}2.fastq\n" \
 			"shortMerged=${outputPrefix}-merged.fastq\n" \
 			"\n" \
-			"python $merge_files -i $short1 -i $short2 -o $shortMerged\n"
+			"$merge_files -1 $short1 -2 $short2 -o $shortMerged\n"
 		file.write(line)
 
 def simulateSimlordLongReads(testDetails, paths):
