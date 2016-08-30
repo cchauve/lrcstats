@@ -22,7 +22,7 @@ std::vector< CorrespondingSegments > getUntrimmedCorrespondingSegmentsList(std::
 
 	for (int64_t index = 0; index < length; index++) {
 		// Check if we're at the beginning of a corrected segment
-		if ( not inCorrectedSegment and (isupper(cRead[index]) or cRead[index] == '-') ) {
+		if ( not inCorrectedSegment and (isupper(cRead[index])) ) {
 			inCorrectedSegment = true;
 		// Check if we've left the end of a corrected segement
 		} else if ( inCorrectedSegment and islower(cRead[index]) ) {
