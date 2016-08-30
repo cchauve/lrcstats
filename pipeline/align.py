@@ -199,7 +199,7 @@ def generateAlignmentJob(testDetails, paths):
 				 testDetails["program"], testName, testName)
                 file.write(jobOutputPath)
 
-		jobName = "#PBS -N %s-align\n" % (testName)
+		jobName = "#PBS -N %s-%s-align\n" % (testDetails["experimentName"], testName)
                 file.write(jobName)
 
 		writeResources(file)

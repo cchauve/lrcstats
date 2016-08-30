@@ -160,7 +160,7 @@ def generateCorrectionJob(testDetails, paths):
 				 testDetails["program"], testName, testName)
 		file.write(jobOutputPath)
 
-		jobName = "#PBS -N %s-correct\n" % (testName)
+		jobName = "#PBS -N %s-%s-correct\n" % (testDetails["experimentName"], testName)
 		file.write(jobName)
 
 		writeResources(file, testDetails["genome"])

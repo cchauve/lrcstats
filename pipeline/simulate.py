@@ -29,8 +29,8 @@ def simulateArtShortReads(testDetails, paths):
 		writeResources(file)
 
 		# Name of the job
-		line = "#PBS -N simulate-%s-short-d%s\n" \
-			% (testDetails["genome"], testDetails["shortCov"])
+		line = "#PBS -N %s-simulate-%s-short-d%s\n" \
+			% (testDetails["experimentName"], testDetails["genome"], testDetails["shortCov"])
 		file.write(line)
 
 		file.write('\n')
@@ -91,8 +91,8 @@ def simulateSimlordLongReads(testDetails, paths):
 		file.write(line)
 
 		# Name of the job
-		line = "#PBS -N simulate-%s-long-%s\n" \
-			% (testDetails["genome"], testDetails["longCov"])
+		line = "#PBS -N %s-simulate-%s-long-%s\n" \
+			% (testDetails["experimentName"], testDetails["genome"], testDetails["longCov"])
 		file.write(line)
 
 		file.write('\n')

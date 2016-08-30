@@ -43,7 +43,7 @@ def generateStatsJob(testDetails, paths):
 				testDetails["program"], testName, testName)
                 file.write(jobOutputPath)
 
-		jobName = "#PBS -N %s-stats\n\n" % (testName)
+		jobName = "#PBS -N %s-%s-stats\n\n" % (testDetails["experimentName"], testName)
                 file.write(jobName)
 
 		experiment = "experiment=%s\n" % (testDetails["experimentName"])
