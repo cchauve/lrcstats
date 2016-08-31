@@ -120,9 +120,12 @@ def writeColormap(file, paths):
 	line = "colormap=%s\n" % ( paths["colormap"] ) 
 	file.write(line)
 
+	line = "outputPrefix=$outputDir/$testName\n"
+	file.write(line)
+
 	line = 	"\n" \
 		"cd $outputDir\n" \
-		"$colormap $long $mergedShort $outputDir ${PBS_NUM_PPN}\n" 
+		"$colormap $long $mergedShort $outputDir $outputPrefix ${PBS_NUM_PPN}\n" 
 	file.write(line)
 
 def writeColormapOea(file, paths):
