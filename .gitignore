@@ -3,3 +3,5 @@ scripts/*
 *.DS_store
 *.pyc
 src/aligner/aligner
+*.pbs
+*.sh
