@@ -6,7 +6,10 @@
 * Computing cluster with TORQUE and Moab software
 
 ## Installation ##
-Clone this repository with the command `git clone --recursive https://github.com/thefantasticdron/lrcstats.git`.
+Clone this repository with the command 
+```
+git clone --recursive https://github.com/thefantasticdron/lrcstats.git
+```
 
 To compile the aligner, perform the following commands:
 ```
