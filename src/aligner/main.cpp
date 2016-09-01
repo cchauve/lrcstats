@@ -7,6 +7,7 @@
 #include <cassert>
 // For multithreading
 #include <future>
+#include <thread>
 
 #include "data/data.hpp"
 #include "alignments/alignments.hpp"
