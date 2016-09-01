@@ -163,7 +163,8 @@ void generateMaf()
 	
 	// Only create g_threads - 1 new threads; work will also be done on the main thread
 	for (int64_t i = 1; i < partitions.size(); i++) {
-		partitionThread.push_back( std::async(alignReads, partitions.at(i)) );
+		partitionThread.push_back( std::async(std::launch::async, alignReads, 
+			partitions.at(i)) );
 	} 
 
 	// Once the threads have finished doing their thing, get all the aligned partitions of reads
