@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <cassert>
 // For multithreading
-#include <thread>
 #include <future>
 
 #include "data/data.hpp"
@@ -19,6 +18,7 @@ int64_t g_threads = std::thread::hardware_concurrency();
 std::string g_mafInputName = "";
 std::string g_clrName = "";
 std::string g_outputPath = "";
+CorrectedReadType g_cReadType = Untrimmed;
 
 
 std::vector< Read_t > getReadsFromMafAndFasta()
@@ -93,7 +93,6 @@ std::vector< Read_t > getReadsFromMafAndFasta()
 
 std::vector< std::vector<Read_t> > partitionReads( std::vector< Read_t > &reads ) 
 {
-	
 	int64_t partitionSize = reads.size() / ::g_threads;
 	std::vector< Read_t > readsPartition;
 	std::vector< std::vector<Read_t> > partitions;
@@ -113,45 +112,41 @@ std::vector< std::vector<Read_t> > partitionReads( std::vector< Read_t > &reads 
 	return partitions;
 }
 
-std::vector< Read_t > alignUntrimmedReads( const std::vector<Read_t> &reads )
+Read_t findAlignment( Read_t &unalignedReads ) 
 {
-	std::vector< Read_t > alignments;
+	Read_t alignedReads;
 
-	for (int64_t i = 0; i < reads.size(); i++) {
-		Read_t unalignedReads = reads.at(i);
-		UntrimmedAlignments alignment(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
-
-		Read_t alignedReads;
-		alignedReads.ref = alignment.getRef();
-		alignedReads.clr = alignment.getClr();
-		alignedReads.ulr = alignment.getUlr();
-		alignedReads.readInfo = unalignedReads.readInfo;
-		alignments.push_back(alignedReads);		
-	}
-	
-	return alignments;
-}
-
-std::vector< Read_t > alignTrimmedReads( const std::vector<Read_t> &reads )
-{
-	std::vector< Read_t > alignments;
-
-	for (int64_t i = 0; i < reads.size(); i++) {
-		Read_t unalignedReads = reads.at(i);
+	if (g_cReadType == Trimmed) {
 		TrimmedAlignments alignment(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
-
-		Read_t alignedReads;
 		alignedReads.ref = alignment.getRef();
 		alignedReads.clr = alignment.getClr();
 		alignedReads.ulr = alignment.getUlr();
 		alignedReads.readInfo = unalignedReads.readInfo;
-		alignments.push_back(alignedReads);		
+	} else {
+		UntrimmedAlignments alignment(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
+		alignedReads.ref = alignment.getRef();
+		alignedReads.clr = alignment.getClr();
+		alignedReads.ulr = alignment.getUlr();
+		alignedReads.readInfo = unalignedReads.readInfo;
+	}
+
+	return alignedReads;
+}
+
+std::vector<Read_t> alignReads( std::vector<Read_t> reads )
+{
+	std::vector< Read_t > alignments;
+
+	for (int64_t i = 0; i < reads.size(); i++) {
+		Read_t unalignedReads = reads.at(i);
+		Read_t alignedReads = findAlignment(unalignedReads);
+		alignments.push_back(alignedReads);
 	}
 	
 	return alignments;
 }
 
-void generateTrimmedMaf()
+void generateMaf()
 {
 	// Read the MAF and cLR FASTA file
 	std::cout << "Reading MAF and FASTA files...";
@@ -166,18 +161,18 @@ void generateTrimmedMaf()
 
 	// Process each partition separately in its own thread 
 	std::cout << "Aligning " << ::g_threads << " partitions of reads concurrently...";
-	std::vector< std::future<std::vector<Read_t>> > partitionThread;
+	std::vector< std::future< std::vector<Read_t> > > partitionThread;
 	
 	// Only create g_threads - 1 new threads; work will also be done on the main thread
 	for (int64_t i = 1; i < partitions.size(); i++) {
-		partitionThread.push_back( std::async( &alignTrimmedReads, partitions.at(i) ) );
+		partitionThread.push_back( std::async(&alignReads, partitions.at(i)) );
 	} 
 
 	// Once the threads have finished doing their thing, get all the aligned partitions of reads
 	std::vector< std::vector<Read_t> > alignedPartitions;
 
 	// Perform work in this thread, too
-	alignedPartitions.push_back( alignTrimmedReads( partitions.at(0) ) );
+	alignedPartitions.push_back( alignReads( partitions.at(0) ) );
 
 	for (int64_t i = 0; i < partitionThread.size(); i++) {
 		alignedPartitions.push_back( partitionThread.at(i).get() );
@@ -193,52 +188,6 @@ void generateTrimmedMaf()
 		for (int64_t partitionIndex = 0; partitionIndex < partition.size(); partitionIndex++) {
 			Read_t reads = partition.at(partitionIndex);
 			mafOutput.addReads( reads );
-		} 
-	}
-	std::cout << " finished.\n";
-}
-
-void generateUntrimmedMaf()
-{
-	// Read the MAF and cLR FASTA file
-	std::cout << "Reading MAF and FASTA files...";
-	std::vector< Read_t > reads = getReadsFromMafAndFasta(); 
-	std::cout << " finished.\n";
-
-	// Split the reads vector into g_threads equally sized partition(s) contained in a vector of 
-	// Read_t vectors
-	std::cout << "Partitioning reads...";
-	std::vector< std::vector<Read_t> > partitions = partitionReads(reads);
-	std::cout << " finished.\n";
-
-	// Process each partition separately in its own thread 
-	std::cout << "Aligning partitions of reads concurrently...";
-	std::vector< std::future<std::vector<Read_t>> > partitionThread;
-	
-	for (int64_t i = 1; i < partitions.size(); i++) {
-		partitionThread.push_back( std::async( &alignUntrimmedReads, partitions.at(i) ) );
-	} 
-
-	// Once the threads have finished doing their thing, get all the aligned partitions of reads
-	std::vector< std::vector<Read_t> > alignedPartitions;
-
-	// Perform work in this thread, too
-	alignedPartitions.push_back( alignUntrimmedReads( partitions.at(0) ) );
-
-	for (int64_t i = 0; i < partitionThread.size(); i++) {
-		alignedPartitions.push_back( partitionThread.at(i).get() );
-	}
-	std::cout << " finished.\n";
-
-	// Write the alignments to MAF file
-	std::cout << "Writing alignments to MAF file...";
-	MafFile mafOutput(g_outputPath);
-
-	for (int64_t vectorIndex = 0; vectorIndex < alignedPartitions.size(); vectorIndex++) {
-		std::vector< Read_t > partition = alignedPartitions.at(vectorIndex);	
-		for (int64_t partitionIndex = 0; partitionIndex < partition.size(); partitionIndex++) {
-			Read_t read = partition.at(partitionIndex);
-			mafOutput.addReads( read );
 		} 
 	}
 	std::cout << " finished.\n";
@@ -512,7 +461,6 @@ int main(int argc, char *argv[])
 
 	// Command line argument handling
 
-	CorrectedReadType cReadType = Untrimmed;
 	bool trimmed = false;
 
 	while ((opt = getopt(argc, argv, "m:c:o:htp:")) != -1) {
@@ -531,7 +479,7 @@ int main(int argc, char *argv[])
 				break;
 			case 't':
 				// Whether the corrected long reads are trimmed or not
-				cReadType = Trimmed;	
+				g_cReadType = Trimmed;	
 				break;
 			case 'h':
 				// Displays usage
@@ -573,13 +521,9 @@ int main(int argc, char *argv[])
 	std::cout << "Number of theads: " << ::g_threads << ".\n";
 
 	if (mode == "maf") {
-		if (cReadType == Trimmed) {
-			generateTrimmedMaf();
-		} else {
-			generateUntrimmedMaf();
-		}
+			generateMaf();
 	} else {
-		if (cReadType == Trimmed) {
+		if (g_cReadType == Trimmed) {
 			createTrimmedStat();				
 		} else {
 			createUntrimmedStat();
