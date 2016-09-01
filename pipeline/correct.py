@@ -135,9 +135,12 @@ def writeColormapOea(file, paths):
 	line = "colormapOea=%s\n" % ( paths["colormap_oea"] ) 
 	file.write(line)
 
+	line = "outputPrefix=$outputDir/$testName\n"
+	file.write(line)
+
 	line = 	"\n" \
 		"cd $outputDir\n" \
-		"${colormapOea} $long $mergedShort $outputDir ${PBS_NUM_PPN}\n" 
+		"${colormapOea} $long $mergedShort $outputDir $outputPrefix ${PBS_NUM_PPN}\n" 
 	file.write(line)
 
 def generateCorrectionJob(testDetails, paths):
