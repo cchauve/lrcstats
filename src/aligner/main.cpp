@@ -143,30 +143,27 @@ std::vector<Read_t> alignReads( std::vector<Read_t> reads )
 		Read_t alignedReads = findAlignment(unalignedReads);
 		alignments.push_back(alignedReads);
 	}
-	
 	return alignments;
 }
 
 void generateMaf()
 {
 	// Read the MAF and cLR FASTA file
-	std::cout << "Reading MAF and FASTA files...";
+	std::cout << "Reading MAF and FASTA files...\n";
 	std::vector< Read_t > reads = getReadsFromMafAndFasta(); 
-	std::cout << " finished.\n";
 
 	// Split the reads vector into g_threads equally sized partition(s) contained in a vector of 
 	// Read_t vectors
-	std::cout << "Partitioning reads...";
+	std::cout << "Partitioning reads...\n";
 	std::vector< std::vector<Read_t> > partitions = partitionReads(reads);
-	std::cout << " finished.\n";
 
 	// Process each partition separately in its own thread 
-	std::cout << "Aligning " << ::g_threads << " partitions of reads concurrently...";
+	std::cout << "Aligning " << ::g_threads << " partitions of reads concurrently...\n";
 	std::vector< std::future< std::vector<Read_t> > > partitionThread;
 	
 	// Only create g_threads - 1 new threads; work will also be done on the main thread
 	for (int64_t i = 1; i < partitions.size(); i++) {
-		partitionThread.push_back( std::async(&alignReads, partitions.at(i)) );
+		partitionThread.push_back( std::async(alignReads, partitions.at(i)) );
 	} 
 
 	// Once the threads have finished doing their thing, get all the aligned partitions of reads
@@ -178,10 +175,9 @@ void generateMaf()
 	for (int64_t i = 0; i < partitionThread.size(); i++) {
 		alignedPartitions.push_back( partitionThread.at(i).get() );
 	}
-	std::cout << " finished.\n";
-
+	
 	// Write the alignments to MAF file
-	std::cout << "Writing alignments to MAF file...";
+	std::cout << "Writing alignments to MAF file...\n";
 	MafFile mafOutput(g_outputPath);
 
 	for (int64_t vectorIndex = 0; vectorIndex < alignedPartitions.size(); vectorIndex++) {
@@ -191,7 +187,7 @@ void generateMaf()
 			mafOutput.addReads( reads );
 		} 
 	}
-	std::cout << " finished.\n";
+	std::cout << "Done.\n";
 }
 
 std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int64_t cSize, std::string uRead, int64_t uSize)
