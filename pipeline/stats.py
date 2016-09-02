@@ -38,7 +38,7 @@ def generateStatsJob(testDetails, paths):
 			line = "#PBS -l %s\n" % (resource)
 			file.write(line)
 
-		jobOutputPath = "#PBS -o %s/%s/statistics/%s/%s/%s.out\n" \
+		jobOutputPath = "#PBS -o %s/%s/stats/%s/%s/%s.out\n" \
                         % (paths["data"], testDetails["experimentName"], \
 				testDetails["program"], testName, testName)
                 file.write(jobOutputPath)
