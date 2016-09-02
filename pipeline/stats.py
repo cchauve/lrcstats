@@ -83,15 +83,15 @@ def generateStatsJob(testDetails, paths):
 		line = "############### Collecting data ###########\n" \
 			"echo 'Collecting data...'\n" \
 			"\n" \
-			"align=${lrcstats}/src/aligner/aligner\n" \
+			"aligner=${lrcstats}/src/aligner/aligner\n" \
 			"statsOutput=${outputDir}/${testName}.stats\n" \
 			"\n"
 		file.write(line)
 
 		if testDetails["program"] in ["jabba", "proovread"]:
-			command = "$align stats -m $maf -o $statsOutput -t\n\n"
+			command = "$aligner stats -m $maf -o $statsOutput -t -p ${PBS_NUM_PPN}\n\n"
 		else:
-			command = "$align stats -m $maf -o $statsOutput\n\n"
+			command = "$aligner stats -m $maf -o $statsOutput -p ${PBS_NUM_PPN}\n\n"
 		file.write(command)
 
 		line = "input=${statsOutput}\n" \
