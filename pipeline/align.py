@@ -4,7 +4,7 @@ def writeResources(file):
         '''
         Write the resource usage into the job script.
         '''
-        resources = ["walltime=3:00:00:00", "mem=16gb", "nodes=1:ppn=8"]
+        resources = ["walltime=3:00:00:00", "mem=64gb", "nodes=1:ppn=8"]
 
         for resource in resources:
                 line = "#PBS -l %s\n" % (resource)
