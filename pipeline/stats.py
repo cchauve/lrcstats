@@ -38,7 +38,7 @@ def generateStatsJob(testDetails, paths):
 			line = "#PBS -l %s\n" % (resource)
 			file.write(line)
 
-		jobOutputPath = "#PBS -o %s/%s/statistics/%s/%s/%s.out\n" \
+		jobOutputPath = "#PBS -o %s/%s/stats/%s/%s/%s.out\n" \
                         % (paths["data"], testDetails["experimentName"], \
 				testDetails["program"], testName, testName)
                 file.write(jobOutputPath)
@@ -83,15 +83,15 @@ def generateStatsJob(testDetails, paths):
 		line = "############### Collecting data ###########\n" \
 			"echo 'Collecting data...'\n" \
 			"\n" \
-			"align=${lrcstats}/src/collection/align\n" \
+			"aligner=${lrcstats}/src/aligner/aligner\n" \
 			"statsOutput=${outputDir}/${testName}.stats\n" \
 			"\n"
 		file.write(line)
 
 		if testDetails["program"] in ["jabba", "proovread"]:
-			command = "$align stats -m $maf -o $statsOutput -t\n\n"
+			command = "$aligner stats -m $maf -o $statsOutput -t -p ${PBS_NUM_PPN}\n\n"
 		else:
-			command = "$align stats -m $maf -o $statsOutput\n\n"
+			command = "$aligner stats -m $maf -o $statsOutput -p ${PBS_NUM_PPN}\n\n"
 		file.write(command)
 
 		line = "input=${statsOutput}\n" \

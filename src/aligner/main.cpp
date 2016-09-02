@@ -516,8 +516,6 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	std::cout << "Number of theads: " << ::g_threads << ".\n";
-
 	if (mode == "maf") {
 			generateMaf();
 	} else {
