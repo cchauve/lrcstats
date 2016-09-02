@@ -101,7 +101,7 @@ def generateStatsJob(testDetails, paths):
 		line = "############## Summarizing statistics ############\n" \
 			"echo 'Summarizing statistics...'\n" \
 			"\n" \
-			"summarize_stats=${lrcstats}/src/statistics/summarize_stats.py\n" \
+			"summarizeStats=${lrcstats}/src/statistics/summarize_stats.py\n" \
 			"statsOutput=${prefix}/stats/${program}/${testName}/${testName}_stats.txt\n" \
 			"\n"
 		file.write(line)
@@ -109,9 +109,9 @@ def generateStatsJob(testDetails, paths):
 		program = testDetails["program"]
 
 		if program in ["proovread", "jabba"]:
-			line = "python ${summarize_stats} -i ${input} -o ${statsOutput}\n"
+			line = "python ${summarizeStats} -i ${input} -o ${statsOutput}\n"
 		elif program in ["lordec", "colormap", "colormap_oea"]:
-			line = "python ${summarize_stats} -i ${input} -b -o ${statsOutput}\n"
+			line = "python ${summarizeStats} -i ${input} -b -o ${statsOutput}\n"
 
 		file.write(line)
 
