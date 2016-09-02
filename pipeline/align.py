@@ -172,7 +172,7 @@ def writeColormapOea(file, testDetails):
 	'''
 	Write the commands for colormap w/ OEA
 	'''
-	inputFasta="input=${inputDir}/${testName}_oea.fa\n\n"
+	inputFasta="input=${inputDir}/${testName}_oea.fasta\n\n"
 	file.write(inputFasta)
 	writeSortFasta(file)
 	writePruneMaf(file)
