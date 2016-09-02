@@ -83,7 +83,7 @@ def generateStatsJob(testDetails, paths):
 		line = "############### Collecting data ###########\n" \
 			"echo 'Collecting data...'\n" \
 			"\n" \
-			"align=${lrcstats}/src/collection/align\n" \
+			"align=${lrcstats}/src/aligner/aligner\n" \
 			"statsOutput=${outputDir}/${testName}.stats\n" \
 			"\n"
 		file.write(line)
