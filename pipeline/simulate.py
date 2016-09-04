@@ -4,7 +4,7 @@ def writeResources(file):
 	'''
 	Write the resources
 	'''
-	resources = ['walltime=12:00:00', 'mem=8gb', 'nodes=1:ppn=4']
+	resources = ['walltime=24:00:00', 'mem=16gb', 'nodes=1:ppn=1']
 	for resource in resources:
 		line = "#PBS -l %s\n" % (resource)
 		file.write(line)
