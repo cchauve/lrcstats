@@ -8,6 +8,8 @@
 // For multithreading
 #include <future>
 #include <thread>
+// For std::exit
+#include <cstdlib>
 
 #include "data/data.hpp"
 #include "alignments/alignments.hpp"
@@ -29,7 +31,7 @@ std::vector< Read_t > getReadsFromMafAndFasta()
 
 	if (!mafInput.is_open() || !clrInput.is_open()) {
 		std::cerr << "Unable to open either maf input or corrected long reads file\n";
-		// Insert exit statement here
+		std::exit(1);
 	}	
 
 	std::string mafLine;
