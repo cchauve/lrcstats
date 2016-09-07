@@ -247,60 +247,37 @@ void UntrimmedAlignments::findAlignments()
 	std::string refMaf = "";
 	int64_t rowIndex = rows - 1;
 	int64_t columnIndex = columns - 1;
-	int64_t cIndex;
-	int64_t urIndex;
-	int64_t insert;
+	int64_t infinity = std::numeric_limits<int64_t>::max();
 	int64_t deletion;
+	int64_t insert;
 	int64_t substitute;
-	int64_t currentCost;
-	bool isEndingLC;
-	int64_t infinity = std::numeric_limits<int>::max();
 
 	// Follow the best path from the bottom right to the top left of the matrix.
 	// This is equivalent to the optimal alignment between ulr and clr.
 	// The path we follow is restricted to the conditions set when computing the matrix,
 	// i.e. we can never follow a path that the edit distance equations do not allow.
 	while (rowIndex > 0 || columnIndex > 0) {
-		/*
-		std::cout << "rowIndex == " << rowIndex << "\n";
-		std::cout << "columnIndex == " << columnIndex << "\n";
-		std::cout << "Before\n";
-		std::cout << "clrMaf == " << clrMaf << "\n";
-		std::cout << "ulrMaf == " << ulrMaf << "\n";
-		std::cout << "refMaf == " << refMaf << "\n";
-		*/
 
-		urIndex = columnIndex - 1;
-		cIndex = rowIndex - 1;
-		currentCost = matrix[rowIndex][columnIndex];
+		int64_t urIndex = columnIndex - 1;
+		int64_t cIndex = rowIndex - 1;
+		int64_t currentCost = matrix[rowIndex][columnIndex];
 
 		// Set the costs of the different operations, 
 		// ensuring we don't go out of bounds of the matrix.
 		if (rowIndex > 0 && columnIndex > 0) {
-			deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
-			insert = std::abs( matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]) );
-			substitute = std::abs( matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]) );	
+			int64_t deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
+			int64_t insert = std::abs( matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]) );
+			int64_t substitute = std::abs( matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]) );	
 		} else if (rowIndex <= 0 && columnIndex > 0) {
-			deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
-			insert = infinity;
-			substitute = infinity;
+			int64_t deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
+			int64_t insert = infinity;
+			int64_t substitute = infinity;
 		} else if (rowIndex > 0 && columnIndex <= 0) {
-			deletion = infinity;
-			insert = std::abs( matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]) );
-			substitute = infinity;
+			int64_t deletion = infinity;
+			int64_t insert = std::abs( matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]) );
+			int64_t substitute = infinity;
 		} 
 
-		// Make sure we follow the same path as dictated by the edit distance equations. 
-		// Determine if the current letter in clr is lowercase and is followed by an upper case letter
-		// i.e. if the current letter in clr is an ending lowercase letter
-		/*
-		if ( (cIndex < clr.length() - 1 && islower(clr[cIndex]) && isupper(clr[cIndex+1])) || 
-			(cIndex == clr.length() - 1 && islower(clr[cIndex])) ) {
-			isEndingLC = true;	
-		} else {
-			isEndingLC = false;
-		}
-		*/
 		bool isEndingLC = checkIfEndingLowerCase(cIndex);
 
 		if (rowIndex == 0 || columnIndex == 0) {
