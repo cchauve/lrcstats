@@ -398,11 +398,6 @@ void createTrimmedStat()
 		// Write corrected segment statistics
 		std::vector<CorrespondingSegments> correspondingSegmentsList = getTrimmedCorrespondingSegmentsList(clr,ulr,ref);
 
-		if (correspondingSegmentsList.size() == 0) {
-			std::cout << "Error at read " << read << "\n";
-			assert( correspondingSegmentsList.size() > 0 );
-		}
-
 		for (int index = 0; index < correspondingSegmentsList.size(); index++) {
 			CorrespondingSegments segments = correspondingSegmentsList.at(index);
 			std::vector<int64_t> statistics = trimmedReadStats(segments);
