@@ -37,17 +37,6 @@ Alignments::~Alignments()
 	deleteMatrix();
 }
 
-void Alignments::reset(std::string reference, std::string uLongRead, std::string cLongRead)
-/* Resets variables to new values and deletes and recreates matrix given new information */
-{
-	// Resets in case of need to reassign values of object
-	ref = reference;
-	ulr = uLongRead;
-	clr = cLongRead;
-	deleteMatrix();
-	createMatrix();
-}
-
 std::string Alignments::getClr()
 /* Returns optimal cLR alignment ready to be written in 3-way MAF file */
 {
@@ -143,13 +132,6 @@ UntrimmedAlignments::UntrimmedAlignments(std::string reference, std::string uLon
 /* Constructor */
 { initialize(); }
 
-void UntrimmedAlignments::reset(std::string reference, std::string uLongRead, std::string cLongRead)
-/* Resets variables to new values and deletes and recreates matrix given new information */
-{ 
-	Alignments::reset(reference, uLongRead, cLongRead);
-	initialize(); 
-}
-
 bool UntrimmedAlignments::checkIfEndingLowerCase(int64_t cIndex)
 /* Determine if we're at an ending lower case i.e. if the current base
  * in cLR is lowercase and the following base is uppercase or the
@@ -191,16 +173,6 @@ void UntrimmedAlignments::initialize()
 			cIndex = rowIndex - 1;
 			urIndex = columnIndex -  1;
 
-			// Determine if the current letter in clr is lowercase and is followed by an upper case letter
-			// i.e. if the current letter in clr is an ending lowercase letter
-			/*
-			if ( (cIndex < clr.length() - 1 && islower(clr[cIndex]) && isupper(clr[cIndex+1])) || 
-				(cIndex == clr.length() - 1 && islower(clr[cIndex])) ) {
-				isEndingLC = true;	
-			} else {
-				isEndingLC = false;
-			}
-			*/
 			bool isEndingLC = checkIfEndingLowerCase(cIndex);
 
 			if (isEndingLC) {
@@ -265,17 +237,17 @@ void UntrimmedAlignments::findAlignments()
 		// Set the costs of the different operations, 
 		// ensuring we don't go out of bounds of the matrix.
 		if (rowIndex > 0 && columnIndex > 0) {
-			int64_t deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
-			int64_t insert = std::abs( matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]) );
-			int64_t substitute = std::abs( matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]) );	
+			deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
+			insert = std::abs( matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]) );
+			substitute = std::abs( matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]) );	
 		} else if (rowIndex <= 0 && columnIndex > 0) {
-			int64_t deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
-			int64_t insert = infinity;
-			int64_t substitute = infinity;
+			deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
+			insert = infinity;
+			substitute = infinity;
 		} else if (rowIndex > 0 && columnIndex <= 0) {
-			int64_t deletion = infinity;
-			int64_t insert = std::abs( matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]) );
-			int64_t substitute = infinity;
+			deletion = infinity;
+			insert = std::abs( matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]) );
+			substitute = infinity;
 		} 
 
 		bool isEndingLC = checkIfEndingLowerCase(cIndex);
@@ -403,12 +375,6 @@ void UntrimmedAlignments::findAlignments()
 				columnIndex = 0;
 			}
 		} 		
-		/*
-		std::cout << "After\n";
-		std::cout << "clrMaf == " << clrMaf << "\n";
-		std::cout << "ulrMaf == " << ulrMaf << "\n";
-		std::cout << "refMaf == " << refMaf << "\n\n";
-		*/
 	}
 
 	clr = clrMaf;
@@ -422,14 +388,6 @@ TrimmedAlignments::TrimmedAlignments(std::string reference, std::string uLongRea
 	: Alignments(reference, uLongRead, cLongRead)
 /* Constructor - is a child class of Alignments */
 { initialize(); }
-
-void TrimmedAlignments::reset(std::string reference, std::string uLongRead, std::string cLongRead)
-/* Resets the alignment object to be used again */
-{
-	Alignments::reset(reference, uLongRead, cLongRead);
-	lastBaseIndices.clear();
- 	initialize(); 
-}
 
 void TrimmedAlignments::initialize()
 /* Create the DP matrix similar to generic alignment object */
@@ -508,7 +466,7 @@ void TrimmedAlignments::findAlignments()
 	int64_t insert;
 	int64_t deletion;
 	int64_t substitute;
-	int64_t infinity = std::numeric_limits<int>::max();
+	int64_t infinity = std::numeric_limits<int64_t>::max();
 	// If we're at the last base of a trimmed read and it's the first deletion,
 	// then we place an 'X' in the cLR alignment
 	bool isLastBase;
