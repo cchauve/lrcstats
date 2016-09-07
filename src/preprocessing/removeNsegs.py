@@ -48,7 +48,7 @@ with open(inputPath,'r') as file:
 		if len(line) > 0 and line[0] == ">":
 			header = line
 		else:
-			sequence += line.rstrip()
+			oldSequence += line.rstrip()
 
 newSequence = oldSequence.replace("N","")
 
