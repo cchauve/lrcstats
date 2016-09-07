@@ -130,7 +130,9 @@ void Alignments::printMatrix()
 UntrimmedAlignments::UntrimmedAlignments(std::string reference, std::string uLongRead, std::string cLongRead)
 	: Alignments(reference, uLongRead, cLongRead)
 /* Constructor */
-{ initialize(); }
+{ 
+	initialize();
+}
 
 bool UntrimmedAlignments::checkIfEndingLowerCase(int64_t cIndex)
 /* Determine if we're at an ending lower case i.e. if the current base
@@ -150,6 +152,19 @@ void UntrimmedAlignments::initialize()
 /* Given cLR, uLR and ref sequences, construct the DP matrix for the optimal alignments. 
  * Requires these member variables to be set before use. */
 {
+	// collect all the beginning and ending boundaries of the corrected segments
+	for (int64_t index = 0; index < clr.length(); index++) {
+		if ( isupper(clr[index]) ) {
+			if ( index == 0 or (index > 0 and islower(clr[index-1])) ) {
+				correctedBeginningBoundaries.push_back(index);
+			}
+			if ( index == clr.length() - 1 or ( index < clr.length and 
+			     islower(clr[index+1]) ) {
+				correctedEndingBoundaries.push_back(index);		
+			}	
+		}
+	}
+
 	int64_t cIndex;
 	int64_t urIndex;
 	int64_t keep;
@@ -210,6 +225,26 @@ void UntrimmedAlignments::initialize()
 	findAlignments();
 }
 
+bool UntrimmedAlignments::checkIfBeginningBoundary(int64_t cIndex) 
+{
+	if (std::find(correctedBeginningBoundaries.begin(), 
+	    correctedBeginningBoundaries.end(), cIndex) != correctedBeginningBoundaries.end()) {
+		return true;
+	} else {
+		return false;
+	} 
+}
+
+bool UntrimmedAlignments::checkIfEndingBoundary(int64_t cIndex)
+{
+	if (std::find(correctedEndingBoundaries.begin(), 
+	    correctedEndingBoundaries.end(), cIndex) != correctedEndingBoundaries.end()) {
+		return true;
+	} else {
+		return false;
+	} 
+}
+
 void UntrimmedAlignments::findAlignments()
 /* Backtracks through the DP matrix to find the optimal alignments. 
  * Follows same schema as the DP algorithm. */
@@ -251,6 +286,8 @@ void UntrimmedAlignments::findAlignments()
 		} 
 
 		bool isEndingLC = checkIfEndingLowerCase(cIndex);
+		bool isBeginningBoundary = checkIfBeginningBoundary(cIndex);
+		bool isEndingBoundary = checkIfEndingBoundary(cIndex);
 
 		if (rowIndex == 0 || columnIndex == 0) {
 				//std::cout << "Path 6\n";
