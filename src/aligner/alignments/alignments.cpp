@@ -218,15 +218,27 @@ void UntrimmedAlignments::findAlignments()
 /* Backtracks through the DP matrix to find the optimal alignments. 
  * Follows same schema as the DP algorithm. */
 {
-	std::string clrMaf = "";
-	std::string ulrMaf = "";
-	std::string refMaf = "";
 	int64_t rowIndex = rows - 1;
 	int64_t columnIndex = columns - 1;
 	int64_t infinity = std::numeric_limits<int64_t>::max();
 	int64_t deletion;
 	int64_t insert;
 	int64_t substitute;
+
+	std::string clrMaf;
+	std::string ulrMaf;
+	std::string refMaf;
+
+	// if the last base of the cLR has been corrected, insert the first boundary
+	if ( isupper(clr[rowIndex-1]) ) {
+		clrMaf = "X";
+		ulrMaf = "-";
+		refMaf = "-";
+	} else {
+		clrMaf = "";
+		ulrMaf = "";
+		refMaf = "";
+	}
 
 	// Follow the best path from the bottom right to the top left of the matrix.
 	// This is equivalent to the optimal alignment between ulr and clr.
@@ -239,7 +251,7 @@ void UntrimmedAlignments::findAlignments()
 		int64_t currentCost = matrix[rowIndex][columnIndex];
 
 		// Set the costs of the different operations, 
-		// ensuring we don't go out of bounds of the matrix.
+		// also ensuring we don't go out of bounds of the matrix.
 		if (rowIndex > 0 && columnIndex > 0) {
 			deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
 			insert = std::abs( matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]) );
@@ -257,34 +269,44 @@ void UntrimmedAlignments::findAlignments()
 		bool isEndingLC = checkIfEndingLowerCase(cIndex);
 
 		if (rowIndex == 0 || columnIndex == 0) {
-				//std::cout << "Path 6\n";
 				if (rowIndex == 0) {
-					//std::cout << "Deletion\n";
 					clrMaf = '-' + clrMaf;
 					ulrMaf = ulr[urIndex] + ulrMaf;
 					refMaf = ref[urIndex] + refMaf;
 					columnIndex--;
 				} else {
-					//std::cout << "Insertion\n";
 					clrMaf = clr[cIndex] + clrMaf;
 					ulrMaf = '-' + ulrMaf;
 					refMaf = '-' + refMaf;
+
+					// Insert the left and right boundaries of the corrected segments
+					if ( ( isupper(clr[cIndex]) and (cIndex == 0 or islower(clr[cIndex-1])) ) or
+					     ( islower(clr[cIndex]) and (cIndex > 0 and isupper(clr[cIndex-1])) ) ) {
+						clrMaf = 'X' + clrMaf;	
+						ulrMaf = '-' + ulrMaf;
+						refMaf = '-' + refMaf;
+					}
 					rowIndex--;
 				}
 		} else if (isEndingLC) {
 			if ( toupper( ulr[urIndex] ) == toupper( clr[cIndex] ) ) {
-				//std::cout << "Path 1\n";
 				if (deletion == currentCost) {
-					//std::cout << "Deletion\n";
 					clrMaf = '-' + clrMaf;
 					ulrMaf = ulr[urIndex] + ulrMaf;
 					refMaf = ref[urIndex] + refMaf;
 					columnIndex--;
 				} else if (substitute == currentCost) {
-					//std::cout << "Substitution\n";
 					clrMaf = clr[cIndex] + clrMaf;
 					ulrMaf = ulr[urIndex] + ulrMaf;
 					refMaf = ref[urIndex] + refMaf;
+
+					// Insert the right boundary of a corrected segment
+					if ( cIndex > 0 and isupper(clr[cIndex-1]) ) {
+						clrMaf = 'X' + clrMaf;	
+						ulrMaf = '-' + ulrMaf;
+						refMaf = '-' + refMaf;
+					}
+
 					rowIndex--;
 					columnIndex--;
 				} else {
@@ -294,9 +316,7 @@ void UntrimmedAlignments::findAlignments()
 					std::exit(1);
 				}
 			} else {
-				//std::cout << "Path 2\n";
 				if (deletion == currentCost) {
-					//std::cout << "Deletion\n";
 					clrMaf = '-' + clrMaf;
 					ulrMaf = ulr[urIndex] + ulrMaf;
 					refMaf = ref[urIndex] + refMaf;
@@ -310,12 +330,18 @@ void UntrimmedAlignments::findAlignments()
 			}
 		} else if (islower(clr[cIndex])) {
 			if ( toupper( ulr[urIndex] ) == toupper( clr[cIndex] ) ) {
-				//std::cout << "Path 3\n";
 				if (substitute == currentCost) {
-					//std::cout << "Substitution\n";
 					clrMaf = clr[cIndex] + clrMaf;	
 					ulrMaf = ulr[urIndex] + ulrMaf;
 					refMaf = ref[urIndex] + refMaf;
+
+					// Insert the right boundary of a corrected segment
+					if ( cIndex > 0 and isupper(clr[cIndex-1]) ) {
+						clrMaf = 'X' + clrMaf;	
+						ulrMaf = '-' + ulrMaf;
+						refMaf = '-' + refMaf;
+					}
+
 					rowIndex--;
 					columnIndex--;
 				} else {
@@ -325,10 +351,8 @@ void UntrimmedAlignments::findAlignments()
 					std::exit(1);
 				}
 			} else if (ulr[urIndex] == '-') {
-				//std::cout << "Path 4\n";
 				deletion = matrix[rowIndex][columnIndex-1];
 				if (deletion == currentCost) {
-					//std::cout << "Deletion\n";
 					clrMaf = '-' + clrMaf;
 					ulrMaf = ulr[urIndex] + ulrMaf;
 					refMaf = ref[urIndex] + refMaf;
@@ -346,24 +370,37 @@ void UntrimmedAlignments::findAlignments()
 				std::exit(1);	
 			}
 		} else {
-			//std::cout << "Path 5\n";
 			if (deletion == currentCost) {
-				//std::cout << "Deletion\n";
 				clrMaf = '-' + clrMaf;
 				ulrMaf = ulr[urIndex] + ulrMaf;
 				refMaf = ref[urIndex] + refMaf;
 				columnIndex--;
 			} else if (insert == currentCost) {
-				//std::cout << "Insertion\n";
 				clrMaf = clr[cIndex] + clrMaf;
 				ulrMaf = '-' + ulrMaf;
 				refMaf = '-' + refMaf;
+
+				// Insert the left boundary of the corrected segment
+				if ( cIndex == 0 or islower(clr[cIndex-1]) ) {
+					clrMaf = 'X' + clrMaf;
+					ulrMaf = '-' + ulrMaf;
+					refMaf = '-' + refMaf;
+				}
+
 				rowIndex--;
+
 			} else if (substitute == currentCost) {
-				//std::cout << "Substitution\n";
 				clrMaf = clr[cIndex] + clrMaf;
 				ulrMaf = ulr[urIndex] + ulrMaf;
 				refMaf = ref[urIndex] + refMaf;
+
+				// Insert the left boundary of the corrected segment
+				if ( cIndex == 0 or islower(clr[cIndex-1]) ) {
+					clrMaf = 'X' + clrMaf;
+					ulrMaf = '-' + ulrMaf;
+					refMaf = '-' + refMaf;
+				}
+
 				rowIndex--;
 				columnIndex--;
 			} else {
@@ -456,9 +493,6 @@ void TrimmedAlignments::findAlignments()
  * of the trimmed long reads.
 */
 {
-	std::string clrMaf = "";
-	std::string ulrMaf = "";
-	std::string refMaf = "";
 	int64_t rowIndex = rows - 1;
 	int64_t columnIndex = columns - 1;
 	int64_t insert;
@@ -470,6 +504,10 @@ void TrimmedAlignments::findAlignments()
 	bool isLastBase;
 	bool firstDeletion = false;
 	bool insertedFinalBoundary = false;
+
+	std::string clrMaf = "";
+	std::string ulrMaf = "";
+	std::string refMaf = "";
 
 	// Follow the best path from the bottom right to the top left of the matrix.
 	// This is equivalent to the optimal alignment between ulr and clr.
