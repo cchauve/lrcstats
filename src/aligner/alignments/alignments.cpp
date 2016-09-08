@@ -232,8 +232,8 @@ void UntrimmedAlignments::findAlignments()
 	// if the last base of the cLR has been corrected, insert the first boundary
 	if ( isupper(clr[rowIndex-1]) ) {
 		clrMaf = "X";
-		ulrMaf = "-";
-		refMaf = "-";
+		ulrMaf = "X";
+		refMaf = "X";
 	} else {
 		clrMaf = "";
 		ulrMaf = "";
@@ -283,8 +283,8 @@ void UntrimmedAlignments::findAlignments()
 					if ( ( isupper(clr[cIndex]) and (cIndex == 0 or islower(clr[cIndex-1])) ) or
 					     ( islower(clr[cIndex]) and (cIndex > 0 and isupper(clr[cIndex-1])) ) ) {
 						clrMaf = 'X' + clrMaf;	
-						ulrMaf = '-' + ulrMaf;
-						refMaf = '-' + refMaf;
+						ulrMaf = 'X' + ulrMaf;
+						refMaf = 'X' + refMaf;
 					}
 					rowIndex--;
 				}
@@ -303,8 +303,8 @@ void UntrimmedAlignments::findAlignments()
 					// Insert the right boundary of a corrected segment
 					if ( cIndex > 0 and isupper(clr[cIndex-1]) ) {
 						clrMaf = 'X' + clrMaf;	
-						ulrMaf = '-' + ulrMaf;
-						refMaf = '-' + refMaf;
+						ulrMaf = 'X' + ulrMaf;
+						refMaf = 'X' + refMaf;
 					}
 
 					rowIndex--;
@@ -338,8 +338,8 @@ void UntrimmedAlignments::findAlignments()
 					// Insert the right boundary of a corrected segment
 					if ( cIndex > 0 and isupper(clr[cIndex-1]) ) {
 						clrMaf = 'X' + clrMaf;	
-						ulrMaf = '-' + ulrMaf;
-						refMaf = '-' + refMaf;
+						ulrMaf = 'X' + ulrMaf;
+						refMaf = 'X' + refMaf;
 					}
 
 					rowIndex--;
@@ -383,8 +383,8 @@ void UntrimmedAlignments::findAlignments()
 				// Insert the left boundary of the corrected segment
 				if ( cIndex == 0 or islower(clr[cIndex-1]) ) {
 					clrMaf = 'X' + clrMaf;
-					ulrMaf = '-' + ulrMaf;
-					refMaf = '-' + refMaf;
+					ulrMaf = 'X' + ulrMaf;
+					refMaf = 'X' + refMaf;
 				}
 
 				rowIndex--;
@@ -397,8 +397,8 @@ void UntrimmedAlignments::findAlignments()
 				// Insert the left boundary of the corrected segment
 				if ( cIndex == 0 or islower(clr[cIndex-1]) ) {
 					clrMaf = 'X' + clrMaf;
-					ulrMaf = '-' + ulrMaf;
-					refMaf = '-' + refMaf;
+					ulrMaf = 'X' + ulrMaf;
+					refMaf = 'X' + refMaf;
 				}
 
 				rowIndex--;
@@ -555,8 +555,8 @@ void TrimmedAlignments::findAlignments()
 		if (rowIndex == 0 or currentCost == deletion) {
 			// Mark the beginning of a trimmed long read
 			if ( (isLastBase or rowIndex == 0) and firstDeletion ) {
-				refMaf = '-' + refMaf;
-				ulrMaf = '-' + ulrMaf;
+				refMaf = 'X' + refMaf;
+				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
 			}
 			refMaf = ref[urIndex] + refMaf;
@@ -568,8 +568,8 @@ void TrimmedAlignments::findAlignments()
 		} else if (columnIndex == 0 or currentCost == insert ) {
 			// Mark the end of a trimmed long read
 			if (isLastBase) {
-				refMaf = '-' + refMaf;
-				ulrMaf = '-' + ulrMaf;
+				refMaf = 'X' + refMaf;
+				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
 			}	
 			refMaf = '-' + refMaf;
@@ -581,8 +581,8 @@ void TrimmedAlignments::findAlignments()
 		} else if (currentCost == substitute) {
 			// Mark the end of a trimmed long read
 			if (isLastBase) {
-				refMaf = '-' + refMaf;
-				ulrMaf = '-' + ulrMaf;
+				refMaf = 'X' + refMaf;
+				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
 			}	
 			refMaf = ref[urIndex] + refMaf;
@@ -594,8 +594,8 @@ void TrimmedAlignments::findAlignments()
 			firstDeletion = true;
 
 			if (rowIndex == 0 and columnIndex == 0) {
-				refMaf = '-' + refMaf;
-				ulrMaf = '-' + ulrMaf;
+				refMaf = 'X' + refMaf;
+				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
 			}
 		} else {
@@ -610,8 +610,8 @@ void TrimmedAlignments::findAlignments()
 	// last boundary into the alignment
 	if (firstDeletion) {
 		clrMaf = 'X' + clrMaf;
-		ulrMaf = '-' + ulrMaf;
-		refMaf = '-' + refMaf;
+		ulrMaf = 'X' + ulrMaf;
+		refMaf = 'X' + refMaf;
 	}
 
 	clr = clrMaf;
