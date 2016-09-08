@@ -491,7 +491,7 @@ void TrimmedAlignments::findAlignments()
 		// Set the costs of the different operations, 
 		// ensuring we don't go out of bounds of the matrix.
 		if (rowIndex > 0 && columnIndex > 0) {
-			// Since if we're at the end of the read, zero cost deletion
+			// if we're at the end of the read, zero cost deletion
 			if (isLastBase) {
 				deletion = matrix[rowIndex][columnIndex-1]; 
 			} else {
@@ -500,7 +500,7 @@ void TrimmedAlignments::findAlignments()
 			insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
 			substitute = matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]);	
 		} else if (rowIndex <= 0 && columnIndex > 0) {
-			// Since if we're at the end of the read, zero cost deletion
+			// if we're at the end of the read, zero cost deletion
 			if (isLastBase) {
 				deletion = matrix[rowIndex][columnIndex-1];
 			} else {
