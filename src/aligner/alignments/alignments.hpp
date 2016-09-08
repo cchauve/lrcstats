@@ -32,10 +32,6 @@ class UntrimmedAlignments : public Alignments
         public:
                 UntrimmedAlignments(std::string reference, std::string uLongRead, std::string cLongRead);
 	private:
-		std::vector< int64_t > correctedBeginningBoundaries;
-		std::vector< int64_t > correctedEndingBoundaries;
-		bool checkIfBeginningBoundary(int64_t cIndex);
-		bool checkIfEndingBoundary(int64_t cIndex);
 		// Specs for matrix
 		bool checkIfEndingLowerCase(int64_t cIndex);
 		void initialize();

@@ -6,6 +6,8 @@
 #include <cmath>
 #include <cassert>
 #include <cstdint>
+// for std::exit
+#include <cstdlib>
 
 #include "alignments.hpp"
 #include "../data/data.hpp"
@@ -152,19 +154,6 @@ void UntrimmedAlignments::initialize()
 /* Given cLR, uLR and ref sequences, construct the DP matrix for the optimal alignments. 
  * Requires these member variables to be set before use. */
 {
-	// collect all the beginning and ending boundaries of the corrected segments
-	for (int64_t index = 0; index < clr.length(); index++) {
-		if ( isupper(clr[index]) ) {
-			if ( index == 0 or (index > 0 and islower(clr[index-1])) ) {
-				correctedBeginningBoundaries.push_back(index);
-			}
-			if ( index == clr.length() - 1 or ( index < clr.length and 
-			     islower(clr[index+1]) ) {
-				correctedEndingBoundaries.push_back(index);		
-			}	
-		}
-	}
-
 	int64_t cIndex;
 	int64_t urIndex;
 	int64_t keep;
@@ -225,26 +214,6 @@ void UntrimmedAlignments::initialize()
 	findAlignments();
 }
 
-bool UntrimmedAlignments::checkIfBeginningBoundary(int64_t cIndex) 
-{
-	if (std::find(correctedBeginningBoundaries.begin(), 
-	    correctedBeginningBoundaries.end(), cIndex) != correctedBeginningBoundaries.end()) {
-		return true;
-	} else {
-		return false;
-	} 
-}
-
-bool UntrimmedAlignments::checkIfEndingBoundary(int64_t cIndex)
-{
-	if (std::find(correctedEndingBoundaries.begin(), 
-	    correctedEndingBoundaries.end(), cIndex) != correctedEndingBoundaries.end()) {
-		return true;
-	} else {
-		return false;
-	} 
-}
-
 void UntrimmedAlignments::findAlignments()
 /* Backtracks through the DP matrix to find the optimal alignments. 
  * Follows same schema as the DP algorithm. */
@@ -286,8 +255,6 @@ void UntrimmedAlignments::findAlignments()
 		} 
 
 		bool isEndingLC = checkIfEndingLowerCase(cIndex);
-		bool isBeginningBoundary = checkIfBeginningBoundary(cIndex);
-		bool isEndingBoundary = checkIfEndingBoundary(cIndex);
 
 		if (rowIndex == 0 || columnIndex == 0) {
 				//std::cout << "Path 6\n";
@@ -324,8 +291,7 @@ void UntrimmedAlignments::findAlignments()
 					std::cout << "ERROR CODE 1: No paths found. Terminating backtracking.\n";	
 					std::cout << "cIndex is " << cIndex << "\n";
 					std::cout << "urIndex is " << urIndex << "\n";
-					rowIndex = 0;
-					columnIndex = 0;
+					std::exit(1);
 				}
 			} else {
 				//std::cout << "Path 2\n";
@@ -339,8 +305,7 @@ void UntrimmedAlignments::findAlignments()
 					std::cout << "ERROR CODE 2: No paths found. Terminating backtracking.\n";
 					std::cout << "cIndex is " << cIndex << "\n";
 					std::cout << "urIndex is " << urIndex << "\n";
-					rowIndex = 0;
-					columnIndex = 0;
+					std::exit(1);
 				}
 			}
 		} else if (islower(clr[cIndex])) {
@@ -357,8 +322,7 @@ void UntrimmedAlignments::findAlignments()
 					std::cout << "ERROR CODE 3: No paths found. Terminating backtracking.\n";
 					std::cout << "cIndex is " << cIndex << "\n";
 					std::cout << "urIndex is " << urIndex << "\n";
-					rowIndex = 0;
-					columnIndex = 0;
+					std::exit(1);
 				}
 			} else if (ulr[urIndex] == '-') {
 				//std::cout << "Path 4\n";
@@ -373,15 +337,13 @@ void UntrimmedAlignments::findAlignments()
 					std::cout << "ERROR CODE 4: No paths found. Terminating backtracking.\n";
 					std::cout << "cIndex is " << cIndex << "\n";
 					std::cout << "urIndex is " << urIndex << "\n";
-					rowIndex = 0;
-					columnIndex = 0;
+					std::exit(1);
 				}
 			} else {
 				std::cout << "ERROR CODE 5: No paths found. Terminating backtracking.\n";
 				std::cout << "cIndex is " << cIndex << "\n";
 				std::cout << "urIndex is " << urIndex << "\n";
-				rowIndex = 0;
-				columnIndex = 0;
+				std::exit(1);	
 			}
 		} else {
 			//std::cout << "Path 5\n";
@@ -408,8 +370,7 @@ void UntrimmedAlignments::findAlignments()
 				std::cout << "ERROR CODE 6: No paths found. Terminating backtracking.\n";
 				std::cout << "cIndex is " << cIndex << "\n";
 				std::cout << "urIndex is " << urIndex << "\n";
-				rowIndex = 0;
-				columnIndex = 0;
+				std::exit(1);	
 			}
 		} 		
 	}
@@ -603,8 +564,7 @@ void TrimmedAlignments::findAlignments()
 			std::cout << "ERROR: No paths found. Terminating backtracking.\n";
 			std::cout << "cIndex is " << cIndex << "\n";
 			std::cout << "urIndex is " << urIndex << "\n";
-			rowIndex = 0;
-			columnIndex = 0;
+			std::exit(1);
 		}
 	}
 
