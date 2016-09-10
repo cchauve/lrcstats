@@ -96,21 +96,25 @@ std::vector< Read_t > getReadsFromMafAndFasta()
 
 std::vector< std::vector<Read_t> > partitionReads( std::vector< Read_t > &reads ) 
 {
-	int64_t partitionSize = reads.size() / ::g_threads;
+	// Holds individual partitions of reads
 	std::vector< Read_t > readsPartition;
+	// Holds all partitions of reads
 	std::vector< std::vector<Read_t> > partitions;
-
 	std::vector< Read_t >::iterator iter = reads.begin();
 
-	do {
-		if (reads.end() - iter > partitionSize) {
-			readsPartition.assign(iter, iter + partitionSize);
-		} else {
-			readsPartition.assign(iter, reads.end());
-		}
+	// Size of partition
+	int64_t partitionSize = reads.size() / g_threads;
+	// Number of partitions that will have partitionSize + 1 number of reads
+	int64_t extra = reads.size() % g_threads;
+
+	for (int64_t i = 0; i < g_threads; i++) {
+		int64_t offset = partitionSize + (i < extra ? 1 : 0);
+		readsPartition.assign(iter, iter + offset);
 		partitions.push_back(readsPartition);	
-		iter += partitionSize;
-	} while ( iter < reads.end() );
+		iter += offset;
+	}
+
+	assert( iter == reads.end() );
 
 	return partitions;
 }
