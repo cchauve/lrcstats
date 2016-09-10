@@ -5,63 +5,7 @@
 #include <vector>
 #include "measures.hpp"
 
-std::vector< CorrespondingSegments > getUntrimmedCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref) 
-/* Returns a vector of all the CorrespondingSegments of the given cLR, uLR and reference sequences. */
-{
-	assert(cRead.length() == uRead.length());	
-	assert(cRead.length() == ref.length());	
-	assert(ref.length() == uRead.length());	
-
-	int64_t length = ref.length();
-	bool inCorrectedSegment = false;
-	std::string cReadSegment;
-	std::string uReadSegment;
-	std::string refSegment;
-	CorrespondingSegments correspondingSegments;
-	std::vector< CorrespondingSegments > segmentList;
-
-	for (int64_t index = 0; index < length; index++) {
-		// Check if we're at the beginning of a corrected segment
-		if ( not inCorrectedSegment and (isupper(cRead[index])) ) {
-			inCorrectedSegment = true;
-		// Check if we've left the end of a corrected segement
-		} else if ( inCorrectedSegment and islower(cRead[index]) ) {
-			inCorrectedSegment = false;
-
-			correspondingSegments.cReadSegment = cReadSegment;
-			correspondingSegments.uReadSegment = uReadSegment;
-			correspondingSegments.refSegment = refSegment;
-			
-			segmentList.push_back(correspondingSegments);	
-
-			cReadSegment = "";
-			uReadSegment = "";
-			refSegment = "";
-		}
-		if (inCorrectedSegment) {
-			cReadSegment = cReadSegment + cRead[index];
-			uReadSegment = uReadSegment + uRead[index];
-			refSegment = refSegment + ref[index];
-		}
-	}
-
-	// If at the end of the loop we were still in a corrected segment, add
-	// that last segment into the vector
-	if (inCorrectedSegment) {
-		correspondingSegments.cReadSegment = cReadSegment;
-		correspondingSegments.uReadSegment = uReadSegment;
-		correspondingSegments.refSegment = refSegment;
-		
-		segmentList.push_back(correspondingSegments);	
-
-		cReadSegment = "";
-		uReadSegment = "";
-		refSegment = "";
-	}
-	return segmentList;
-}
-
-std::vector< CorrespondingSegments > getTrimmedCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref) 
+std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref) 
 /* Returns a vector of all the CorrespondingSegments of the given cLR, uLR and reference sequences. */
 {
 	assert(cRead.length() == uRead.length());	
@@ -83,6 +27,7 @@ std::vector< CorrespondingSegments > getTrimmedCorrespondingSegmentsList(std::st
 		if ( not inCorrectedSegment and cRead[index] == 'X') {
 			inCorrectedSegment = true;
 		} else if (inCorrectedSegment and cRead[index] != 'X') {
+			// Add the next base to the corrected segment
 			cReadSegment = cReadSegment + cRead[index];
 			uReadSegment = uReadSegment + uRead[index];
 			refSegment = refSegment + ref[index];
@@ -145,38 +90,6 @@ DeletionProportion getDeletionProportion( CorrespondingSegments correspondingSeg
 	return proportion;
 }
 
-int64_t editScore(std::string ref, std::string lr)
-/* Since maf files give the true alignment, we can find the true "edit distance"
- * (or edit score, as we call it) without trying to find an approximation.
- * We can also use this module to find the edit distance between cLRs and the ref
- * using the same metric as when calculating the edit score between the ref and lr
- */
-{
-	int64_t score = 0;
-	int64_t del = 1;
-	int64_t ins = 1;
-	int64_t sub = 1;
-	int64_t length = ref.length();
-	char refBase;
-	char base;
-
-	for (int64_t seqIndex = 0; seqIndex < length; seqIndex++) {
-		refBase = ref[seqIndex];
-		base = lr[seqIndex];
-
-		if (refBase != base) {
-			if (refBase == '-') {
-				score = score + ins;
-			} else if (base == '-') {
-				score = score + del;
-			} else {
-				score = score + sub;
-			}
-		}
-	}		
-	return score;
-}
-
 int64_t getSubstitutions(std::string ref, std::string read)
 // Returns the number of substitutions between the reference and read string
 {
@@ -185,7 +98,10 @@ int64_t getSubstitutions(std::string ref, std::string read)
 	int64_t subs = 0;
 
 	for (int64_t index = 0; index < ref.length(); index++) {
-		if ( ref[index] != '-' and read[index] != '-' and toupper(ref[index]) != toupper(read[index]) ) {
+		char refBase = ref[index];
+		char readBase = read[index];
+		if ( refBase != 'X' and readBase != 'X' and refBase != '-' and readBase != '-' 
+		     and toupper(refBase) != toupper(readBase) ) {
 			subs++;
 		}			
 	}
@@ -225,6 +141,8 @@ int64_t getDeletions(std::string ref, std::string read)
 	return del;
 }
 
+/* DO NOT USE THESE STATISTICS - THEY ARE ERRONEOUS */
+
 int64_t correctedTruePositives(std::string ref, std::string read)
 // Returns the number of pairs of bases such that the read base is corrected and
 // the read base is equivalent to the reference base.
@@ -234,7 +152,10 @@ int64_t correctedTruePositives(std::string ref, std::string read)
 	int64_t truePositives = 0;
 
 	for (int64_t index = 0; index < ref.length(); index++) {
-		if ( (isupper(read[index]) or read[index] == '-') and toupper(read[index]) == toupper(ref[index]) ) {
+		char refBase = ref[index];
+		char readBase = read[index];
+		if ( (isupper(readBase) or readBase == '-') and readBase != 'X' and refBase != 'X' 
+		      and toupper(readBase) == toupper(refBase) ) {
 			truePositives++;		
 		}	
 	}
@@ -251,7 +172,10 @@ int64_t correctedFalsePositives(std::string ref, std::string read)
 	int64_t falsePositives = 0;
 
 	for (int64_t index = 0; index < ref.length(); index++) {
-		if ( (isupper(read[index]) or read[index] == '-') and toupper(read[index]) != toupper(ref[index]) ) {
+		char readBase = read[index];
+		char refBase = ref[index];
+		if ( (isupper(readBase) or readBase == '-') and readBase != 'X' and refBase != 'X' 
+		      and toupper(readBase) != toupper(refBase) ) {
 			falsePositives++;		
 		}	
 	}
@@ -291,34 +215,4 @@ int64_t uncorrectedFalsePositives(std::string ref, std::string read)
 	}
 
 	return falsePositives;
-}
-
-int64_t correctedBases(std::string read)
-// Returns the number of corrected bases in the read
-{
-	assert( read.length() > 0 );
-
-	int64_t corrected = 0;
-
-	for (int64_t index = 0; index < read.length(); index++) { 
-		if ( isupper(read[index]) or read[index] == '-' ) { 
-			corrected++; 
-		}	
-	}
-
-	return corrected;
-}
-
-int64_t uncorrectedBases(std::string read)
-// Returns the number of uncorrected bases in the read 
-{
-	assert( read.length() > 0 );
-	
-	int64_t uncorrected = 0;
-
-	for (int64_t index = 0; index < read.length(); index++) {
-		if ( islower(read[index]) ) { uncorrected++; } 
-	}
-
-	return uncorrected;
 }

@@ -265,8 +265,8 @@ std::vector<int64_t> trimmedReadStats(CorrespondingSegments segments)
 	return statistics;
 }
 
-void createUntrimmedStat()
-/* Given a 3-way MAF file between cLR, uLR and ref sequences, outputs a
+void createStats()
+/* Given a 3-way MAF file between cLR, uLR and ref sequences, outputs a text file containing stats
  */
 {
 	std::ifstream mafFile (g_mafInputName, std::ios::in);
@@ -315,88 +315,19 @@ void createUntrimmedStat()
 		// Skip last line, which is empty 
 		std::getline(mafFile, line);
 
-		// Write whole read statistics
-		std::vector<int64_t> statistics = untrimmedReadStats(ref,clr,clrSize,ulr,ulrSize);
+		// If the read type if untrimmed, then do untrimmed statistics 
+		if (g_cReadType == Untrimmed) {
+			std::vector<int64_t> statistics = untrimmedReadStats(ref,clr,clrSize,ulr,ulrSize);
 
-		output << "u ";
-		for (int index = 0; index < statistics.size(); index++) {
-			output << statistics.at(index) << " ";
-		} 
-		output << "\n";
-
-		// Write corrected segment statistics
-		std::vector<CorrespondingSegments> correspondingSegmentsList = getUntrimmedCorrespondingSegmentsList(clr,ulr,ref);
-
-		for (int index = 0; index < correspondingSegmentsList.size(); index++) {
-			CorrespondingSegments segments = correspondingSegmentsList.at(index);
-			std::vector<int64_t> statistics = trimmedReadStats(segments);
-
-			output << "t ";
-			for (int i = 0; i < statistics.size(); i++) {
-				output << statistics.at(i) << " ";
-			}
+			output << "u ";
+			for (int index = 0; index < statistics.size(); index++) {
+				output << statistics.at(index) << " ";
+			} 
 			output << "\n";
 		}
-	}
-
-	mafFile.close();
-	output.close();
-}
-
-void createTrimmedStat()
-/* Given a 3-way MAF file between cLR, uLR and ref sequences, outputs a
- */
-{
-	std::ifstream mafFile (g_mafInputName, std::ios::in);
-	std::ofstream output (g_outputPath, std::ios::out);
-	std::string line = "";
-
-	// Indices where each respective information lies in the MAF file line
-	int readIndex = 1;
-	int sizeIndex = 3; 
-	int seqIndex = 6;
-	// Number of statistics we consider
-	int numStatistics = 10;
-
-	// Skip first four lines
-	
-	for (int i = 0; i < 4; i++) {
-		assert( !mafFile.eof() );	
-		std::getline(mafFile, line); 
-	} 
-
-	// The getline in the while loop condition skips the "a" line
-	while (std::getline(mafFile, line)) {
-		// Read ref line
-		std::getline(mafFile, line);
-
-		std::string ref = split(line).at(seqIndex);
-		assert(ref != "");
-
-		// Read ulr line
-		std::getline(mafFile, line);
-
-		std::string ulr = split(line).at(seqIndex);
-		assert(ulr != "");
-
-		int64_t ulrSize = atoi( split(line).at(sizeIndex).c_str() );
-		assert( ulrSize > 0 );
-
-		// Read clr line
-		std::getline(mafFile, line);
-
-		std::string clr = split(line).at(seqIndex);	
-		assert(clr != "");
-
-		int64_t clrSize = atoi( split(line).at(sizeIndex).c_str() );
-		std::string read = split(line).at(readIndex);
-		assert( clrSize > 0 );
-
-		// Skip last line
-		std::getline(mafFile, line);
 
 		// Write corrected segment statistics
-		std::vector<CorrespondingSegments> correspondingSegmentsList = getTrimmedCorrespondingSegmentsList(clr,ulr,ref);
+		std::vector<CorrespondingSegments> correspondingSegmentsList = getCorrespondingSegmentsList(clr,ulr,ref);
 
 		for (int index = 0; index < correspondingSegmentsList.size(); index++) {
 			CorrespondingSegments segments = correspondingSegmentsList.at(index);
@@ -514,13 +445,9 @@ int main(int argc, char *argv[])
 	}
 
 	if (mode == "maf") {
-			generateMaf();
+		generateMaf();
 	} else {
-		if (g_cReadType == Trimmed) {
-			createTrimmedStat();				
-		} else {
-			createUntrimmedStat();
-		}
+		createStats();				
 	}
 	
 	return 0;

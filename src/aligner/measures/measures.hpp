@@ -31,10 +31,7 @@ struct CorrespondingSegments
         std::string refSegment;
 };
 
-std::vector< CorrespondingSegments > getUntrimmedCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref);
-/* Returns a vector of all the CorrespondingSegments of the given cLR, uLR and reference sequences. */
-
-std::vector< CorrespondingSegments > getTrimmedCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref);
+std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cRead, std::string uRead, std::string ref);
 /* Returns a vector of all the CorrespondingSegments of the given cLR, uLR and reference sequences. */
 
 SubstitutionProportion getSubstitutionProportion( CorrespondingSegments correspondingSegments);
@@ -74,11 +71,5 @@ int64_t uncorrectedTruePositives(std::string ref, std::string read);
 int64_t uncorrectedFalsePositives(std::string ref, std::string read);
 // Returns the number of pairs of bases where the read base is uncorrected and
 // the read base is not equivalent to the reference base.
-
-int64_t correctedBases(std::string read);
-// Returns the number of corrected bases in the read
-
-int64_t uncorrectedBases(std::string read);
-// Returns the number of uncorrected bases in the read 
 
 #endif // MEASURES_H
