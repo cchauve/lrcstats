@@ -18,7 +18,7 @@ class Alignments
 		std::string ref;
                 int64_t rows;
                 int64_t columns;
-                int** matrix;
+                int64_t** matrix;
 		void createMatrix();
 		void deleteMatrix();
                 int64_t cost(char refBase, char cBase);
@@ -44,7 +44,7 @@ class TrimmedAlignments: public Alignments
 	public:
 		TrimmedAlignments(std::string reference, std::string uLongRead, std::string cLongRead);
 	private:
-		std::vector<int> lastBaseIndices;
+		std::vector<int64_t> lastBaseIndices;
 		void initialize();
                 void findAlignments();
 };

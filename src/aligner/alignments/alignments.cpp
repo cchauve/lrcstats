@@ -68,14 +68,14 @@ void Alignments::createMatrix()
 	columns = ulr.length() + 1;
  
 	try {
-		matrix = new int*[rows];
+		matrix = new int64_t*[rows];
 	} catch( std::bad_alloc& ba ) {
 		std::cout << "Memory allocation failed; unable to create DP matrix.\n";
 	}
 	
 	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
 		try {
-			matrix[rowIndex] = new int[columns];
+			matrix[rowIndex] = new int64_t[columns];
 		} catch( std::bad_alloc& ba ) {
 			std::cout << "Memory allocation failed; unable to create DP matrix.\n";
 		}
@@ -113,7 +113,7 @@ int64_t Alignments::cost(char refBase, char cBase)
 void Alignments::printMatrix()
 /* Print64_t the matrix */
 {
-	int64_t infinity = std::numeric_limits<int>::max();
+	int64_t infinity = std::numeric_limits<int64_t>::max();
 	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
 		for (int64_t columnIndex = 0; columnIndex < columns; columnIndex++) {
 			int64_t val = matrix[rowIndex][columnIndex];
@@ -160,7 +160,7 @@ void UntrimmedAlignments::initialize()
 	int64_t substitute;
 	int64_t insert;
 	int64_t deletion;
-	int64_t infinity = std::numeric_limits<int>::max();
+	int64_t infinity = std::numeric_limits<int64_t>::max();
 
 	// Set the base cases for the DP matrix
 	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
@@ -224,6 +224,7 @@ void UntrimmedAlignments::findAlignments()
 	int64_t deletion;
 	int64_t insert;
 	int64_t substitute;
+	int64_t numX = 0;
 
 	std::string clrMaf;
 	std::string ulrMaf;
@@ -234,6 +235,7 @@ void UntrimmedAlignments::findAlignments()
 		clrMaf = "X";
 		ulrMaf = "X";
 		refMaf = "X";
+		numX++;
 	} else {
 		clrMaf = "";
 		ulrMaf = "";
@@ -285,6 +287,7 @@ void UntrimmedAlignments::findAlignments()
 						clrMaf = 'X' + clrMaf;	
 						ulrMaf = 'X' + ulrMaf;
 						refMaf = 'X' + refMaf;
+						numX++;
 					}
 					rowIndex--;
 				}
@@ -305,6 +308,7 @@ void UntrimmedAlignments::findAlignments()
 						clrMaf = 'X' + clrMaf;	
 						ulrMaf = 'X' + ulrMaf;
 						refMaf = 'X' + refMaf;
+						numX++;
 					}
 
 					rowIndex--;
@@ -340,6 +344,7 @@ void UntrimmedAlignments::findAlignments()
 						clrMaf = 'X' + clrMaf;	
 						ulrMaf = 'X' + ulrMaf;
 						refMaf = 'X' + refMaf;
+						numX++;
 					}
 
 					rowIndex--;
@@ -385,6 +390,7 @@ void UntrimmedAlignments::findAlignments()
 					clrMaf = 'X' + clrMaf;
 					ulrMaf = 'X' + ulrMaf;
 					refMaf = 'X' + refMaf;
+					numX++;
 				}
 
 				rowIndex--;
@@ -399,6 +405,7 @@ void UntrimmedAlignments::findAlignments()
 					clrMaf = 'X' + clrMaf;
 					ulrMaf = 'X' + ulrMaf;
 					refMaf = 'X' + refMaf;
+					numX++;
 				}
 
 				rowIndex--;
@@ -411,6 +418,9 @@ void UntrimmedAlignments::findAlignments()
 			}
 		} 		
 	}
+
+	// If the number of X's placed in the alignments is odd, we done goofed somewhere
+	assert( numX % 2 == 0 );
 
 	clr = clrMaf;
 	ulr = ulrMaf;
@@ -429,26 +439,18 @@ void TrimmedAlignments::initialize()
 {
 	// Split the clr into its corrected parts
 	std::vector< std::string > trimmedClrs = split(clr);
-	// Remove spaces in clr
-	clr.erase(std::remove(clr.begin(), clr.end(), ' '), clr.end());
-
-	rows = clr.length() + 1;
-	columns = ref.length() + 1;
-
-	int64_t cIndex;
-	int64_t urIndex;
-	int64_t substitute;
-	int64_t insert;
-	int64_t deletion;
-
 	int64_t lastBaseIndex = -1;
-	bool isLastBase;
-	
 	// Record the indices of the first bases of all the reads
 	for (int64_t index = 0; index < trimmedClrs.size(); index++) {
 		lastBaseIndex = lastBaseIndex + trimmedClrs.at(index).length();
 		lastBaseIndices.push_back(lastBaseIndex);	
 	}
+
+	// Remove spaces in clr
+	clr.erase(std::remove(clr.begin(), clr.end(), ' '), clr.end());
+
+	rows = clr.length() + 1;
+	columns = ref.length() + 1;
 
 	// Set the base cases for the DP matrix
 	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
@@ -457,6 +459,13 @@ void TrimmedAlignments::initialize()
 	for (int64_t columnIndex = 1; columnIndex < columns; columnIndex++) {
 		matrix[0][columnIndex] = 0;
 	}
+
+	int64_t cIndex;
+	int64_t urIndex;
+	int64_t substitute;
+	int64_t insert;
+	int64_t deletion;
+	bool isLastBase;
 
 	// Find the minimal edit distances
 	for (int64_t rowIndex = 1; rowIndex < rows; rowIndex++) {
@@ -493,6 +502,7 @@ void TrimmedAlignments::findAlignments()
  * of the trimmed long reads.
 */
 {
+	int64_t numX = 0;
 	int64_t rowIndex = rows - 1;
 	int64_t columnIndex = columns - 1;
 	int64_t insert;
@@ -503,7 +513,6 @@ void TrimmedAlignments::findAlignments()
 	// then we place an 'X' in the cLR alignment
 	bool isLastBase;
 	bool firstDeletion = false;
-	bool insertedFinalBoundary = false;
 
 	std::string clrMaf = "";
 	std::string ulrMaf = "";
@@ -552,12 +561,27 @@ void TrimmedAlignments::findAlignments()
 			substitute = infinity;
 		}	
 
+		// Solves corner case where the second of two trimmed reads aligns with the 
+		// beginning of the ref but the first does not
+		if (isLastBase and urIndex == -1) {
+			refMaf = 'X' + refMaf;
+			ulrMaf = 'X' + ulrMaf;
+			clrMaf = 'X' + clrMaf;
+			numX++;
+		}
+
 		if (rowIndex == 0 or currentCost == deletion) {
 			// Mark the beginning of a trimmed long read
-			if ( (isLastBase or rowIndex == 0) and firstDeletion ) {
+			if (isLastBase and firstDeletion) {
 				refMaf = 'X' + refMaf;
 				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
+				numX++;
+				/*
+				std::cout << "Ending deletion X placed at\n";
+				std::cout << "cIndex == " << cIndex << std::endl;
+				std::cout << "urIndex == " << urIndex << std::endl;
+				*/
 			}
 
 			refMaf = ref[urIndex] + refMaf;
@@ -572,16 +596,29 @@ void TrimmedAlignments::findAlignments()
 				refMaf = 'X' + refMaf;
 				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
+				numX++;
+				/*
+				std::cout << "Ending insertion X placed at\n";
+				std::cout << "cIndex == " << cIndex << std::endl;
+				std::cout << "urIndex == " << urIndex << std::endl;
+				*/
 			}	
 
 			refMaf = '-' + refMaf;
 			ulrMaf = '-' + ulrMaf;
 			clrMaf = clr[cIndex] + clrMaf;
 
+			// Mark the beginning of a trimmed long read
 			if (cIndex == 0) {
 				refMaf = 'X' + refMaf;
 				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
+				numX++;
+				/*
+				std::cout << "Beginning insertion X placed at\n";
+				std::cout << "cIndex == " << cIndex << std::endl;
+				std::cout << "urIndex == " << urIndex << std::endl;
+				*/
 			}
 
 			rowIndex--;
@@ -592,16 +629,31 @@ void TrimmedAlignments::findAlignments()
 				refMaf = 'X' + refMaf;
 				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
+				numX++;
+				/*
+				std::cout << "Ending substitution X placed at\n";
+				std::cout << "cIndex == " << cIndex << std::endl;
+				std::cout << "urIndex == " << urIndex << std::endl;
+				*/
 			}	
 
 			refMaf = ref[urIndex] + refMaf;
 			ulrMaf = ulr[urIndex] + ulrMaf;
 			clrMaf = clr[cIndex] + clrMaf;
 
+			// Mark the beginning of a trimmed long read
+			// We only place this beginning boundary when we're
+			// at the very first base of a read
 			if (cIndex == 0) {
 				refMaf = 'X' + refMaf;
 				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
+				numX++;
+				/*
+				std::cout << "Beginning substitution X placed at\n";
+				std::cout << "cIndex == " << cIndex << std::endl;
+				std::cout << "urIndex == " << urIndex << std::endl;
+				*/
 			}
 
 			rowIndex--;
@@ -615,6 +667,9 @@ void TrimmedAlignments::findAlignments()
 			std::exit(1);
 		}
 	}
+
+	// If the number of X's placed in the alignments is odd, we done goofed somewhere
+	assert( numX % 2 == 0 );
 
 	clr = clrMaf;
 	ulr = ulrMaf;
