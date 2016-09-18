@@ -123,8 +123,8 @@ class Alignment(object):
 		uRead = uRead[0:newEndIndex]
 
 		if self.isInMiddleOfTrimmedRead(cRead):
-			ref += '-'
-			uRead += '-'
+			ref += 'X'
+			uRead += 'X'
 			cRead += 'X'
 
 		return ref, uRead, cRead
