@@ -45,6 +45,7 @@ class TrimmedAlignments: public Alignments
 		TrimmedAlignments(std::string reference, std::string uLongRead, std::string cLongRead);
 	private:
 		std::vector<int64_t> lastBaseIndices;
+		bool isLastBase(int64_t cIndex);
 		void initialize();
                 void findAlignments();
 };

@@ -106,7 +106,7 @@ int64_t Alignments::cost(char refBase, char cBase)
 	} else {
 		// Ideally, in an alignment between cLR and ref we want to minimize the number of discrepancies
 		// as much as possible, so if both bases are different, we assign a cost of 2.
-		return 2;
+		return 1;
 	}
 }
 
@@ -434,6 +434,17 @@ TrimmedAlignments::TrimmedAlignments(std::string reference, std::string uLongRea
 /* Constructor - is a child class of Alignments */
 { initialize(); }
 
+bool TrimmedAlignments::isLastBase( int64_t cIndex )
+/* returns whether the current index is the index of a last base */
+{
+	// Check if cIndex is the first base of a read
+	if (std::find( lastBaseIndices.begin(), lastBaseIndices.end(), cIndex ) != lastBaseIndices.end()) {
+		return true;
+	} else {
+		return false;
+	} 
+} 
+
 void TrimmedAlignments::initialize()
 /* Create the DP matrix similar to generic alignment object */
 {
@@ -460,27 +471,18 @@ void TrimmedAlignments::initialize()
 		matrix[0][columnIndex] = 0;
 	}
 
-	int64_t cIndex;
-	int64_t urIndex;
 	int64_t substitute;
 	int64_t insert;
 	int64_t deletion;
-	bool isLastBase;
 
 	// Find the minimal edit distances
 	for (int64_t rowIndex = 1; rowIndex < rows; rowIndex++) {
 		for (int64_t columnIndex = 1; columnIndex < columns; columnIndex++) {
-			cIndex = rowIndex - 1;
-			urIndex = columnIndex - 1;
+			int64_t cIndex = rowIndex - 1;
+			int64_t urIndex = columnIndex - 1;
+			bool lastBase = isLastBase(cIndex);
 
-			// Check if cIndex is the first base of a read
-			if (std::find( lastBaseIndices.begin(), lastBaseIndices.end(), cIndex ) != lastBaseIndices.end()) {
-				isLastBase = true;
-			} else {
-				isLastBase = false;
-			} 
-
-			if (isLastBase) {
+			if (lastBase) {
 				deletion = matrix[rowIndex][columnIndex-1];
 			} else {
 				deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
@@ -511,7 +513,7 @@ void TrimmedAlignments::findAlignments()
 	int64_t infinity = std::numeric_limits<int64_t>::max();
 	// If we're at the last base of a trimmed read and it's the first deletion,
 	// then we place an 'X' in the cLR alignment
-	bool isLastBase;
+	bool lastBase;
 	bool firstDeletion = false;
 
 	std::string clrMaf = "";
@@ -529,17 +531,13 @@ void TrimmedAlignments::findAlignments()
 
 		// Check if cIndex is the last base of a read, if it is then that means
 		// we're either at the beginning or the end of a read
-		if (std::find(lastBaseIndices.begin(), lastBaseIndices.end(), cIndex) != lastBaseIndices.end()) {
-			isLastBase = true;
-		} else {
-			isLastBase = false;
-		} 
+		lastBase = isLastBase(cIndex);
 
 		// Set the costs of the different operations, 
 		// ensuring we don't go out of bounds of the matrix.
 		if (rowIndex > 0 && columnIndex > 0) {
 			// if we're at the end of the read, zero cost deletion
-			if (isLastBase) {
+			if (lastBase) {
 				deletion = matrix[rowIndex][columnIndex-1]; 
 			} else {
 				deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
@@ -548,7 +546,7 @@ void TrimmedAlignments::findAlignments()
 			substitute = matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]);	
 		} else if (rowIndex <= 0 && columnIndex > 0) {
 			// if we're at the end of the read, zero cost deletion
-			if (isLastBase) {
+			if (lastBase) {
 				deletion = matrix[rowIndex][columnIndex-1];
 			} else {
 				deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
@@ -563,7 +561,7 @@ void TrimmedAlignments::findAlignments()
 
 		// Solves corner case where the second of two trimmed reads aligns with the 
 		// beginning of the ref but the first does not
-		if (isLastBase and urIndex == -1) {
+		if (lastBase and urIndex == -1) {
 			refMaf = 'X' + refMaf;
 			ulrMaf = 'X' + ulrMaf;
 			clrMaf = 'X' + clrMaf;
@@ -572,7 +570,7 @@ void TrimmedAlignments::findAlignments()
 
 		if (rowIndex == 0 or currentCost == deletion) {
 			// Mark the beginning of a trimmed long read
-			if (isLastBase and firstDeletion) {
+			if (lastBase and firstDeletion) {
 				refMaf = 'X' + refMaf;
 				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
@@ -592,7 +590,7 @@ void TrimmedAlignments::findAlignments()
 			firstDeletion = false;
 		} else if (columnIndex == 0 or currentCost == insert) {
 			// Mark the end of a trimmed long read
-			if (isLastBase) {
+			if (lastBase) {
 				refMaf = 'X' + refMaf;
 				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
@@ -625,7 +623,7 @@ void TrimmedAlignments::findAlignments()
 			firstDeletion = true;
 		} else if (currentCost == substitute) {
 			// Mark the end of a trimmed long read
-			if (isLastBase) {
+			if (lastBase) {
 				refMaf = 'X' + refMaf;
 				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
@@ -669,7 +667,7 @@ void TrimmedAlignments::findAlignments()
 	}
 
 	// If the number of X's placed in the alignments is odd, we done goofed somewhere
-	assert( numX % 2 == 0 );
+	//assert( numX % 2 == 0 );
 
 	clr = clrMaf;
 	ulr = ulrMaf;
