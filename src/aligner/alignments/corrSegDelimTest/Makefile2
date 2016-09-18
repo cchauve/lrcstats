@@ -1,0 +1,4 @@
+all:
+	g++ -std=c++11 -o test2 alignments.cpp ../data/data.cpp test2.cpp
+clean:
+	rm test2
