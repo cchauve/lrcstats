@@ -667,7 +667,7 @@ void TrimmedAlignments::findAlignments()
 	}
 
 	// If the number of X's placed in the alignments is odd, we done goofed somewhere
-	//assert( numX % 2 == 0 );
+	assert( numX % 2 == 0 );
 
 	clr = clrMaf;
 	ulr = ulrMaf;
