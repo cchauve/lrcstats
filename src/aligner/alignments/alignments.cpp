@@ -445,12 +445,24 @@ bool TrimmedAlignments::isLastBase( int64_t cIndex )
 	} 
 } 
 
+bool TrimmedAlignments::isFirstBase(int64_t cIndex)
+{
+	// Check if cIndex is the first base of a read
+	if (cIndex == 0 or std::find( lastBaseIndices.begin(), lastBaseIndices.end(), cIndex-1 ) != lastBaseIndices.end()) {
+		return true;
+	} else {
+		return false;
+	} 
+
+}
+
 void TrimmedAlignments::initialize()
 /* Create the DP matrix similar to generic alignment object */
 {
 	// Split the clr into its corrected parts
 	std::vector< std::string > trimmedClrs = split(clr);
 	int64_t lastBaseIndex = -1;
+
 	// Record the indices of the first bases of all the reads
 	for (int64_t index = 0; index < trimmedClrs.size(); index++) {
 		lastBaseIndex = lastBaseIndex + trimmedClrs.at(index).length();
@@ -500,10 +512,11 @@ void TrimmedAlignments::initialize()
 void TrimmedAlignments::findAlignments()
 /* Construct the optimal alignments between the trimmed corrected long reads, 
  * uncorrected long read and reference sequence. These algorithm indicates the boundaries
- * of the original trimmed long reads by placing X's immediately left and right of the boundaries
+ * of the original trimmed long reads by placing X's immediately left and right
  * of the trimmed long reads.
-*/
+ */
 {
+	// Number of X triple delimters placed
 	int64_t numX = 0;
 	int64_t rowIndex = rows - 1;
 	int64_t columnIndex = columns - 1;
@@ -511,10 +524,6 @@ void TrimmedAlignments::findAlignments()
 	int64_t deletion;
 	int64_t substitute;
 	int64_t infinity = std::numeric_limits<int64_t>::max();
-	// If we're at the last base of a trimmed read and it's the first deletion,
-	// then we place an 'X' in the cLR alignment
-	bool lastBase;
-	bool firstDeletion = false;
 
 	std::string clrMaf = "";
 	std::string ulrMaf = "";
@@ -524,18 +533,19 @@ void TrimmedAlignments::findAlignments()
 	// This is equivalent to the optimal alignment between ulr and clr.
 	// The path we follow is restricted to the conditions set when computing the matrix,
 	// i.e. we can never follow a path that the edit distance equations do not allow.
-	while (rowIndex > 0 || columnIndex > 0) {
+	while (rowIndex > 0 or columnIndex > 0) {
 		int64_t urIndex = columnIndex - 1;
 		int64_t cIndex = rowIndex - 1;
 		int64_t currentCost = matrix[rowIndex][columnIndex];
 
 		// Check if cIndex is the last base of a read, if it is then that means
 		// we're either at the beginning or the end of a read
-		lastBase = isLastBase(cIndex);
+		bool lastBase = isLastBase(cIndex);
+		bool firstBase = isFirstBase(cIndex);
 
 		// Set the costs of the different operations, 
 		// ensuring we don't go out of bounds of the matrix.
-		if (rowIndex > 0 && columnIndex > 0) {
+		if (rowIndex > 0 and columnIndex > 0) {
 			// if we're at the end of the read, zero cost deletion
 			if (lastBase) {
 				deletion = matrix[rowIndex][columnIndex-1]; 
@@ -544,7 +554,7 @@ void TrimmedAlignments::findAlignments()
 			}
 			insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
 			substitute = matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]);	
-		} else if (rowIndex <= 0 && columnIndex > 0) {
+		} else if (rowIndex <= 0 and columnIndex > 0) {
 			// if we're at the end of the read, zero cost deletion
 			if (lastBase) {
 				deletion = matrix[rowIndex][columnIndex-1];
@@ -553,86 +563,19 @@ void TrimmedAlignments::findAlignments()
 			}
 			insert = infinity;
 			substitute = infinity;
-		} else if (rowIndex > 0 && columnIndex <= 0) {
+		} else if (rowIndex > 0 and columnIndex <= 0) {
 			deletion = infinity;
 			insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
 			substitute = infinity;
 		}	
 
-		// Solves corner case where the second of two trimmed reads aligns with the 
-		// beginning of the ref but the first does not
-		if (lastBase and urIndex == -1) {
-			refMaf = 'X' + refMaf;
-			ulrMaf = 'X' + ulrMaf;
-			clrMaf = 'X' + clrMaf;
-			numX++;
-		}
-
-		if (rowIndex == 0 or currentCost == deletion) {
-			// Mark the beginning of a trimmed long read
-			if (lastBase and firstDeletion) {
-				refMaf = 'X' + refMaf;
-				ulrMaf = 'X' + ulrMaf;
-				clrMaf = 'X' + clrMaf;
-				numX++;
-				/*
-				std::cout << "Ending deletion X placed at\n";
-				std::cout << "cIndex == " << cIndex << std::endl;
-				std::cout << "urIndex == " << urIndex << std::endl;
-				*/
-			}
-
-			refMaf = ref[urIndex] + refMaf;
-			ulrMaf = ulr[urIndex] + ulrMaf;
-			clrMaf = '-' + clrMaf;
-
-			columnIndex--;
-			firstDeletion = false;
-		} else if (columnIndex == 0 or currentCost == insert) {
+		if (currentCost == substitute) {
 			// Mark the end of a trimmed long read
 			if (lastBase) {
 				refMaf = 'X' + refMaf;
 				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
 				numX++;
-				/*
-				std::cout << "Ending insertion X placed at\n";
-				std::cout << "cIndex == " << cIndex << std::endl;
-				std::cout << "urIndex == " << urIndex << std::endl;
-				*/
-			}	
-
-			refMaf = '-' + refMaf;
-			ulrMaf = '-' + ulrMaf;
-			clrMaf = clr[cIndex] + clrMaf;
-
-			// Mark the beginning of a trimmed long read
-			if (cIndex == 0) {
-				refMaf = 'X' + refMaf;
-				ulrMaf = 'X' + ulrMaf;
-				clrMaf = 'X' + clrMaf;
-				numX++;
-				/*
-				std::cout << "Beginning insertion X placed at\n";
-				std::cout << "cIndex == " << cIndex << std::endl;
-				std::cout << "urIndex == " << urIndex << std::endl;
-				*/
-			}
-
-			rowIndex--;
-			firstDeletion = true;
-		} else if (currentCost == substitute) {
-			// Mark the end of a trimmed long read
-			if (lastBase) {
-				refMaf = 'X' + refMaf;
-				ulrMaf = 'X' + ulrMaf;
-				clrMaf = 'X' + clrMaf;
-				numX++;
-				/*
-				std::cout << "Ending substitution X placed at\n";
-				std::cout << "cIndex == " << cIndex << std::endl;
-				std::cout << "urIndex == " << urIndex << std::endl;
-				*/
 			}	
 
 			refMaf = ref[urIndex] + refMaf;
@@ -642,22 +585,43 @@ void TrimmedAlignments::findAlignments()
 			// Mark the beginning of a trimmed long read
 			// We only place this beginning boundary when we're
 			// at the very first base of a read
-			if (cIndex == 0) {
+			if (firstBase) {
 				refMaf = 'X' + refMaf;
 				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
 				numX++;
-				/*
-				std::cout << "Beginning substitution X placed at\n";
-				std::cout << "cIndex == " << cIndex << std::endl;
-				std::cout << "urIndex == " << urIndex << std::endl;
-				*/
 			}
 
 			rowIndex--;
 			columnIndex--;
-			firstDeletion = true;
+		} else if (rowIndex == 0 or currentCost == deletion) {
+			refMaf = ref[urIndex] + refMaf;
+			ulrMaf = ulr[urIndex] + ulrMaf;
+			clrMaf = '-' + clrMaf;
 
+			columnIndex--;
+		} else if (columnIndex == 0 or currentCost == insert) {
+			// Mark the end of a trimmed long read
+			if (lastBase) {
+				refMaf = 'X' + refMaf;
+				ulrMaf = 'X' + ulrMaf;
+				clrMaf = 'X' + clrMaf;
+				numX++;
+			}	
+
+			refMaf = '-' + refMaf;
+			ulrMaf = '-' + ulrMaf;
+			clrMaf = clr[cIndex] + clrMaf;
+
+			// Mark the beginning of a trimmed long read
+			if (firstBase) {
+				refMaf = 'X' + refMaf;
+				ulrMaf = 'X' + ulrMaf;
+				clrMaf = 'X' + clrMaf;
+				numX++;
+			}
+
+			rowIndex--;
 		} else {
 			std::cout << "ERROR: No paths found. Terminating backtracking.\n";
 			std::cout << "cIndex is " << cIndex << "\n";
@@ -667,7 +631,7 @@ void TrimmedAlignments::findAlignments()
 	}
 
 	// If the number of X's placed in the alignments is odd, we done goofed somewhere
-	//assert( numX % 2 == 0 );
+	assert( numX % 2 == 0 );
 
 	clr = clrMaf;
 	ulr = ulrMaf;
