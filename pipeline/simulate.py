@@ -68,7 +68,7 @@ def simulateArtShortReads(testDetails, paths):
 			"short2=${outputPrefix}2.fastq\n" \
 			"shortMerged=${outputPrefix}-merged.fastq\n" \
 			"\n" \
-			"$merge_files -1 $short1 -2 $short2 -o $shortMerged\n"
+			"$merge_files shuffle -1 $short1 -2 $short2 -o $shortMerged\n"
 		file.write(line)
 
 def simulateSimlordLongReads(testDetails, paths):
