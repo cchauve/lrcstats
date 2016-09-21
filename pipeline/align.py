@@ -223,6 +223,10 @@ def generateAlignmentJob(testDetails, paths):
                 elif program == "jabba":
                         writeJabba(file, testDetails)
 
+		line = "qsub %s/scripts/%s/stats/%s/%s-stats.pbs\n" \
+			% (paths["lrcstats"], testDetail["experimentName"], testDetail["program"], testName)
+		file.write(line)
+
 def createQuickQsubScript(testDetails, paths, experimentName):
 	'''
 	create a quick-qsub script for the alignment jobs

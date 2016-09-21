@@ -190,6 +190,11 @@ def generateCorrectionJob(testDetails, paths):
 		elif program == "jabba":
 			writeJabba(file, paths)
 
+		line = "qsub %s/scripts/%s/align/%s/%s-align.pbs\n" \
+			% (paths["lrcstats"], testDetails["experimentName"], testDetails["program"], testName)
+		file.write(line)
+
+
 def createQuickQsubScript(testDetails, paths, experimentName):
 	'''
 	Create a quick-qsub script for the correction jobs
