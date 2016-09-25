@@ -40,6 +40,6 @@ python lrcstats.py --input_config config/[CONFIG NAME].config --experiment_name 
 
 5. Once statistics collection is complete, you can find the results of your experiments in the file:
 ```
-[data]/[genome]/[experiment]/statistics/stats/[correction algorithm]/[correction algorithm]-[genome]-[short coverage]Sx[long coverage]L/[correction algorithm]-[genome]-[short coverage]Sx[long coverage]L_stats.txt
+[data]/[genome]/[experiment]/stats/[correction algorithm]/[correction algorithm]-[genome]-[short coverage]Sx[long coverage]L/[correction algorithm]-[genome]-[short coverage]Sx[long coverage]L_stats.txt
 ```
-where [data] is the directory you indicated to store your read data in your configuration file.
+where `[data]` is the directory you indicated to store your read data in your configuration file.
