@@ -135,7 +135,7 @@ def simulateSimlordLongReads(testDetails, paths):
 
 		line = "mkdir -p $outputDir\n" \
 			"reads=$(python $reads4coverage -c $cov -i $fastq -r $ref)\n" \
-			"$simlord -n $reads -sf $fastq -rr $ref $outputPrefix\n" \
+			"$simlord -n $reads -mp 1 -sf $fastq -rr $ref $outputPrefix\n" \
 			"\n" \
 			"sam=${outputPrefix}.fastq.sam\n" \
 			"maf=${sam}\n" \
