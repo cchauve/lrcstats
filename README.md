@@ -23,7 +23,7 @@ cd src/preprocessing/utils
 make
 ```
 
-Otherwise, the rest of the pipeline is written in Python so you just need to make sure your version of Python run by the command `python` is Python 2.7.2.
+Otherwise, the rest of the pipeline is written in Python so you just need to make sure your version of Python run by the command `python` is 2.7.2.
 
 ## Usage ##
 1. Create your own configuration file with `python lrcstats.py --blank_config [CONFIG NAME]`. The configuration file will appear under `config/[CONFIG NAME].config`.
@@ -32,8 +32,14 @@ Otherwise, the rest of the pipeline is written in Python so you just need to mak
 `
 python lrcstats.py --input_config config/[CONFIG NAME].config --experiment_name [EXPERIMENT NAME] --simulate --correct --align --stats
 `
-4. Currently LRCStats can only be run on computing clusters with TORQUE and Moab software. You can submit all your batch jobs at once using the `quick-qsub` shell scripts under the `scripts/[EXPERIMENT NAME]` directory. Run them in the order of:
-  1. simulate
-  2. correct
-  3. align
-  4. stats
+4. Currently LRCStats can only be run on computing clusters with TORQUE and Moab software. You can submit all your batch jobs at once using the `quick-qsub` shell scripts under the `scripts/[EXPERIMENT NAME]` directory. Except for the scripts contained under the directory `simulate`, each PBS script will automatically submit the next stage's PBS script. For example, once a `correct` script has finished executing in your computing cluster, it will automatically submit the corresponding `align` script. Thus, most of the time the only two `quick-qsub` scripts you will have to execute will be the `simulate` and `correct` scripts. Check your email for the results of each job. If something goes wrong and you need to resubmit jobs, submit them in the order of: 
+  1. `simulate`
+  2. `correct`
+  3. `align`
+  4. `stats`
+
+5. Once statistics collection is complete, you can find the results of your experiments in the file:
+```
+[data]/[genome]/[experiment]/stats/[correction algorithm]/[correction algorithm]-[genome]-[short coverage]Sx[long coverage]L/[correction algorithm]-[genome]-[short coverage]Sx[long coverage]L_stats.txt
+```
+where `[data]` is the directory you indicated to store your read data in your configuration file.
