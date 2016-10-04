@@ -100,7 +100,7 @@ int64_t getSubstitutions(std::string ref, std::string read)
 	for (int64_t index = 0; index < ref.length(); index++) {
 		char refBase = ref[index];
 		char readBase = read[index];
-		if ( refBase != 'X' and readBase != 'X' and refBase != '-' and readBase != '-' 
+		if ( readBase != 'X' and refBase != '-' and readBase != '-' 
 		     and toupper(refBase) != toupper(readBase) ) {
 			subs++;
 		}			

@@ -284,7 +284,7 @@ void UntrimmedAlignments::findAlignments()
 					// Insert the left and right boundaries of the corrected segments
 					if ( ( isupper(clr[cIndex]) and (cIndex == 0 or islower(clr[cIndex-1])) ) or
 					     ( islower(clr[cIndex]) and (cIndex > 0 and isupper(clr[cIndex-1])) ) ) {
-						clrMaf = 'X' + clrMaf;	
+						clrMaf = '-' + clrMaf;	
 						ulrMaf = 'X' + ulrMaf;
 						refMaf = 'X' + refMaf;
 						numX++;
@@ -305,7 +305,7 @@ void UntrimmedAlignments::findAlignments()
 
 					// Insert the right boundary of a corrected segment
 					if ( cIndex > 0 and isupper(clr[cIndex-1]) ) {
-						clrMaf = 'X' + clrMaf;	
+						clrMaf = '-' + clrMaf;	
 						ulrMaf = 'X' + ulrMaf;
 						refMaf = 'X' + refMaf;
 						numX++;
@@ -341,7 +341,7 @@ void UntrimmedAlignments::findAlignments()
 
 					// Insert the right boundary of a corrected segment
 					if ( cIndex > 0 and isupper(clr[cIndex-1]) ) {
-						clrMaf = 'X' + clrMaf;	
+						clrMaf = '-' + clrMaf;	
 						ulrMaf = 'X' + ulrMaf;
 						refMaf = 'X' + refMaf;
 						numX++;
@@ -387,7 +387,7 @@ void UntrimmedAlignments::findAlignments()
 
 				// Insert the left boundary of the corrected segment
 				if ( cIndex == 0 or islower(clr[cIndex-1]) ) {
-					clrMaf = 'X' + clrMaf;
+					clrMaf = '-' + clrMaf;
 					ulrMaf = 'X' + ulrMaf;
 					refMaf = 'X' + refMaf;
 					numX++;
@@ -402,7 +402,7 @@ void UntrimmedAlignments::findAlignments()
 
 				// Insert the left boundary of the corrected segment
 				if ( cIndex == 0 or islower(clr[cIndex-1]) ) {
-					clrMaf = 'X' + clrMaf;
+					clrMaf = '-' + clrMaf;
 					ulrMaf = 'X' + ulrMaf;
 					refMaf = 'X' + refMaf;
 					numX++;
@@ -572,7 +572,7 @@ void TrimmedAlignments::findAlignments()
 		if (currentCost == substitute) {
 			// Mark the end of a trimmed long read
 			if (lastBase) {
-				refMaf = 'X' + refMaf;
+				refMaf = '-' + refMaf;
 				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
 				numX++;
@@ -586,7 +586,7 @@ void TrimmedAlignments::findAlignments()
 			// We only place this beginning boundary when we're
 			// at the very first base of a read
 			if (firstBase) {
-				refMaf = 'X' + refMaf;
+				refMaf = '-' + refMaf;
 				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
 				numX++;
@@ -603,7 +603,7 @@ void TrimmedAlignments::findAlignments()
 		} else if (columnIndex == 0 or currentCost == insert) {
 			// Mark the end of a trimmed long read
 			if (lastBase) {
-				refMaf = 'X' + refMaf;
+				refMaf = '-' + refMaf;
 				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
 				numX++;
@@ -615,7 +615,7 @@ void TrimmedAlignments::findAlignments()
 
 			// Mark the beginning of a trimmed long read
 			if (firstBase) {
-				refMaf = 'X' + refMaf;
+				refMaf = '-' + refMaf;
 				ulrMaf = 'X' + ulrMaf;
 				clrMaf = 'X' + clrMaf;
 				numX++;
