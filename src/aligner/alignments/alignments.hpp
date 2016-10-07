@@ -8,6 +8,7 @@ class Alignments
 		Alignments(std::string reference, std::string uLongRead, std::string cLongRead);
 		Alignments(const Alignments &reads);
 		~Alignments();
+		// Returns the corrected, uncorrected and reference alignments
 		std::string getClr();
 		std::string getUlr();
 		std::string getRef();

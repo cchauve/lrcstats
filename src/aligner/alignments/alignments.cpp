@@ -214,7 +214,10 @@ void UntrimmedAlignments::initialize()
 
 void UntrimmedAlignments::findAlignments()
 /* Backtracks through the DP matrix to find the optimal alignments. 
- * Follows same schema as the DP algorithm. */
+ * Follows same schema as the DP algorithm for untrimmed corrected long reads. 
+ * Inserts X chars around corrected sequences in the alignment
+ * to indicate the start and end of corrected sequences. 
+ */
 {
 	int64_t rowIndex = rows - 1;
 	int64_t columnIndex = columns - 1;
@@ -266,6 +269,7 @@ void UntrimmedAlignments::findAlignments()
 			substitute = infinity;
 		} 
 
+		// check to see if the current base in the corrected long read is lowercase
 		bool isEndingLC = checkIfEndingLowerCase(cIndex);
 
 		if (rowIndex == 0 || columnIndex == 0) {
@@ -372,6 +376,7 @@ void UntrimmedAlignments::findAlignments()
 				std::cout << "urIndex is " << urIndex << "\n";
 				std::exit(1);	
 			}
+		// This condition is performed if the current corrected long read base is uppercase
 		} else {
 			if (deletion == currentCost) {
 				clrMaf = '-' + clrMaf;
@@ -416,9 +421,7 @@ void UntrimmedAlignments::findAlignments()
 		} 		
 	}
 
-	// If the number of X's placed in the alignments is odd, we done goofed somewhere
-	assert( numX % 2 == 0 );
-
+	// Store the alignments in the UntrimmedAlignment object
 	clr = clrMaf;
 	ulr = ulrMaf;
 	ref = refMaf;
@@ -432,7 +435,8 @@ TrimmedAlignments::TrimmedAlignments(std::string reference, std::string uLongRea
 { initialize(); }
 
 bool TrimmedAlignments::isLastBase(int64_t cIndex)
-/* returns whether the current index is the index of a last base */
+/* Returns true if the current index is the index of a last base of a trimmed segment, false otherwise
+ */
 {
 	// Check if cIndex is the first base of a read
 	if (std::find( lastBaseIndices.begin(), lastBaseIndices.end(), cIndex ) != lastBaseIndices.end()) {
@@ -443,6 +447,8 @@ bool TrimmedAlignments::isLastBase(int64_t cIndex)
 } 
 
 bool TrimmedAlignments::isFirstBase(int64_t cIndex)
+/* Returns true if current corrected long read base is the first base of trimmed segment, false otherwise
+ */
 {
 	// Check if cIndex is the first base of a read
 	if (cIndex == 0 or std::find( lastBaseIndices.begin(), lastBaseIndices.end(), cIndex-1 ) != lastBaseIndices.end()) {
@@ -454,7 +460,8 @@ bool TrimmedAlignments::isFirstBase(int64_t cIndex)
 }
 
 void TrimmedAlignments::initialize()
-/* Create the DP matrix similar to generic alignment object */
+/* Constructs the DP matrix for trimmed corrected long reads
+ */
 {
 	// Split the clr into its corrected parts
 	std::vector< std::string > trimmedClrs = split(clr);
@@ -627,9 +634,7 @@ void TrimmedAlignments::findAlignments()
 		}
 	}
 
-	// If the number of X's placed in the alignments is odd, we done goofed somewhere
-	assert( numX % 2 == 0 );
-
+	// Store the alignments in the TrimmedAlignment object
 	clr = clrMaf;
 	ulr = ulrMaf;
 	ref = refMaf;
