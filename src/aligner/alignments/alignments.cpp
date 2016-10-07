@@ -104,8 +104,6 @@ int64_t Alignments::cost(char refBase, char cBase)
 	} else if ( toupper(refBase) == cBase ) {
 		return 0;
 	} else {
-		// Ideally, in an alignment between cLR and ref we want to minimize the number of discrepancies
-		// as much as possible, so if both bases are different, we assign a cost of 2.
 		return 1;
 	}
 }
@@ -232,9 +230,9 @@ void UntrimmedAlignments::findAlignments()
 
 	// if the last base of the cLR has been corrected, insert the first boundary
 	if ( isupper(clr[rowIndex-1]) ) {
-		clrMaf = "X";
-		ulrMaf = "X";
-		refMaf = "X";
+		refMaf = '-' + refMaf;
+		ulrMaf = 'X' + ulrMaf;
+		clrMaf = 'X' + clrMaf;	
 		numX++;
 	} else {
 		clrMaf = "";
@@ -284,9 +282,9 @@ void UntrimmedAlignments::findAlignments()
 					// Insert the left and right boundaries of the corrected segments
 					if ( ( isupper(clr[cIndex]) and (cIndex == 0 or islower(clr[cIndex-1])) ) or
 					     ( islower(clr[cIndex]) and (cIndex > 0 and isupper(clr[cIndex-1])) ) ) {
-						clrMaf = '-' + clrMaf;	
+						refMaf = '-' + refMaf;
 						ulrMaf = 'X' + ulrMaf;
-						refMaf = 'X' + refMaf;
+						clrMaf = 'X' + clrMaf;	
 						numX++;
 					}
 					rowIndex--;
@@ -305,9 +303,9 @@ void UntrimmedAlignments::findAlignments()
 
 					// Insert the right boundary of a corrected segment
 					if ( cIndex > 0 and isupper(clr[cIndex-1]) ) {
-						clrMaf = '-' + clrMaf;	
+						refMaf = '-' + refMaf;
 						ulrMaf = 'X' + ulrMaf;
-						refMaf = 'X' + refMaf;
+						clrMaf = 'X' + clrMaf;	
 						numX++;
 					}
 
@@ -341,9 +339,9 @@ void UntrimmedAlignments::findAlignments()
 
 					// Insert the right boundary of a corrected segment
 					if ( cIndex > 0 and isupper(clr[cIndex-1]) ) {
-						clrMaf = '-' + clrMaf;	
+						refMaf = '-' + refMaf;
 						ulrMaf = 'X' + ulrMaf;
-						refMaf = 'X' + refMaf;
+						clrMaf = 'X' + clrMaf;
 						numX++;
 					}
 
@@ -387,9 +385,9 @@ void UntrimmedAlignments::findAlignments()
 
 				// Insert the left boundary of the corrected segment
 				if ( cIndex == 0 or islower(clr[cIndex-1]) ) {
-					clrMaf = '-' + clrMaf;
+					refMaf = '-' + refMaf;
 					ulrMaf = 'X' + ulrMaf;
-					refMaf = 'X' + refMaf;
+					clrMaf = 'X' + clrMaf;
 					numX++;
 				}
 
@@ -402,9 +400,9 @@ void UntrimmedAlignments::findAlignments()
 
 				// Insert the left boundary of the corrected segment
 				if ( cIndex == 0 or islower(clr[cIndex-1]) ) {
-					clrMaf = '-' + clrMaf;
+					refMaf = '-' + refMaf;
 					ulrMaf = 'X' + ulrMaf;
-					refMaf = 'X' + refMaf;
+					clrMaf = 'X' + clrMaf;
 					numX++;
 				}
 
