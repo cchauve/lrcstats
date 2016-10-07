@@ -10,6 +10,8 @@ int64_t gaplessLength(std::string read);
 /* Returns the length of a sequence without gaps. */
 
 struct ReadInfo
+/* Contains the read information for the two-way MAF file for the uncorrected long read and reference sequence 
+ */
 {
 	std::string name;
 	std::string refOrient;
@@ -19,6 +21,9 @@ struct ReadInfo
 };
 
 struct Read_t
+/* Carries the reference and uncorrected alignments from the two-way MAF file and the corrected long read sequence
+ * from the FASTA file.
+ */
 {
 	std::string ref;
 	std::string ulr;
@@ -27,7 +32,8 @@ struct Read_t
 };
 
 class MafFile
-/* Creates a MAF containing 3-way alignments between a reference, uLR and cLR */
+/* Object to create a MAF containing 3-way alignments between a reference, uLR and cLR 
+ */
 {
 	public:
 		MafFile(std::string fileName);
