@@ -392,7 +392,6 @@ void UntrimmedAlignments::findAlignments()
 				}
 
 				rowIndex--;
-
 			} else if (substitute == currentCost) {
 				clrMaf = clr[cIndex] + clrMaf;
 				ulrMaf = ulr[urIndex] + ulrMaf;
@@ -432,7 +431,7 @@ TrimmedAlignments::TrimmedAlignments(std::string reference, std::string uLongRea
 /* Constructor - is a child class of Alignments */
 { initialize(); }
 
-bool TrimmedAlignments::isLastBase( int64_t cIndex )
+bool TrimmedAlignments::isLastBase(int64_t cIndex)
 /* returns whether the current index is the index of a last base */
 {
 	// Check if cIndex is the first base of a read
@@ -567,32 +566,7 @@ void TrimmedAlignments::findAlignments()
 			substitute = infinity;
 		}	
 
-		if (currentCost == substitute) {
-			// Mark the end of a trimmed long read
-			if (lastBase) {
-				refMaf = '-' + refMaf;
-				ulrMaf = 'X' + ulrMaf;
-				clrMaf = 'X' + clrMaf;
-				numX++;
-			}	
-
-			refMaf = ref[urIndex] + refMaf;
-			ulrMaf = ulr[urIndex] + ulrMaf;
-			clrMaf = clr[cIndex] + clrMaf;
-
-			// Mark the beginning of a trimmed long read
-			// We only place this beginning boundary when we're
-			// at the very first base of a read
-			if (firstBase) {
-				refMaf = '-' + refMaf;
-				ulrMaf = 'X' + ulrMaf;
-				clrMaf = 'X' + clrMaf;
-				numX++;
-			}
-
-			rowIndex--;
-			columnIndex--;
-		} else if (rowIndex == 0 or currentCost == deletion) {
+		if (rowIndex == 0 or currentCost == deletion) {
 			refMaf = ref[urIndex] + refMaf;
 			ulrMaf = ulr[urIndex] + ulrMaf;
 			clrMaf = '-' + clrMaf;
@@ -620,6 +594,31 @@ void TrimmedAlignments::findAlignments()
 			}
 
 			rowIndex--;
+		} else if (currentCost == substitute) {
+			// Mark the end of a trimmed long read
+			if (lastBase) {
+				refMaf = '-' + refMaf;
+				ulrMaf = 'X' + ulrMaf;
+				clrMaf = 'X' + clrMaf;
+				numX++;
+			}	
+
+			refMaf = ref[urIndex] + refMaf;
+			ulrMaf = ulr[urIndex] + ulrMaf;
+			clrMaf = clr[cIndex] + clrMaf;
+
+			// Mark the beginning of a trimmed long read
+			// We only place this beginning boundary when we're
+			// at the very first base of a read
+			if (firstBase) {
+				refMaf = '-' + refMaf;
+				ulrMaf = 'X' + ulrMaf;
+				clrMaf = 'X' + clrMaf;
+				numX++;
+			}
+
+			rowIndex--;
+			columnIndex--;
 		} else {
 			std::cout << "ERROR: No paths found. Terminating backtracking.\n";
 			std::cout << "cIndex is " << cIndex << "\n";
