@@ -32,6 +32,7 @@ std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cR
 			uReadSegment = uReadSegment + uRead[index];
 			refSegment = refSegment + ref[index];
 		// Check if we've just left an uncorrected segment
+		// If so, add the previous corresponding segment to the vector
 		} else if (inCorrectedSegment and cRead[index] == 'X') {
 			inCorrectedSegment = false;
 
