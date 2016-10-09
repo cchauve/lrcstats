@@ -62,6 +62,7 @@ void Alignments::createMatrix()
 /* Preconstruct the matrix */
 {
 	std::string cleanedClr = clr; 
+	// Remove spaces from the corrected long read in case it is trimmed
 	cleanedClr.erase(std::remove(cleanedClr.begin(), cleanedClr.end(), ' '), cleanedClr.end());
 
 	rows = cleanedClr.length() + 1;
@@ -80,6 +81,15 @@ void Alignments::createMatrix()
 			std::cout << "Memory allocation failed; unable to create DP matrix.\n";
 		}
 	}
+
+	// Set the base cases for the DP matrix
+	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
+		matrix[rowIndex][0] = rowIndex;	
+	}
+	for (int64_t columnIndex = 1; columnIndex < columns; columnIndex++) {
+		matrix[0][columnIndex] = columnIndex;
+	}
+
 }
 
 void Alignments::deleteMatrix()
@@ -99,9 +109,7 @@ void Alignments::deleteMatrix()
 int64_t Alignments::cost(char refBase, char cBase)
 /* Cost function for dynamic programming algorithm */
 {
-	if ( islower(cBase) ) {
-		return 0;
-	} else if ( toupper(refBase) == cBase ) {
+	if ( toupper(refBase) == toupper(cBase) ) {
 		return 0;
 	} else {
 		return 1;
@@ -109,7 +117,7 @@ int64_t Alignments::cost(char refBase, char cBase)
 }
 
 void Alignments::printMatrix()
-/* Print64_t the matrix */
+/* Print the matrix */
 {
 	int64_t infinity = std::numeric_limits<int64_t>::max();
 	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
@@ -132,6 +140,7 @@ UntrimmedAlignments::UntrimmedAlignments(std::string reference, std::string uLon
 /* Constructor */
 { 
 	initialize();
+	findAlignments();
 }
 
 bool UntrimmedAlignments::checkIfEndingLowerCase(int64_t cIndex)
@@ -159,14 +168,6 @@ void UntrimmedAlignments::initialize()
 	int64_t insert;
 	int64_t deletion;
 	int64_t infinity = std::numeric_limits<int64_t>::max();
-
-	// Set the base cases for the DP matrix
-	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
-		matrix[rowIndex][0] = rowIndex;	
-	}
-	for (int64_t columnIndex = 1; columnIndex < columns; columnIndex++) {
-		matrix[0][columnIndex] = columnIndex;
-	}
 
 	// Find the optimal edit distance such that all uncorrected segments of clr are aligned with uncorrected
  	// portions of ulr. 
@@ -209,7 +210,6 @@ void UntrimmedAlignments::initialize()
 			}
 		}		
 	}
-	findAlignments();
 }
 
 void UntrimmedAlignments::findAlignments()
@@ -432,7 +432,10 @@ void UntrimmedAlignments::findAlignments()
 TrimmedAlignments::TrimmedAlignments(std::string reference, std::string uLongRead, std::string cLongRead)
 	: Alignments(reference, uLongRead, cLongRead)
 /* Constructor - is a child class of Alignments */
-{ initialize(); }
+{ 
+	initialize(); 
+	findAlignments();
+}
 
 bool TrimmedAlignments::isLastBase(int64_t cIndex)
 /* Returns true if the current index is the index of a last base of a trimmed segment, false otherwise
@@ -465,9 +468,9 @@ void TrimmedAlignments::initialize()
 {
 	// Split the clr into its corrected parts
 	std::vector< std::string > trimmedClrs = split(clr);
-	int64_t lastBaseIndex = -1;
 
 	// Record the indices of the first bases of all the reads
+	int64_t lastBaseIndex = -1;
 	for (int64_t index = 0; index < trimmedClrs.size(); index++) {
 		lastBaseIndex = lastBaseIndex + trimmedClrs.at(index).length();
 		lastBaseIndices.push_back(lastBaseIndex);	
@@ -478,14 +481,6 @@ void TrimmedAlignments::initialize()
 
 	rows = clr.length() + 1;
 	columns = ref.length() + 1;
-
-	// Set the base cases for the DP matrix
-	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
-		matrix[rowIndex][0] = rowIndex;	
-	}
-	for (int64_t columnIndex = 1; columnIndex < columns; columnIndex++) {
-		matrix[0][columnIndex] = 0;
-	}
 
 	int64_t substitute;
 	int64_t insert;
@@ -509,8 +504,6 @@ void TrimmedAlignments::initialize()
 			matrix[rowIndex][columnIndex] = std::min( deletion, std::min( insert, substitute ) );
 		}
 	}
-
-	findAlignments();
 }
 
 void TrimmedAlignments::findAlignments()
