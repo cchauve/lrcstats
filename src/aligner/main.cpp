@@ -11,9 +11,9 @@
 // For std::exit
 #include <cstdlib>
 
-#include "data/data.hpp"
-#include "alignments/alignments.hpp"
-#include "measures/measures.hpp"
+#include "data.hpp"
+#include "alignments.hpp"
+#include "measures.hpp"
 
 enum CorrectedReadType {Trimmed,Untrimmed};
 

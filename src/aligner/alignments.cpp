@@ -10,7 +10,7 @@
 #include <cstdlib>
 
 #include "alignments.hpp"
-#include "../data/data.hpp"
+#include "data.hpp"
 
 Alignments::Alignments(std::string reference, std::string uLongRead, std::string cLongRead)
 /* Constructor for general reads class - is the parent of UntrimmedAlignments and TrimmedAlignments */
