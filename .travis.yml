@@ -5,12 +5,17 @@
 
 #install: ./install.sh
 
-language: cpp
+language: cpp, python
 
 cpp:
     - "5.1.0"
 
+python:
+    - "2.7.2"
+
 compiler:
     - "gcc"
+
+install: true
 
 script: ./install.sh
