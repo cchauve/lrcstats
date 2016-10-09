@@ -13,4 +13,4 @@ cpp:
 compiler:
     - "gcc"
 
-install: ./install.sh
+script: ./install.sh
