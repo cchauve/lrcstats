@@ -16,6 +16,6 @@ python:
 compiler:
     - "gcc"
 
-install: true
+install: ./install.sh
 
-script: ./install.sh
+script: true
