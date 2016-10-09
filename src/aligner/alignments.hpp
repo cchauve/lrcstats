@@ -23,7 +23,6 @@ class Alignments
 		void createMatrix();
 		void deleteMatrix();
                 int64_t cost(char refBase, char cBase);
-		void processAlignments();
 };
 
 class UntrimmedAlignments : public Alignments
