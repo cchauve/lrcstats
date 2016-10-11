@@ -6,9 +6,6 @@ cpp:
 python:
     - "2.7.2"
 
-compiler:
-    - "gcc"
-
 install: ./install.sh
 
 script: 
