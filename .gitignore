@@ -5,3 +5,4 @@ scripts/*
 src/aligner/aligner
 *.pbs
 *.swp
+src/aligner/unit_tests/unit_tests_aligner

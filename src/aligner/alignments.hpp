@@ -9,14 +9,18 @@ class Alignments
 		Alignments(const Alignments &reads);
 		~Alignments();
 		// Returns the corrected, uncorrected and reference alignments
+		// Returns clr, not oldClr
 		std::string getClr();
 		std::string getUlr();
 		std::string getRef();
 		void printMatrix();	
 	protected:
+		// This is the corrected long read sequence after alignment
 		std::string clr;
 		std::string ulr;
 		std::string ref;
+		// This is the corrected long read sequence before alignment
+		std::string oldClr;
                 int64_t rows;
                 int64_t columns;
                 int64_t** matrix;
@@ -31,7 +35,7 @@ class UntrimmedAlignments : public Alignments
 {
         public:
                 UntrimmedAlignments(std::string reference, std::string uLongRead, std::string cLongRead);
-	private:
+	protected:
 		// Specs for matrix
 		bool checkIfEndingLowerCase(int64_t cIndex);
 		void initialize();
@@ -43,7 +47,7 @@ class TrimmedAlignments: public Alignments
 {
 	public:
 		TrimmedAlignments(std::string reference, std::string uLongRead, std::string cLongRead);
-	private:
+	protected:
 		std::vector<int64_t> lastBaseIndices;
 		bool isLastBase(int64_t cIndex);
 		bool isFirstBase(int64_t cIndex);
