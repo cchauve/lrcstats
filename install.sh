@@ -10,4 +10,6 @@ cd ../preprocessing/utils
 make
 echo "Done."
 
+cd ../..
+
 echo "Installation complete. You may now use LRCStats."
