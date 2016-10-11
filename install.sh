@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 echo "Building aligner..."
 cd src/aligner
 make
