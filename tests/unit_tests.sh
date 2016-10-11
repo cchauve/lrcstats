@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 echo "Performing unit tests..."
 
 # Perform unit tests for aligner
