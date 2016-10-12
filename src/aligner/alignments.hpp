@@ -6,27 +6,25 @@ class Alignments
 {
 	public:
 		Alignments(std::string reference, std::string uLongRead, std::string cLongRead);
-		Alignments(const Alignments &reads);
 		~Alignments();
-		// Returns the corrected, uncorrected and reference alignments
-		// Returns clr, not oldClr
+		// Returns the ref, uLR and cLR alignments
 		std::string getClr();
 		std::string getUlr();
 		std::string getRef();
-		void printMatrix();	
 	protected:
-		// This is the corrected long read sequence after alignment
 		std::string clr;
 		std::string ulr;
 		std::string ref;
-		// This is the corrected long read sequence before alignment
-		std::string oldClr;
                 int64_t rows;
                 int64_t columns;
                 int64_t** matrix;
+		// Allocate and delete the dynamic programming matrix in the heap
 		void createMatrix();
 		void deleteMatrix();
+		// Cost function for dynamic programming matrix
                 int64_t cost(char refBase, char cBase);
+		// Print the matrix - debugging purposes only
+		void printMatrix();	
 };
 
 class UntrimmedAlignments : public Alignments
@@ -36,9 +34,18 @@ class UntrimmedAlignments : public Alignments
         public:
                 UntrimmedAlignments(std::string reference, std::string uLongRead, std::string cLongRead);
 	protected:
-		// Specs for matrix
+		// Returns true if the current base is an uncorrected, lower case base that precedes 
+		// a corrected, upper case base or the end of the read
 		bool checkIfEndingLowerCase(int64_t cIndex);
+		// Returns true if the current base in the cLR is the first base of a corrected segment;
+		// false otherwise
+		bool isBeginningCorrectedIndex(int64_t cIndex);
+		// Returns true if the current base in the cLR is the last base of a corrected segment;
+		// false otherwise
+		bool isEndingCorrectedIndex(int64_t cIndex);
+		// Fill the dynamic programming matrix
 		void initialize();
+		// Backtrack through the matrix to find the alignments
                 void findAlignments();
 };
 
