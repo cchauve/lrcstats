@@ -8,12 +8,16 @@ TEST_CASE( "ref, uLR and cLR alignments are the same length", "[alignments]" ) {
 	SECTION( "UntrimmedAlignments are the same length" ) {
 		std::string ref = "C-GAGTCAATAAAAA";
 		std::string ulr = "CTG-GTC--TAAG-A";
-		std::string clr = "ctg-gTCAATaag-a"; 
+		std::string clr = "ctggTCAATaaga"; 
 		UntrimmedAlignments alignments(ref, ulr, clr);
 
 		ref = alignments.getRef();
 		ulr = alignments.getUlr(); 
 		clr = alignments.getClr();
+
+		std::cout << ref << std::endl;
+		std::cout << ulr << std::endl;
+		std::cout << clr << std::endl;
 
 		REQUIRE( ref.length() == ulr.length() );
 		REQUIRE( ulr.length() == clr.length() );
@@ -22,6 +26,12 @@ TEST_CASE( "ref, uLR and cLR alignments are the same length", "[alignments]" ) {
 		std::string ref = "C-GAGTCAATAAAAA";
 		std::string ulr = "CTG-GTC--TAAG-A";
 		std::string clr = "TCAAT"; 
+
+		std::cout << ref << std::endl;
+		std::cout << ulr << std::endl;
+		std::cout << clr << std::endl;
+
+
 		UntrimmedAlignments alignments(ref, ulr, clr);
 
 		ref = alignments.getRef();
@@ -47,7 +57,12 @@ TEST_CASE( "Alignments output (-,X,X) delimiters to indicate the boundaries of c
 		size_t refCount = std::count(ref.begin(), ref.end(), 'X');
 		size_t ulrCount = std::count(ulr.begin(), ulr.end(), 'X');
 		size_t clrCount = std::count(clr.begin(), clr.end(), 'X');
-	
+
+		std::cout << ref << std::endl;
+		std::cout << ulr << std::endl;
+		std::cout << clr << std::endl;
+
+
 		SECTION( "uLR and cLR alignments contain an even number of X delimiters" ) {
 			REQUIRE( ulrCount % 2 == 0 );
 			REQUIRE( clrCount % 2 == 0 );
@@ -70,6 +85,10 @@ TEST_CASE( "Alignments output (-,X,X) delimiters to indicate the boundaries of c
 		ref = alignments.getRef();
 		ulr = alignments.getUlr(); 
 		clr = alignments.getClr();
+
+		std::cout << ref << std::endl;
+		std::cout << ulr << std::endl;
+		std::cout << clr << std::endl;
 
 		size_t refCount = std::count(ref.begin(), ref.end(), 'X');
 		size_t ulrCount = std::count(ulr.begin(), ulr.end(), 'X');
@@ -103,6 +122,10 @@ TEST_CASE( "Alignments output (-,X,X) delimiters to indicate the boundaries of c
 		size_t refCount = std::count(ref.begin(), ref.end(), 'X');
 		size_t ulrCount = std::count(ulr.begin(), ulr.end(), 'X');
 		size_t clrCount = std::count(clr.begin(), clr.end(), 'X');
+
+		std::cout << ref << std::endl;
+		std::cout << ulr << std::endl;
+		std::cout << clr << std::endl;
 		
 		SECTION( "uLR and cLR alignments contain an even number of X delimiters" ) {
 			REQUIRE( ulrCount % 2 == 0 );
