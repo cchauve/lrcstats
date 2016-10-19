@@ -161,4 +161,16 @@ TEST_CASE( "ExtendedUntrimmedAlignments" )
 	std::cout << ref << std::endl;
 	std::cout << ulr << std::endl;
 	std::cout << clr << std::endl;
+	SECTION( "uLR and cLR alignments contain an even number of X delimiters" ) {
+		REQUIRE( ulrCount % 2 == 0 );
+		REQUIRE( clrCount % 2 == 0 );
+	}	
+
+	SECTION( "uLR and cLR alignments contain the same number of X delimiters" ) {
+		REQUIRE( ulrCount == clrCount );
+	}
+
+	SECTION( "the number of X delimiters in the ref alignment is 0" ) {
+		REQUIRE( refCount == 0 );
+	}
 }
