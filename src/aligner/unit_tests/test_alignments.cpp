@@ -142,3 +142,23 @@ TEST_CASE( "Alignments output (-,X,X) delimiters to indicate the boundaries of c
 		}
 	}
 }
+
+TEST_CASE( "ExtendedUntrimmedAlignments" )
+{
+	std::string ref = "C-GAGTCAATAAAAA";
+	std::string ulr = "CTG-GTC--TAAG-A";
+	std::string clr = "ACTACtggTCAATaagATAC"; 
+	ExtendedUntrimmedAlignments alignment;
+	Read_t alignedReads = alignment.align(ref,ulr,clr);
+	ref = alignedReads.ref;
+	ulr = alignedReads.ulr;
+	clr = alignedReads.clr;
+
+	size_t refCount = std::count(ref.begin(), ref.end(), 'X');
+	size_t ulrCount = std::count(ulr.begin(), ulr.end(), 'X');
+	size_t clrCount = std::count(clr.begin(), clr.end(), 'X');
+
+	std::cout << ref << std::endl;
+	std::cout << ulr << std::endl;
+	std::cout << clr << std::endl;
+}

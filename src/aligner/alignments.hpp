@@ -51,9 +51,9 @@ class UntrimmedAlignments : public Alignments
 		// false otherwise
 		bool isEndingCorrectedIndex(int64_t cIndex);
 		// Fill the dynamic programming matrix
-		int64_t editDistance(int64_t rowIndex, int64_t columnIndex) override;
+		virtual int64_t editDistance(int64_t rowIndex, int64_t columnIndex) override;
 		// Backtrack through the matrix to find the alignments
-                void findAlignments() override;
+                virtual void findAlignments() override;
 };
 
 class TrimmedAlignments: public Alignments
@@ -69,5 +69,16 @@ class TrimmedAlignments: public Alignments
 		int64_t editDistance(int64_t rowIndex, int64_t columnIndex) override;
                 void findAlignments() override;
 };
+
+class ExtendedUntrimmedAlignments : public UntrimmedAlignments
+{
+	public:
+		ExtendedUntrimmedAlignments();
+	protected: 
+		int64_t rowBaseCase(int64_t rowIndex) override;
+		int64_t editDistance(int64_t rowIndex, int64_t columnIndex) override;
+		void findAlignments() override;
+};
+
 
 #endif // ALIGNMENTS_H
