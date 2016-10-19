@@ -140,19 +140,13 @@ Read_t findAlignment( Read_t &unalignedReads )
 
 	// Use a different alignments object depending on the read type
 	if (g_cReadType == Trimmed) {
-		TrimmedAlignments alignment(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
-		alignedReads.ref = alignment.getRef();
-		alignedReads.clr = alignment.getClr();
-		alignedReads.ulr = alignment.getUlr();
-		alignedReads.readInfo = unalignedReads.readInfo;
+		TrimmedAlignments alignment;
+		alignedReads = alignment.align(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
 	} else {
-		UntrimmedAlignments alignment(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
-		alignedReads.ref = alignment.getRef();
-		alignedReads.clr = alignment.getClr();
-		alignedReads.ulr = alignment.getUlr();
-		alignedReads.readInfo = unalignedReads.readInfo;
+		UntrimmedAlignments alignment;
+		alignedReads = alignment.align(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
 	}
-
+	alignedReads.readInfo = unalignedReads.readInfo;
 	return alignedReads;
 }
 

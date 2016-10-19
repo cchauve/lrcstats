@@ -12,13 +12,16 @@
 #include "alignments.hpp"
 #include "data.hpp"
 
-Alignments::Alignments(std::string reference, std::string uLongRead, std::string cLongRead)
+Alignments::Alignments()
 /* Constructor for general reads class - is the parent of UntrimmedAlignments and TrimmedAlignments */
 {
-	ref = reference;
-	ulr = uLongRead;
-	clr = cLongRead;
-	createMatrix();
+	ref = "";
+	ulr = "";
+	clr = "";
+	refAlignment = "";
+	ulrAlignment = "";
+	clrAlignment = "";
+	matrix = NULL;
 }
 
 Alignments::~Alignments()
@@ -27,33 +30,31 @@ Alignments::~Alignments()
 	deleteMatrix();
 }
 
-std::string Alignments::getClr()
-/* Returns optimal cLR alignment ready to be written in 3-way MAF file */
+Read_t Alignments::align(std::string reference, std::string uRead, std::string cRead)
 {
-	return clr;
+	ref = reference;
+	ulr = uRead;
+	clr = cRead;
+	deleteMatrix();
+	preprocessReads();
+	createMatrix();
+	findAlignments();
+	Read_t alignedReads;
+	alignedReads.ref = refAlignment;
+	alignedReads.ulr = ulrAlignment;
+	alignedReads.clr = clrAlignment;
+	return alignedReads;
 }
 
-
-std::string Alignments::getUlr()
-/* Returns optimal uLR alignment ready to be written in 3-way MAF file */
+void Alignments::preprocessReads()
 {
-	return ulr;
-}
-
-std::string Alignments::getRef()
-/* Returns optimal ref alignment ready to be written in 3-way MAF file */
-{
-	return ref;
+	rows = clr.length() + 1;
+	columns = ulr.length() + 1;
 }
 
 void Alignments::createMatrix()
 /* Preconstruct the matrix */
 {
-	std::string cleanedClr = clr; 
-	// Remove spaces from the corrected long read in case it is trimmed
-	cleanedClr.erase(std::remove(cleanedClr.begin(), cleanedClr.end(), ' '), cleanedClr.end());
-	rows = cleanedClr.length() + 1;
-	columns = ulr.length() + 1;
 	try {
 		matrix = new int64_t*[rows];
 	} catch( std::bad_alloc& ba ) {
@@ -68,25 +69,39 @@ void Alignments::createMatrix()
 	}
 	// Set the base cases for the DP matrix
 	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
-		matrix[rowIndex][0] = rowIndex;	
+		matrix[rowIndex][0] = rowBaseCase(rowIndex);	
 	}
 	for (int64_t columnIndex = 1; columnIndex < columns; columnIndex++) {
 		matrix[0][columnIndex] = columnIndex;
+	}
+	for (int64_t rowIndex = 1; rowIndex < rows; rowIndex++) {
+		for (int64_t columnIndex = 1; columnIndex < columns; columnIndex++) {
+			matrix[rowIndex][columnIndex] = editDistance(rowIndex,columnIndex);
+		}
 	}
 }
 
 void Alignments::deleteMatrix()
 /* Delete the matrix allocated in the heap */
 {
-	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
-		if (matrix[rowIndex] != NULL) {
-			delete matrix[rowIndex];
-		} 	
-	}
 	if (matrix != NULL) {
+		for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
+			if (matrix[rowIndex] != NULL) {
+				delete matrix[rowIndex];
+			} 	
+		}
 		delete matrix;
 	}
 }
+
+int64_t Alignments::rowBaseCase(int64_t rowIndex)
+{
+	return rowIndex;
+}
+
+int64_t Alignments::editDistance(int64_t rowIndex, int64_t columnIndex) {}
+
+void Alignments::findAlignments() {}
 
 int64_t Alignments::cost(char refBase, char cBase)
 /* Cost function for dynamic programming algorithm */
@@ -117,13 +132,7 @@ void Alignments::printMatrix()
 
 /*--------------------------------------------------------------------------------------------------------*/
 
-UntrimmedAlignments::UntrimmedAlignments(std::string reference, std::string uLongRead, std::string cLongRead)
-	: Alignments(reference, uLongRead, cLongRead)
-/* Constructor */
-{ 
-	initialize();
-	findAlignments();
-}
+UntrimmedAlignments::UntrimmedAlignments() : Alignments() {}
 
 bool UntrimmedAlignments::checkIfEndingLowerCase(int64_t cIndex)
 /* Determine if we're at an ending lower case i.e. if the current base
@@ -160,58 +169,50 @@ bool UntrimmedAlignments::isEndingCorrectedIndex(int64_t cIndex)
 	} 
 }
 
-void UntrimmedAlignments::initialize()
+int64_t UntrimmedAlignments::editDistance(int64_t rowIndex, int64_t columnIndex)
 /* Given cLR, uLR and ref sequences, construct the DP matrix for the optimal alignments. 
  * Requires these member variables to be set before use. */
 {
-	int64_t cIndex;
-	int64_t urIndex;
 	int64_t keep;
 	int64_t substitute;
 	int64_t insert;
 	int64_t deletion;
 	int64_t infinity = std::numeric_limits<int64_t>::max();
 
-	// Find the optimal edit distance such that all uncorrected segments of clr are aligned with uncorrected
- 	// portions of ulr. 
-	for (int64_t rowIndex = 1; rowIndex < rows; rowIndex++) {
-		for (int64_t columnIndex = 1; columnIndex < columns; columnIndex++) {
-			cIndex = rowIndex - 1;
-			urIndex = columnIndex -  1;
+	int64_t cIndex = rowIndex - 1;
+	int64_t urIndex = columnIndex -  1;
 
-			bool isEndingLC = checkIfEndingLowerCase(cIndex);
+	bool isEndingLC = checkIfEndingLowerCase(cIndex);
 
-			if (isEndingLC) {
-				// If both letters are the same, we can either keep both letters or deletion the one from
-				// clr. If they are different, we can't keep both so we can only consider deleting the
-				// one from clr.
-				if ( toupper(ulr[urIndex]) == toupper(clr[cIndex]) ) {
-					keep = std::abs( matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]) );
-					deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
-					matrix[rowIndex][columnIndex] = std::min(keep, deletion); 
-				} else {
-					matrix[rowIndex][columnIndex] = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') ); 
-				}
-			} else if (islower(clr[cIndex])) {
-				if ( toupper( ulr[urIndex] ) == toupper( clr[cIndex] ) ) {
-					// Keep the characters if they are the same
-					matrix[rowIndex][columnIndex] = std::abs( matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]) );
-				} else if (ulr[urIndex] == '-') {
-					// If uLR has a dash, the optimal solution is just to call a deletion.
-					matrix[rowIndex][columnIndex] = matrix[rowIndex][columnIndex-1]; //Zero cost deletion
-				} else {
-					// Setting the position in the matrix to infinity ensures that we can never
-					// find an alignment where the uncorrected segments are not perfectly aligned.
-					matrix[rowIndex][columnIndex] = infinity;
-				}
-			} else {
-				// Usual Levenshtein distance equations.
-				deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
-				insert = std::abs( matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]) );
-				substitute = std::abs( matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]) );
-				matrix[rowIndex][columnIndex] = std::min( deletion, std::min(insert, substitute) ); 
-			}
-		}		
+	if (isEndingLC) {
+		// If both letters are the same, we can either keep both letters or deletion the one from
+		// clr. If they are different, we can't keep both so we can only consider deleting the
+		// one from clr.
+		if ( toupper(ulr[urIndex]) == toupper(clr[cIndex]) ) {
+			keep = std::abs( matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]) );
+			deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
+			return std::min(keep, deletion); 
+		} else {
+			return std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') ); 
+		}
+	} else if (islower(clr[cIndex])) {
+		if ( toupper( ulr[urIndex] ) == toupper( clr[cIndex] ) ) {
+			// Keep the characters if they are the same
+			return std::abs( matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]) );
+		} else if (ulr[urIndex] == '-') {
+			// If uLR has a dash, the optimal solution is just to call a deletion.
+			return matrix[rowIndex][columnIndex-1]; //Zero cost deletion
+		} else {
+			// Setting the position in the matrix to infinity ensures that we can never
+			// find an alignment where the uncorrected segments are not perfectly aligned.
+			return infinity;
+		}
+	} else {
+		// Usual Levenshtein distance equations.
+		deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
+		insert = std::abs( matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]) );
+		substitute = std::abs( matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]) );
+		return std::min( deletion, std::min(insert, substitute) ); 
 	}
 }
 
@@ -428,20 +429,14 @@ void UntrimmedAlignments::findAlignments()
 		} 		
 	}
 	// Store the alignments in the UntrimmedAlignment object
-	clr = clrMaf;
-	ulr = ulrMaf;
-	ref = refMaf;
+	clrAlignment = clrMaf;
+	ulrAlignment = ulrMaf;
+	refAlignment = refMaf;
 }
 
 /* --------------------------------------------------------------------------------------------- */
 
-TrimmedAlignments::TrimmedAlignments(std::string reference, std::string uLongRead, std::string cLongRead)
-	: Alignments(reference, uLongRead, cLongRead)
-/* Constructor - is a child class of Alignments */
-{ 
-	initialize(); 
-	findAlignments();
-}
+TrimmedAlignments::TrimmedAlignments() : Alignments() {}
 
 bool TrimmedAlignments::isLastBase(int64_t cIndex)
 /* Returns true if the current index is the index of a last base of a trimmed segment, false otherwise
@@ -468,9 +463,7 @@ bool TrimmedAlignments::isFirstBase(int64_t cIndex)
 
 }
 
-void TrimmedAlignments::initialize()
-/* Constructs the DP matrix for trimmed corrected long reads
- */
+void TrimmedAlignments::preprocessReads()
 {
 	// Split the clr into its corrected parts
 	std::vector< std::string > trimmedClrs = split(clr);
@@ -487,29 +480,27 @@ void TrimmedAlignments::initialize()
 
 	rows = clr.length() + 1;
 	columns = ref.length() + 1;
+}
 
+int64_t TrimmedAlignments::editDistance(int64_t rowIndex, int64_t columnIndex)
+/* Constructs the DP matrix for trimmed corrected long reads
+ */
+{
 	int64_t substitute;
 	int64_t insert;
 	int64_t deletion;
+	int64_t cIndex = rowIndex - 1;
+	int64_t urIndex = columnIndex - 1;
+	bool lastBase = isLastBase(cIndex);
 
-	// Find the minimal edit distances
-	for (int64_t rowIndex = 1; rowIndex < rows; rowIndex++) {
-		for (int64_t columnIndex = 1; columnIndex < columns; columnIndex++) {
-			int64_t cIndex = rowIndex - 1;
-			int64_t urIndex = columnIndex - 1;
-			bool lastBase = isLastBase(cIndex);
-
-			if (lastBase) {
-				deletion = matrix[rowIndex][columnIndex-1];
-			} else {
-				deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
-			}	
-
-			insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
-			substitute = matrix[rowIndex-1][columnIndex-1] + cost(clr[cIndex], ref[urIndex]);
-			matrix[rowIndex][columnIndex] = std::min( deletion, std::min( insert, substitute ) );
-		}
-	}
+	if (lastBase) {
+		deletion = matrix[rowIndex][columnIndex-1];
+	} else {
+		deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
+	}	
+	insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
+	substitute = matrix[rowIndex-1][columnIndex-1] + cost(clr[cIndex], ref[urIndex]);
+	return std::min( deletion, std::min( insert, substitute ) );
 }
 
 void TrimmedAlignments::findAlignments()
@@ -630,7 +621,7 @@ void TrimmedAlignments::findAlignments()
 	}
 
 	// Store the alignments in the TrimmedAlignment object
-	clr = clrMaf;
-	ulr = ulrMaf;
-	ref = refMaf;
+	clrAlignment = clrMaf;
+	ulrAlignment = ulrMaf;
+	refAlignment = refMaf;
 }

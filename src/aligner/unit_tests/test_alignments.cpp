@@ -3,17 +3,18 @@
 #include <string>
 #include "catch.hpp"
 #include "../alignments.hpp"
+#include "../data.hpp"
 
 TEST_CASE( "ref, uLR and cLR alignments are the same length", "[alignments]" ) {
 	SECTION( "UntrimmedAlignments are the same length" ) {
 		std::string ref = "C-GAGTCAATAAAAA";
 		std::string ulr = "CTG-GTC--TAAG-A";
 		std::string clr = "ctggTCAATaaga"; 
-		UntrimmedAlignments alignments(ref, ulr, clr);
-
-		ref = alignments.getRef();
-		ulr = alignments.getUlr(); 
-		clr = alignments.getClr();
+		UntrimmedAlignments alignments;
+		Read_t alignedReads = alignments.align(ref,ulr,clr);
+		ref = alignedReads.ref;
+		ulr = alignedReads.ulr;
+		clr = alignedReads.clr;
 
 		std::cout << ref << std::endl;
 		std::cout << ulr << std::endl;
@@ -27,16 +28,15 @@ TEST_CASE( "ref, uLR and cLR alignments are the same length", "[alignments]" ) {
 		std::string ulr = "CTG-GTC--TAAG-A";
 		std::string clr = "TCAAT"; 
 
+		TrimmedAlignments alignments;
+		Read_t alignedReads = alignments.align(ref,ulr,clr);
+		ref = alignedReads.ref;
+		ulr = alignedReads.ulr;
+		clr = alignedReads.clr;
+
 		std::cout << ref << std::endl;
 		std::cout << ulr << std::endl;
 		std::cout << clr << std::endl;
-
-
-		UntrimmedAlignments alignments(ref, ulr, clr);
-
-		ref = alignments.getRef();
-		ulr = alignments.getUlr(); 
-		clr = alignments.getClr();
 
 		REQUIRE( ref.length() == ulr.length() );
 		REQUIRE( ulr.length() == clr.length() );
@@ -50,10 +50,11 @@ TEST_CASE( "Alignments output (-,X,X) delimiters to indicate the boundaries of c
 		std::string ref = "AAAAA";
 		std::string ulr = "AAAAA";
 		std::string clr = "TCCCTaaaaa"; 
-		UntrimmedAlignments alignments(ref, ulr, clr);
-		ref = alignments.getRef();
-		ulr = alignments.getUlr(); 
-		clr = alignments.getClr();
+		UntrimmedAlignments alignments;
+		Read_t alignedReads = alignments.align(ref,ulr,clr);
+		ref = alignedReads.ref;
+		ulr = alignedReads.ulr;
+		clr = alignedReads.clr;
 		size_t refCount = std::count(ref.begin(), ref.end(), 'X');
 		size_t ulrCount = std::count(ulr.begin(), ulr.end(), 'X');
 		size_t clrCount = std::count(clr.begin(), clr.end(), 'X');
@@ -80,11 +81,11 @@ TEST_CASE( "Alignments output (-,X,X) delimiters to indicate the boundaries of c
 		std::string ref = "CGAGTCAATAAAAA";
 		std::string ulr = "CGAGTCAATAAAAA";
 		std::string clr = "cgagTCAATaaaaa"; 
-		UntrimmedAlignments alignments(ref, ulr, clr);
-
-		ref = alignments.getRef();
-		ulr = alignments.getUlr(); 
-		clr = alignments.getClr();
+		UntrimmedAlignments alignments;
+		Read_t alignedReads = alignments.align(ref,ulr,clr);
+		ref = alignedReads.ref;
+		ulr = alignedReads.ulr;
+		clr = alignedReads.clr;
 
 		std::cout << ref << std::endl;
 		std::cout << ulr << std::endl;
@@ -113,11 +114,11 @@ TEST_CASE( "Alignments output (-,X,X) delimiters to indicate the boundaries of c
 		std::string ulr = "CGAGTCAATAAAAA";
 		std::string clr = "CGAGT CAAT AAAAA";
 
-		TrimmedAlignments alignments(ref,ulr,clr);
-
-		ref = alignments.getRef();
-		ulr = alignments.getUlr(); 
-		clr = alignments.getClr();
+		TrimmedAlignments alignments;
+		Read_t alignedReads = alignments.align(ref,ulr,clr);
+		ref = alignedReads.ref;
+		ulr = alignedReads.ulr;
+		clr = alignedReads.clr;
 
 		size_t refCount = std::count(ref.begin(), ref.end(), 'X');
 		size_t ulrCount = std::count(ulr.begin(), ulr.end(), 'X');
