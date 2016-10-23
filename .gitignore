@@ -4,5 +4,5 @@ scripts/*
 *.pyc
 src/aligner/aligner
 *.pbs
-*.sh
 *.swp
+src/aligner/unit_tests/unit_tests_aligner

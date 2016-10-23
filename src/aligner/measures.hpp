@@ -43,10 +43,6 @@ InsertionProportion getInsertionProportion( CorrespondingSegments correspondingS
 DeletionProportion getDeletionProportion( CorrespondingSegments correspondingSegments);
 /* Returns the proportion of deletions between the reads in the correspondingSegments */
 
-int64_t editScore(std::string ref, std::string lr);
-/* Returns the "edit score" of two alignments. 
- * Uses a similar scoring schema as the Levenshtein edit distance equations. */
-
 int64_t getSubstitutions(std::string ref, std::string read);
 // Returns the number of substitutions between the reference and read string
 
@@ -55,6 +51,8 @@ int64_t getInsertions(std::string ref, std::string read);
 
 int64_t getDeletions(std::string ref, std::string read);
 // Returns the number of insertions between the reference and read string
+
+/* The following four methods are deprecated */
 
 int64_t correctedTruePositives(std::string ref, std::string read);
 // Returns the number of pairs of bases such that the read base is corrected and

@@ -32,6 +32,7 @@ std::vector< CorrespondingSegments > getCorrespondingSegmentsList(std::string cR
 			uReadSegment = uReadSegment + uRead[index];
 			refSegment = refSegment + ref[index];
 		// Check if we've just left an uncorrected segment
+		// If so, add the previous corresponding segment to the vector
 		} else if (inCorrectedSegment and cRead[index] == 'X') {
 			inCorrectedSegment = false;
 
@@ -100,7 +101,7 @@ int64_t getSubstitutions(std::string ref, std::string read)
 	for (int64_t index = 0; index < ref.length(); index++) {
 		char refBase = ref[index];
 		char readBase = read[index];
-		if ( refBase != 'X' and readBase != 'X' and refBase != '-' and readBase != '-' 
+		if ( readBase != 'X' and refBase != '-' and readBase != '-' 
 		     and toupper(refBase) != toupper(readBase) ) {
 			subs++;
 		}			
@@ -117,7 +118,7 @@ int64_t getInsertions(std::string ref, std::string read)
 	int64_t ins = 0;
 
 	for (int64_t index = 0; index < ref.length(); index++) {
-		if (ref[index] == '-' and read[index] != '-') {
+		if (ref[index] == '-' and read[index] != '-' and read[index] != 'X') {
 			ins++;
 		}
 	}
@@ -140,8 +141,6 @@ int64_t getDeletions(std::string ref, std::string read)
 
 	return del;
 }
-
-/* DO NOT USE THESE STATISTICS - THEY ARE ERRONEOUS */
 
 int64_t correctedTruePositives(std::string ref, std::string read)
 // Returns the number of pairs of bases such that the read base is corrected and

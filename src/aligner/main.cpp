@@ -11,21 +11,31 @@
 // For std::exit
 #include <cstdlib>
 
-#include "data/data.hpp"
-#include "alignments/alignments.hpp"
-#include "measures/measures.hpp"
+#include "data.hpp"
+#include "alignments.hpp"
+#include "measures.hpp"
 
 enum CorrectedReadType {Trimmed,Untrimmed};
+enum ExtensionType {Extended, Unextended};
 
+// Max number of threads
 int64_t g_threads = std::thread::hardware_concurrency();
+// Input and output file names
 std::string g_mafInputName = "";
 std::string g_clrName = "";
 std::string g_outputPath = "";
-CorrectedReadType g_cReadType = Untrimmed;
-
+// Corrected read type
+CorrectedReadType g_trimType = Untrimmed;
+ExtensionType g_extensionType = Unextended;
 
 std::vector< Read_t > getReadsFromMafAndFasta()
+/* Get reference sequence, corrected and uncorrected reads from MAF and FASTA files.
+ * Assumes reads are in the same order in MAF and FASTA files. 
+ * Outputs
+ * - reads: vector of Read_t objects
+ */
 {
+	// Open the MAF and FASTA files
 	std::ifstream mafInput (g_mafInputName, std::ios::in);
 	std::ifstream clrInput (g_clrName, std::ios::in);
 
@@ -40,6 +50,8 @@ std::vector< Read_t > getReadsFromMafAndFasta()
 	std::vector< Read_t > reads;
 
 	// First, collect all the reads from the FASTA and MAF files
+	// The get line in the while loop conditional skips the empty "a" line in the MAF line
+	// and the header line in the FASTA file.
 	while (std::getline(mafInput, mafLine) && std::getline(clrInput, clrLine)) {
 		// Read ref line
 		std::getline(mafInput, mafLine);
@@ -62,6 +74,7 @@ std::vector< Read_t > getReadsFromMafAndFasta()
 
 		std::string ulr = mafTokens.at(6);
 		std::string readName = mafTokens.at(1);
+		// read number of the current read
 		int64_t readMafNum = atoi( readName.c_str() );
 		std::string readOrient = mafTokens.at(4);
 
@@ -95,6 +108,8 @@ std::vector< Read_t > getReadsFromMafAndFasta()
 }
 
 std::vector< std::vector<Read_t> > partitionReads( std::vector< Read_t > &reads ) 
+/* Partitions the reads into g_threads number of partitions
+ */
 {
 	// Holds individual partitions of reads
 	std::vector< Read_t > readsPartition;
@@ -107,6 +122,7 @@ std::vector< std::vector<Read_t> > partitionReads( std::vector< Read_t > &reads 
 	// Number of partitions that will have partitionSize + 1 number of reads
 	int64_t extra = reads.size() % g_threads;
 
+	// Partition the reads
 	for (int64_t i = 0; i < g_threads; i++) {
 		int64_t offset = partitionSize + (i < extra ? 1 : 0);
 		readsPartition.assign(iter, iter + offset);
@@ -114,36 +130,42 @@ std::vector< std::vector<Read_t> > partitionReads( std::vector< Read_t > &reads 
 		iter += offset;
 	}
 
-	assert( iter == reads.end() );
-
 	return partitions;
 }
 
 Read_t findAlignment( Read_t &unalignedReads ) 
+/* Align the reference, uncorrected and corrected read.
+ */
 {
 	Read_t alignedReads;
-
-	if (g_cReadType == Trimmed) {
-		TrimmedAlignments alignment(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
-		alignedReads.ref = alignment.getRef();
-		alignedReads.clr = alignment.getClr();
-		alignedReads.ulr = alignment.getUlr();
-		alignedReads.readInfo = unalignedReads.readInfo;
+	// Use a different alignment object depending on the trim and extension type
+	if (g_trimType == Trimmed) {
+		if (g_extensionType == Extended) {
+			ExtendedTrimmedAlignments alignment;
+			alignedReads = alignment.align(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
+		} else {
+			TrimmedAlignments alignment;
+			alignedReads = alignment.align(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
+		} 
 	} else {
-		UntrimmedAlignments alignment(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
-		alignedReads.ref = alignment.getRef();
-		alignedReads.clr = alignment.getClr();
-		alignedReads.ulr = alignment.getUlr();
-		alignedReads.readInfo = unalignedReads.readInfo;
+		if (g_extensionType == Extended) {
+			ExtendedUntrimmedAlignments alignment;
+			alignedReads = alignment.align(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
+		} else {
+			UntrimmedAlignments alignment;
+			alignedReads = alignment.align(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
+		}
 	}
-
+	alignedReads.readInfo = unalignedReads.readInfo;
 	return alignedReads;
 }
 
 std::vector<Read_t> alignReads( std::vector<Read_t> reads )
+/* Align partitions of reads
+ */
 {
-	std::vector< Read_t > alignments;
-
+	std::vector<Read_t> alignments;
+	// Align one read after the other
 	for (int64_t i = 0; i < reads.size(); i++) {
 		Read_t unalignedReads = reads.at(i);
 		Read_t alignedReads = findAlignment(unalignedReads);
@@ -153,6 +175,8 @@ std::vector<Read_t> alignReads( std::vector<Read_t> reads )
 }
 
 void generateMaf()
+/* Generates a three-way MAF file between the reference, uncorrected and corrected reads
+ */
 {
 	// Read the MAF and cLR FASTA file
 	std::cout << "Reading MAF and FASTA files...\n";
@@ -198,6 +222,8 @@ void generateMaf()
 }
 
 std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int64_t cSize, std::string uRead, int64_t uSize)
+/* Collects untrimmed read statistics 
+ */
 {
 	std::vector<int64_t> statistics;
 
@@ -212,6 +238,7 @@ std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int6
 	int64_t uAlignmentLength = uRead.length();
 	statistics.push_back( uAlignmentLength );
 
+	// Find the number of mutations for the corrected and uncorrected reads
 	statistics.push_back( getDeletions(ref,cRead) );
 	statistics.push_back( getInsertions(ref,cRead) );
 	statistics.push_back( getSubstitutions(ref,cRead) );
@@ -231,6 +258,8 @@ std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int6
 }
 
 std::vector<int64_t> trimmedReadStats(CorrespondingSegments segments)
+/* Collects trimmed read statistics 
+ */
 {
 	std::vector<int64_t> statistics;
 
@@ -284,7 +313,6 @@ void createStats()
 	int numStatistics = 10;
 
 	// Skip first four lines
-	
 	for (int i = 0; i < 4; i++) {
 		assert( !mafFile.eof() );	
 		std::getline(mafFile, line); 
@@ -320,7 +348,7 @@ void createStats()
 		std::getline(mafFile, line);
 
 		// If the read type if untrimmed, then do untrimmed statistics 
-		if (g_cReadType == Untrimmed) {
+		if (g_trimType == Untrimmed) {
 			std::vector<int64_t> statistics = untrimmedReadStats(ref,clr,clrSize,ulr,ulrSize);
 
 			output << "u ";
@@ -330,7 +358,7 @@ void createStats()
 			output << "\n";
 		}
 
-		// Write corrected segment statistics
+		// Write trimmed read statistics
 		std::vector<CorrespondingSegments> correspondingSegmentsList = getCorrespondingSegmentsList(clr,ulr,ref);
 
 		for (int index = 0; index < correspondingSegmentsList.size(); index++) {
@@ -362,9 +390,10 @@ void displayHelp()
 void displayUsage()
 {
 		std::cout << "Usage: aligner [mode] [-m MAF input path] [-c cLR input path] [-t cLR are trimmed] "
-		      	  << "[-o output path] [-p number of threads]\n";
+		      	  << "[-e cLR are extended] [-o output path] [-p number of threads]\n";
 		std::cout << "aligner maf to create 3-way MAF file\n";
 		std::cout << "aligner stats to perform statistics on MAF file\n";
+		std::cout << "Note: stats mode only uses 1 thread and ignores the -p option\n";
 }
 
 int main(int argc, char *argv[])
@@ -393,7 +422,7 @@ int main(int argc, char *argv[])
 
 	bool trimmed = false;
 
-	while ((opt = getopt(argc, argv, "m:c:o:htp:")) != -1) {
+	while ((opt = getopt(argc, argv, "m:c:o:hetp:")) != -1) {
 		switch (opt) {
 			case 'm':
 				// Source maf file name
@@ -407,9 +436,12 @@ int main(int argc, char *argv[])
 				// output file path
 				g_outputPath = optarg;
 				break;
+			case 'e':
+				g_extensionType = Extended;
+				break;
 			case 't':
 				// Whether the corrected long reads are trimmed or not
-				g_cReadType = Trimmed;	
+				g_trimType = Trimmed;	
 				break;
 			case 'h':
 				// Displays usage
@@ -417,6 +449,7 @@ int main(int argc, char *argv[])
 				displayUsage();
 				return 0;
 			case 'p':
+				// Number of threads to perform alignment
 				::g_threads = atoi(optarg);
 				break;
 			default:
@@ -448,6 +481,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	// Create either a MAF file or find statistics from a three-way  MAF file
 	if (mode == "maf") {
 		generateMaf();
 	} else {

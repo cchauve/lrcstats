@@ -11,16 +11,9 @@ Clone this repository with the command
 git clone --recursive https://github.com/thefantasticdron/lrcstats.git
 ```
 
-To compile the aligner, perform the following commands:
+Compile the aligner and `fastUtils` with the command:
 ```
-cd src/aligner
-make
-```
-
-To compile `fastUtils`, perform the following commands:
-```
-cd src/preprocessing/utils
-make
+./install.sh
 ```
 
 Otherwise, the rest of the pipeline is written in Python so you just need to make sure your version of Python run by the command `python` is 2.7.2.
