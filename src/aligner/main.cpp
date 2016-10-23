@@ -16,6 +16,7 @@
 #include "measures.hpp"
 
 enum CorrectedReadType {Trimmed,Untrimmed};
+enum ExtensionType {Extended, Unextended};
 
 // Max number of threads
 int64_t g_threads = std::thread::hardware_concurrency();
@@ -24,8 +25,8 @@ std::string g_mafInputName = "";
 std::string g_clrName = "";
 std::string g_outputPath = "";
 // Corrected read type
-CorrectedReadType g_cReadType = Untrimmed;
-
+CorrectedReadType g_trimType = Untrimmed;
+ExtensionType g_extensionType = Unextended;
 
 std::vector< Read_t > getReadsFromMafAndFasta()
 /* Get reference sequence, corrected and uncorrected reads from MAF and FASTA files.
@@ -137,14 +138,23 @@ Read_t findAlignment( Read_t &unalignedReads )
  */
 {
 	Read_t alignedReads;
-
-	// Use a different alignments object depending on the read type
-	if (g_cReadType == Trimmed) {
-		TrimmedAlignments alignment;
-		alignedReads = alignment.align(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
+	// Use a different alignment object depending on the trim and extension type
+	if (g_trimType == Trimmed) {
+		if (g_extensionType == Extended) {
+			ExtendedTrimmedAlignments alignment;
+			alignedReads = alignment.align(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
+		} else {
+			TrimmedAlignments alignment;
+			alignedReads = alignment.align(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
+		} 
 	} else {
-		UntrimmedAlignments alignment;
-		alignedReads = alignment.align(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
+		if (g_extensionType == Extended) {
+			ExtendedUntrimmedAlignments alignment;
+			alignedReads = alignment.align(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
+		} else {
+			UntrimmedAlignments alignment;
+			alignedReads = alignment.align(unalignedReads.ref, unalignedReads.ulr, unalignedReads.clr);
+		}
 	}
 	alignedReads.readInfo = unalignedReads.readInfo;
 	return alignedReads;
@@ -154,8 +164,7 @@ std::vector<Read_t> alignReads( std::vector<Read_t> reads )
 /* Align partitions of reads
  */
 {
-	std::vector< Read_t > alignments;
-
+	std::vector<Read_t> alignments;
 	// Align one read after the other
 	for (int64_t i = 0; i < reads.size(); i++) {
 		Read_t unalignedReads = reads.at(i);
@@ -339,7 +348,7 @@ void createStats()
 		std::getline(mafFile, line);
 
 		// If the read type if untrimmed, then do untrimmed statistics 
-		if (g_cReadType == Untrimmed) {
+		if (g_trimType == Untrimmed) {
 			std::vector<int64_t> statistics = untrimmedReadStats(ref,clr,clrSize,ulr,ulrSize);
 
 			output << "u ";
@@ -381,7 +390,7 @@ void displayHelp()
 void displayUsage()
 {
 		std::cout << "Usage: aligner [mode] [-m MAF input path] [-c cLR input path] [-t cLR are trimmed] "
-		      	  << "[-o output path] [-p number of threads]\n";
+		      	  << "[-e cLR are extended] [-o output path] [-p number of threads]\n";
 		std::cout << "aligner maf to create 3-way MAF file\n";
 		std::cout << "aligner stats to perform statistics on MAF file\n";
 		std::cout << "Note: stats mode only uses 1 thread and ignores the -p option\n";
@@ -413,7 +422,7 @@ int main(int argc, char *argv[])
 
 	bool trimmed = false;
 
-	while ((opt = getopt(argc, argv, "m:c:o:htp:")) != -1) {
+	while ((opt = getopt(argc, argv, "m:c:o:hetp:")) != -1) {
 		switch (opt) {
 			case 'm':
 				// Source maf file name
@@ -427,9 +436,12 @@ int main(int argc, char *argv[])
 				// output file path
 				g_outputPath = optarg;
 				break;
+			case 'e':
+				g_extensionType = Extended;
+				break;
 			case 't':
 				// Whether the corrected long reads are trimmed or not
-				g_cReadType = Trimmed;	
+				g_trimType = Trimmed;	
 				break;
 			case 'h':
 				// Displays usage
