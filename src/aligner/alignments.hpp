@@ -30,6 +30,7 @@ class Alignments
 		void printMatrix();	
 		virtual void preprocessReads();
 		virtual int64_t rowBaseCase(int64_t rowIndex);
+		virtual int64_t columnBaseCase(int64_t columnIndex);
 		virtual int64_t editDistance(int64_t rowIndex, int64_t columnIndex);
 		virtual void findAlignments();
 };
@@ -50,10 +51,15 @@ class UntrimmedAlignments : public Alignments
 		// Returns true if the current base in the cLR is the last base of a corrected segment;
 		// false otherwise
 		bool isEndingCorrectedIndex(int64_t cIndex);
+		// Returns the conventional levenshtein distance for alignments, sans the base case
+		virtual int64_t levenshteinDistance(int64_t rowIndex, int64_t columnIndex);
 		// Fill the dynamic programming matrix
-		virtual int64_t editDistance(int64_t rowIndex, int64_t columnIndex) override;
+		int64_t editDistance(int64_t rowIndex, int64_t columnIndex) override;
+		// Returns the operations costs for insertion, deletion and substitute by reference
+		virtual void operationCosts(int64_t rowIndex, int64_t columnIndex,
+                                    int64_t& deletion, int64_t& insert, int64_t& substitute);
 		// Backtrack through the matrix to find the alignments
-                virtual void findAlignments() override;
+                void findAlignments() override;
 };
 
 class TrimmedAlignments: public Alignments
@@ -62,11 +68,15 @@ class TrimmedAlignments: public Alignments
 	public:
 		TrimmedAlignments();
 	protected:
+		int64_t columnBaseCase(int64_t columnIndex) override;
 		std::vector<int64_t> lastBaseIndices;
 		bool isLastBase(int64_t cIndex);
 		bool isFirstBase(int64_t cIndex);
 		void preprocessReads() override;
-		int64_t editDistance(int64_t rowIndex, int64_t columnIndex) override;
+		virtual int64_t editDistance(int64_t rowIndex, int64_t columnIndex) override;
+		// Returns the operations costs for insertion, deletion and substitute by reference
+		virtual void operationCosts(int64_t rowIndex, int64_t columnIndex,
+                                    int64_t& deletion, int64_t& insert, int64_t& substitute);
                 void findAlignments() override;
 };
 
@@ -76,9 +86,21 @@ class ExtendedUntrimmedAlignments : public UntrimmedAlignments
 		ExtendedUntrimmedAlignments();
 	protected: 
 		int64_t rowBaseCase(int64_t rowIndex) override;
-		int64_t editDistance(int64_t rowIndex, int64_t columnIndex) override;
-		void findAlignments() override;
+		// modified levenshtein distance to allow for zero cost insertions at the end of reads
+		int64_t levenshteinDistance(int64_t rowIndex, int64_t columnIndex) override;
+		void operationCosts(int64_t rowIndex, int64_t columnIndex,
+                                    int64_t& deletion, int64_t& insert, int64_t& substitute) override;
 };
 
+class ExtendedTrimmedAlignments : public TrimmedAlignments
+{
+	public:
+		ExtendedTrimmedAlignments();
+	protected:
+		int64_t rowBaseCase(int64_t rowIndex) override;
+		int64_t editDistance(int64_t rowIndex, int64_t columnIndex) override;
+		void operationCosts(int64_t rowIndex, int64_t columnIndex,
+                                    int64_t& deletion, int64_t& insert, int64_t& substitute) override;
+};
 
 #endif // ALIGNMENTS_H
