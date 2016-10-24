@@ -105,13 +105,16 @@ def writeAlignment(file, program):
 
 	if program is "jabba":
 		command = "$aligner maf -m $maf -c $input -t -e -o $mafOutput -p ${PBS_NUM_PPN}\n"
+		file.write(command)
 	elif program is "proovread":
 		command = "$aligner maf -m $maf -c $input -t -o $mafOutput -p ${PBS_NUM_PPN}\n"
+		file.write(command)
 	elif program is "lordec":
 		command = "$aligner maf -m $maf -c $input -o $mafOutput -p ${PBS_NUM_PPN}\n"
+		file.write(command)
 	elif program in ["colormap", "colormap_oea"]:
 		command = "$aligner maf -e -m $maf -c $input -o $mafOutput -p ${PBS_NUM_PPN}\n"
-	file.write(command)
+		file.write(command)
 
 def writeConvertFastq2Fasta(file):
 	'''
