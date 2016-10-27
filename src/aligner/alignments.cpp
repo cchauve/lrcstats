@@ -743,7 +743,11 @@ void ExtendedTrimmedAlignments::operationCosts(int64_t rowIndex, int64_t columnI
 		} else {
 			deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
 		}
-		insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
+		if (columnIndex == columns - 1) {
+			insert = matrix[rowIndex-1][columnIndex] + 1;
+		} else {
+			insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
+		}
 		substitute = matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]);	
 	} else if (rowIndex <= 0 and columnIndex > 0) {
 		// if we're at the end of the read, zero cost deletion
@@ -756,7 +760,11 @@ void ExtendedTrimmedAlignments::operationCosts(int64_t rowIndex, int64_t columnI
 		substitute = infinity;
 	} else if (rowIndex > 0 and columnIndex <= 0) {
 		deletion = infinity;
-		insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
+		if (columnIndex == columns - 1) {
+			insert = matrix[rowIndex-1][columnIndex] + 1;
+		} else {
+			insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
+		}
 		substitute = infinity;
 	}	
 }
