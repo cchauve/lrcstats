@@ -103,13 +103,13 @@ def writeAlignment(file, program):
 		"\n"
 	file.write(line)
 
-	if program is "jabba":
+	if program == "jabba":
 		command = "$aligner maf -m $maf -c $input -t -e -o $mafOutput -p ${PBS_NUM_PPN}\n"
 		file.write(command)
-	elif program is "proovread":
+	elif program == "proovread":
 		command = "$aligner maf -m $maf -c $input -t -o $mafOutput -p ${PBS_NUM_PPN}\n"
 		file.write(command)
-	elif program is "lordec":
+	elif program == "lordec":
 		command = "$aligner maf -m $maf -c $input -o $mafOutput -p ${PBS_NUM_PPN}\n"
 		file.write(command)
 	elif program in ["colormap", "colormap_oea"]:
