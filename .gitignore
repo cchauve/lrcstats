@@ -1,4 +1,4 @@
-scripts/*
+experiments/*
 *.config
 *.DS_store
 *.pyc
