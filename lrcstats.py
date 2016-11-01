@@ -213,7 +213,7 @@ paths = configVariables["paths"]
 experimentDetails = configVariables["experimentDetails"]
 
 # Create the necessary directories under `scripts`
-experimentDir = "scripts/%s" % (experimentName)
+experimentDir = "experiment/%s" % (experimentName)
 
 if not os.path.exists(experimentDir):
 	os.makedirs(experimentDir)
