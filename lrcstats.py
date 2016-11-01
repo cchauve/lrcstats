@@ -214,12 +214,21 @@ experimentDetails = configVariables["experimentDetails"]
 
 # Create the necessary directories under `scripts`
 experimentDir = "experiments/%s" % (experimentName)
-
 if not os.path.exists(experimentDir):
 	os.makedirs(experimentDir)
 
+# Create results folder
+resultsDir = "%s/results" % (experimentDir)
+if not os.path.exists(resultsDir):
+	os.makedirs(resultsDir)
+
+# Create the scripts folder
+scriptsDir = "%s/scripts" % (experimentDir)
+if not os.path.exists(scriptsDir):
+	os.makedirs(scriptsDir)
+
 for stage in ["simulate", "correct", "align", "stats"]: 
-	stageDir = "%s/%s" % (experimentDir, stage)
+	stageDir = "%s/%s" % (scriptsDir, stage)
 	if not os.path.exists(stageDir):
 		os.makedirs(stageDir)
 

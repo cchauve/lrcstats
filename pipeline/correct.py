@@ -154,7 +154,7 @@ def generateCorrectionJob(testDetails, paths):
 		% (testDetails["program"], testDetails["genome"], \
 			testDetails["shortCov"], testDetails["longCov"])
 
-	scriptPath = "%s/scripts/%s/correct/%s/%s-correct.pbs" \
+	scriptPath = "%s/experiments/%s/scripts/correct/%s/%s-correct.pbs" \
 		% (paths["lrcstats"], testDetails["experimentName"], testDetails["program"], testName)
 
 	with open(scriptPath,'w') as file:
@@ -190,7 +190,7 @@ def generateCorrectionJob(testDetails, paths):
 		elif program == "jabba":
 			writeJabba(file, paths)
 
-		line = "qsub %s/scripts/%s/align/%s/%s-align.pbs\n" \
+		line = "qsub %s/experiments/%s/scripts/align/%s/%s-align.pbs\n" \
 			% (paths["lrcstats"], testDetails["experimentName"], testDetails["program"], testName)
 		file.write(line)
 
@@ -204,11 +204,11 @@ def createQuickQsubScript(testDetails, paths, experimentName):
         for testDetail in testDetails:
 		testName = "%s-%s-%sSx%sL" \
 			% (testDetail["program"], testDetail["genome"], testDetail["shortCov"], testDetail["longCov"])
-		scriptPath = "%s/scripts/%s/correct/%s/%s-correct.pbs" \
+		scriptPath = "%s/experiments/%s/scripts/correct/%s/%s-correct.pbs" \
 			% (paths["lrcstats"], testDetail["experimentName"], testDetail["program"], testName)
                 scriptPaths.append(scriptPath)
 
-        path = "%s/scripts/%s/quick-qsub-correct.sh" % (paths["lrcstats"], experimentName)
+        path = "%s/experiments/%s/scripts/quick-qsub-correct.sh" % (paths["lrcstats"], experimentName)
         with open(path,'w') as file:
 		file.write("#!/bin/bash\n")
                 for scriptPath in scriptPaths:

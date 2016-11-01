@@ -17,7 +17,7 @@ def simulateArtShortReads(testDetails, paths):
 	- (dict of strings) paths: contains the program paths for the users systems
 	'''
 	# Reminder: experimentName is a global variable - initialized in lrcstats.py
-	scriptPath = "%s/experiments/%s/simulate/art/simulate-%s-short-d%s.pbs" \
+	scriptPath = "%s/experiments/%s/scripts/simulate/art/simulate-%s-short-d%s.pbs" \
 			% (paths["lrcstats"], testDetails["experimentName"], testDetails["genome"], testDetails["shortCov"]) 
 	with open(scriptPath, 'w') as file:
 		job_header.writeHeader(file, paths)
@@ -78,7 +78,7 @@ def simulateSimlordLongReads(testDetails, paths):
 	- (dict of strings) testDetails: contains the test parameters
 	- (dict of strings) paths: contains the program paths for the users systems
 	'''
-	scriptPath = "%s/experiments/%s/simulate/simlord/simulate-%s-long-d%s.pbs" \
+	scriptPath = "%s/experiments/%s/scripts/simulate/simlord/simulate-%s-long-d%s.pbs" \
 			% (paths["lrcstats"], testDetails["experimentName"], testDetails["genome"], testDetails["longCov"]) 
 
 	with open(scriptPath, 'w') as file:
@@ -150,17 +150,17 @@ def createQuickQsubScript(shortTestDetails, longTestDetails, paths, experimentNa
 	scriptPaths = []
 	for testDetail in longTestDetails:
 		# Add the path to the short read sim
-		scriptPath = "%s/experiments/%s/simulate/simlord/simulate-%s-long-d%s.pbs" \
+		scriptPath = "%s/experiments/%s/scripts/simulate/simlord/simulate-%s-long-d%s.pbs" \
 			% (paths["lrcstats"], testDetail["experimentName"], testDetail["genome"], testDetail["longCov"]) 
 		scriptPaths.append(scriptPath)
 
 	for testDetail in shortTestDetails:
 		# Add the path to the long read sim
-		scriptPath = "%s/experiments/%s/simulate/art/simulate-%s-short-d%s.pbs" \
+		scriptPath = "%s/experiments/%s/scripts/simulate/art/simulate-%s-short-d%s.pbs" \
 			% (paths["lrcstats"], testDetail["experimentName"], testDetail["genome"], testDetail["shortCov"]) 
 		scriptPaths.append(scriptPath)
 
-	path = "%s/experiments/%s/quick-qsub-simulate.sh" % (paths["lrcstats"], experimentName)
+	path = "%s/experiments/%s/scripts/quick-qsub-simulate.sh" % (paths["lrcstats"], experimentName)
 	with open(path,'w') as file:
 		file.write("#!/bin/bash\n")
 		for scriptPath in scriptPaths:
