@@ -25,7 +25,7 @@ def generateStatsJob(testDetails, paths):
 		% (testDetails["program"], testDetails["genome"], \
 			testDetails["shortCov"], testDetails["longCov"])
 
-        scriptPath = "%s/scripts/%s/stats/%s/%s-stats.pbs" \
+        scriptPath = "%s/experiments/%s/stats/%s/%s-stats.pbs" \
 		% (paths["lrcstats"], testDetails["experimentName"], testDetails["program"], testName)
 
 	with open(scriptPath,'w') as file:
@@ -123,11 +123,11 @@ def createQuickQsubScript(testDetails, paths, experimentName):
         for testDetail in testDetails:
 		testName = "%s-%s-%sSx%sL" \
 			% (testDetail["program"], testDetail["genome"], testDetail["shortCov"], testDetail["longCov"])
-	        scriptPath = "%s/scripts/%s/stats/%s/%s-stats.pbs" \
+	        scriptPath = "%s/experiments/%s/stats/%s/%s-stats.pbs" \
 			% (paths["lrcstats"], testDetail["experimentName"], testDetail["program"], testName)
 		scriptPaths.append(scriptPath)
 
-        path = "%s/scripts/%s/quick-qsub-stats.sh" % (paths["lrcstats"], experimentName)
+        path = "%s/experiments/%s/quick-qsub-stats.sh" % (paths["lrcstats"], experimentName)
         with open(path,'w') as file:
 		file.write("#!/bin/bash\n")
                 for scriptPath in scriptPaths:

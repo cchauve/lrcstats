@@ -213,7 +213,7 @@ paths = configVariables["paths"]
 experimentDetails = configVariables["experimentDetails"]
 
 # Create the necessary directories under `scripts`
-experimentDir = "experiment/%s" % (experimentName)
+experimentDir = "experiments/%s" % (experimentName)
 
 if not os.path.exists(experimentDir):
 	os.makedirs(experimentDir)
@@ -282,4 +282,4 @@ if args.stats:
 		stats.generateStatsJob(testDetails,paths)	
 	stats.createQuickQsubScript(tests, paths, experimentName)	
 
-print("PBS job and quick-qsub scripts are ready - they can be found under `scripts/%s`." % (experimentName))
+print("PBS job and quick-qsub scripts are ready - they can be found under `experiments/%s`." % (experimentName))
