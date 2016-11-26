@@ -52,22 +52,4 @@ int64_t getInsertions(std::string ref, std::string read);
 int64_t getDeletions(std::string ref, std::string read);
 // Returns the number of insertions between the reference and read string
 
-/* The following four methods are deprecated */
-
-int64_t correctedTruePositives(std::string ref, std::string read);
-// Returns the number of pairs of bases such that the read base is corrected and
-// the read base is equivalent to the reference base.
-
-int64_t correctedFalsePositives(std::string ref, std::string read);
-// Returns the number of pairs of bases such that the read base is corrected and
-// the read base is not equivalent to the reference base.
-
-int64_t uncorrectedTruePositives(std::string ref, std::string read);
-// Returns the number of pairs of bases where the read base is uncorrected and
-// the read base is equivalent to the reference base.
-
-int64_t uncorrectedFalsePositives(std::string ref, std::string read);
-// Returns the number of pairs of bases where the read base is uncorrected and
-// the read base is not equivalent to the reference base.
-
 #endif // MEASURES_H

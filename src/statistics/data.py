@@ -14,11 +14,6 @@ class ReadDatum(object):
 	uncorrIns_k = "UNCORRECTED INSERTION"
 	uncorrSub_k = "UNCORRECTED SUBSTITUTION"
 
-	cTruePos_k = "CORRECTED TRUE POSITIVE"
-	cFalsePos_k = "CORRECTED FALSE POSITIVE"
-	uTruePos_k = "UNCORRECTED TRUE POSITIVE"
-	uFalsePos_k = "UNCORRECTED FALSE POSITIVE"
-
 	keys = [corrReadLength_k,
 		uncorrReadLength_k,
 		corrAlignmentLength_k,
@@ -28,11 +23,8 @@ class ReadDatum(object):
 		corrSub_k,
 		uncorrDel_k,
 		uncorrIns_k,
-		uncorrSub_k,
-		cTruePos_k,
-		cFalsePos_k,
-		uTruePos_k,
-		uFalsePos_k]
+		uncorrSub_k
+		]
 	'''
 	Preprocesses and outputs general statistics for reads.
 	'''
@@ -176,36 +168,6 @@ class UntrimmedDatum(ReadDatum):
 		correctedTruePos = self.data[ReadDatum.cTruePos_k]
 		correctedFalsePos = self.data[ReadDatum.cFalsePos_k]
 		return (correctedFalsePos)/(correctedTruePos + correctedFalsePos)
-
-	# These methods apply to the uncorrected segments of corrected long reads
-
-	def getUncorrTruePositives(self):
-		'''
-		Uncorrected true positives are defined as bases
-		that have NOT been corrected and are equivalent
-		to its respective base in the reference alignment.
-		'''
-		uncorrectedTruePos = self.data[ReadDatum.uTruePos_k]
-		return uncorrectedTruePos
-
-	def getUncorrFalsePositives(self):
-		'''
-		Uncorrected false positives are defined as bases that
-		have NOT been corrected and are NOT equivalent to its
-		respective base in the reference alignment.
-		'''
-		uncorrectedFalsePos = self.data[ReadDatum.uFalsePos_k]
-		return uncorrectedFalsePos
-
-	def getUncorrSegmentErrorRate(self):
-		'''
-		Returns the error rate over only those segments of
-		the corrected long read which have not been
-		corrected.
-		'''
-		uncorrectedTruePos = self.data[ReadDatum.uTruePos_k]
-		uncorrectedFalsePos = self.data[ReadDatum.uFalsePos_k]
-		return (uncorrectedFalsePos)/(uncorrectedTruePos + uncorrectedFalsePos)
 
 def retrieveRawData(dataPath):
 	'''

@@ -247,12 +247,14 @@ std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int6
 	statistics.push_back( getInsertions(ref,uRead) );
 	statistics.push_back( getSubstitutions(ref,uRead) );
 
+	/*
 	// True and false positive numbers in the corrected long read
 	statistics.push_back( correctedTruePositives(ref,cRead) );
 	statistics.push_back( correctedFalsePositives(ref,cRead) );
 
 	statistics.push_back( uncorrectedTruePositives(ref,cRead) );
 	statistics.push_back( uncorrectedFalsePositives(ref,cRead) );
+	*/
 
 	return statistics;
 }
