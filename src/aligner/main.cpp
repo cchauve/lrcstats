@@ -328,8 +328,23 @@ void createStats()
 		std::getline(mafFile, line); 
 	} 
 
+	//write the legend
+	std::string legend = "# [Read ID]: The ID of the read. Takes on any string value.\n"
+		"# [Type]: If 't', indicates that the statistics are for only corrected segments of the read.\n"
+                "#         If 'u', indicates that the statistics are for the entire segment of the read.\n"
+		"# [cLR Length]: Length of the corrected long read segment without '-'. Takes on values > 0.\n"
+		"# [uLR Length]: Length of the uncorrected long read segment without '-'. Takes on values > 0.\n"
+		"# [Alignment Length]: Length of the segment of the alignment. Takes on values > 0.\n"
+                "# [cLR Del]: Number of deletions in the cLR alignment segment. Positive integer values.\n"
+                "# [cLR Ins]: Number of insertions in the cLR alignment segment. Positive integer values.\n"
+                "# [cLR Sub]: Number of substitutions in the cLR alignment segment. Positive integer values.\n"
+                "# [uLR Del]: Number of deletions in the uLR alignment segment. Positive integer values.\n"
+                "# [uLR Ins]: Number of insertions in the uLR alignment segment. Positive integer values.\n"
+                "# [uLR Sub]: Number of substitutions in the uLR alignment segment. Positive integer values.\n";
+	output << legend;
+
 	// write the header line
-	std::string header = "# [Read ID] [Read Type] [cLR Length] [uLR Length] [Alignment Length] [cLR Deletions] [cLR Insertions] [cLR Substitutions] [uLR Deletions] [uLR Insertions] [uLR Substitutions]";
+	std::string header = "# [Read ID] [Type] [cLR Length] [uLR Length] [Alignment Length] [cLR Del] [cLR Ins] [cLR Sub] [uLR Del] [uLR Ins] [uLR Sub]";
 	output << header << std::endl;
 
 	// The getline in the while loop condition skips the "a" line
