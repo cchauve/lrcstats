@@ -8,287 +8,349 @@ from pipeline import correct
 from pipeline import align
 from pipeline import stats
 
-def createBlankConfig(configName):
+def createBlankConfig(configPath):
 	'''
 	Creates a blank configuration file in the current directory.
 	'''
-	config ="[paths]\n" \
-		"# Make sure there are spaces around each '='\n" \
-		"# For each path, don't include the ending / please!\n" \
-		"# Don't put quotation marks around each item\n" \
-		"\n" \
-		"# Absolute path to LRCStats dir\n" \
-		"lrcstats = \n" \
-		"\n" \
-		"# Path to the read simulator programs\n" \
-		"art = \n" \
-		"simlord = \n" \
-		"\n" \
-		"# Path to the correction tools and dependencies\n" \
-		"proovread = \n" \
-		"colormap = \n" \
-		"colormap_oea = \n" \
-		"lordec = \n" \
-		"karect = \n" \
-		"brownie = \n" \
-		"jabba = \n" \
-		"\n" \
+	config ="[experiment details]\n" \
+		"experiment_name = example_name\n" \
+		"threads = 1\n" \
+		"# true or false\n" \
+		"trimmed = false\n" \
+		"extended = false\n" \
+		"[paths]\n" \
 		"# Directory to store read data\n" \
 		"data = \n" \
-		"\n" \
-		"# Paths to the reference genome FASTA file\n" \
-		"yeast_ref = \n" \
-		"ecoli_ref = \n" \
-		"fly_ref = \n" \
-		"\n" \
-		"# Paths to the real PacBio read FASTQ files\n" \
-		"yeast_fastq = \n" \
-		"ecoli_fastq = \n" \
-		"fly_fastq = \n" \
-		"\n" \
-		"# Your email address to send PBS job info to\n" \
-		"email = email@example.com\n" \
-		"\n" \
-		"[experiment_details]\n" \
-		"# No spaces in between items in list please\n" \
-		"# i.e. in the form [item_1,...,item_n]\n" \
-		"\n" \
-		"# for every genome you include in the list below,\n" \
-		"# make sure you also include the paths to the reference\n" \
-		"# fasta file and the real PacBio long read FASTQ file above!\n" \
-		"genomes = [ecoli]\n" \
-		"short_coverages = [50,100,200]\n" \
-		"long_coverages = [10,20,50,75]\n" \
-		"programs = [proovread,lordec,jabba,colormap,colormap_oea]\n" 
+		"clr = example.fasta\n" \
+		"# Paths to MAF two-way alignment file\n" \
+		"maf = example.maf\n" \
+		"[initialization commands]\n" \
+		"# List shell commands you would like to initialize before the alignment process starts\n" \
+		"# Load python 2.7.2\n" \
+		"module load python/2.7.2\n" \
+		"# Load g++ 5.1.0\n" \
+		"module load gcc/gcc-5.1.0\n" \
+		"[PBS parameters]\n" \
+		"# Enter the PBS parameters that will appear in the header of the LRCStats job file\n" \
+		"# Do not prepend each line with a # character - this will be interpretted as a comment\n" \
+		"PBS -M email@domain.com\n"
+		"PBS -m bea\n" \
+		"PBS -j oe\n" \
+		"PBS -N example_job\n" \
+		"PBS -l mem=8gb\n" \
+		"PBS -l nodes:1:ppn=1\n" \
+		"PBS -l walltime=01:00:00\n"
 
-	blankConfigPath = "config/%s.config" % (configName)
+	blankConfigPath = "%s" % (configPath)
 	with open(blankConfigPath,'w') as file:
-		file.write(config)	
+		file.write(config)
 
-def parseListString(listString):
-	'''
-	Given a string of the form "[item_1,...,item_n]",
-	returns a list of the form ["item_1", ... , "item_n"] 
-	'''
-	# Reverse the string
-	listString = listString[::-1]
-
-	# Get rid of the first left brace
-	listString = listString.rstrip("[")
-
-	# Unreverse the string
-	listString = listString[::-1]
-
-	# Get rid of the last brace
-	listString = listString.rstrip("]")
-
-	# Split that string
-	details = listString.split(",")
-
-	return details
-
-def testParseListString():
-	testString = "[proovread,lordec,jabba,colormap,colormap_oea]"
-	actualList = ["proovread", "lordec", "jabba", "colormap", "colormap_oea"]
-	details = parseListString(testString)
-
-	assert actualList == details
-
-	print("Parse list string passed!")
+def parseToken(token):
+	if token.lower() == "false":
+		return False
+	elif token.lower() == "true":
+		return True
+	else:
+		return token 
 
 def readConfig(configPath):
 	'''
 	Reads a configuration file and outputs a dict of user variables
 	to the necessary programs.
 	''' 
+	experimentDetails = { "extended": False, "trimmed": False }
 	paths = {}
-	experimentDetails = {} 
+	initCommands = []
+	pbsOptions = []
 	currentSection = None
 
 	with open(configPath, 'r') as config:
 		for line in config:
-			tokens = line.split()
-			# hashtags are comments
-			if line[0] != "#":
-				if len(tokens) == 1 and tokens[0] == "[paths]":
+			# Remove comments
+			line = line.split("#")[0]
+			if len(line) > 0:
+				# check if new section and change section
+				if line == "[paths]":
 					currentSection = "paths"
+				elif line == "[initialization commands]": 
+					currentSection = "init"
+				elif line == "[PBS parameters]": 
+					currentSection = "pbs"
+				elif line == "[experiment details]":
+					currentSection = "experiment details"
+				# if not in new section of config file, perform section specific operations
+				else:
+					if currentSection is "experiment details":
+						# remove whitespace from line	
+						line.replace(" ","")
+						line.replace("	","")
+						tokens = line.split("=")
+						experimentDetails[tokens[0]] = parseToken(tokens[1])	
+					elif currentSection is "paths":
+						# remove whitespace from line	
+						line.replace(" ","")
+						line.replace("	","")
+						tokens = line.split("=")
+						# add path to the dict
+						paths[tokens[0]] = parseToken(tokens[1])
+					elif currentSection is "init":
+						initCommands.append( line.rstrip() )
+					elif currentSection is "pbs":
+						pbsOptions.append( line.rstrip() )
 
-				elif len(tokens) == 1 and tokens[0] == "[experiment_details]":
-					currentSection = "experimentDetails"
+	config = {"experimentDetails": experimentDetails, "paths": paths, "initCommands": initCommands, 
+                  "pbsOptions": pbsOptions}
+	return config
 
-				elif len(tokens) == 3 and currentSection is "paths":
-					key = tokens[0]
-					path = tokens[2]
-					paths[key] = path				
+def writeHeader(file, pbsOptions):
+	file.write("#!/bin/bash\n")
+	for option in pbsOptions:
+		line = "# %s\n" %(option)
+		file.write(line)
+	file.write('\n')
 
-				elif len(tokens) == 3 and currentSection is "experimentDetails":
-					key = tokens[0]
-					details = parseListString(tokens[2])
-					experimentDetails[key] = details
+def writeInit(file, initCommands):
+	for command in initCommands:
+		line = "%s\n" % (command)
+		file.write(line) 
+	file.write('\n')
 
-	configVariables = {"paths": paths, "experimentDetails": experimentDetails}
-	return configVariables
+def writePaths(file, paths):
+	lrcstatsPath = os.path.dirname(os.path.realpath(__file__))
+	line = "lrcstats=%s\n" % (lrcstatsPath)
+	file.write(line)
+	for key in paths:
+		line = "%s=%s\n" % (key, paths[key])
+		file.write(line)
+	file.write('\n')
 
-def test():
-	testParseListString()
+def writeSort(file):
+        '''
+        Write the commands to sort FASTA file
+        '''
+        line = "############### Sort FASTA ###########\n" \
+                "echo 'Sorting FASTA file...'\n" \
+                "\n" \
+                "sortfasta=${lrcstats}/src/preprocessing/sortfasta/sortfasta.py\n" \
+                "sortedOutput=${data}/sorted.fasta\n" \
+                "\n" \
+                "python $sortfasta -i $input -o $sortedOutput\n" \
+                "\n" \
+                "clr=$sortedOutput\n" \
+                "\n" 
+        file.write(line)        
 
+def writePrune(file):
+        '''
+        Write the commands to prune the MAF file
+        '''
+        line = "############### Prune the maf file(s) ###########\n" \
+                "echo 'Pruning MAF file(s)...'\n" \
+                "\n" \
+                "prunemaf=${lrcstats}/src/preprocessing/prunemaf/prunemaf.py\n" \
+                "pruneOutput=${data}/pruned\n" \
+                "python $prunemaf -f $input -m $maf -o $pruneOutput\n" \
+                "\n" \
+                "maf=${pruneOutput}.maf\n" \
+                "\n"
+        file.write(line)
+
+def writeConcatenateTrimmedReads(file):
+        '''
+        Write the commands to process trimmed reads.
+        '''
+        line = "############### Concatenate Trimmed Reads ###########\n" \
+                "echo 'Processing trimmed reads...'\n" \
+                "concatenate=${lrcstats}/src/preprocessing/concatenate_trimmed/concatenate_trimmed.py\n" \
+                "concatenated_output=${data}/concatenated.fasta\n" \
+                "\n" \
+                "python ${concatenate} -i ${clr} -o ${concatenated_output}\n" \
+                "\n" \
+                "clr=${concatenated_output}\n" \
+                "\n"
+        file.write(line)
+
+def writeAlignment(file, trimmed, extended):
+        '''
+        Write the commands to create a three-way alignment
+        between the cLR, uLR and ref
+        '''
+        line = "############### Generate three-way alignment ###########\n" \
+                "echo 'Generating three-way alignment...'\n" \
+                "aligner=${lrcstats}/src/aligner/aligner\n" \
+                "mafOutput=${data}/${experiment_name}.maf\n" \
+                "\n"
+        file.write(line)
+
+	if trimmed and extended: 
+		command = "$aligner maf -m $maf -c $clr -t -e -o $mafOutput -p ${threads}\n"
+        elif trimmed:
+                command = "$aligner maf -m $maf -c $clr -t -o $mafOutput -p ${threads}\n"
+        elif extended:
+                command = "$aligner maf -m $maf -c $clr -e -o $mafOutput -p ${threads}\n"
+        else:
+                command = "$aligner maf -m $maf -c $clr -o $mafOutput -p ${threads}\n"
+	file.write(command)
+`
+	line = "maf=${mafOutput}\n"
+	file.write(line)
+
+def writeRemoveExtensions(file):
+	line = "############### Removing extended regions #############\n" \
+               "echo 'Removing extended regions...'\n" \
+               "unextend=${lrcstats}/src/preprocessing/unextend_alignments/unextend_alignments.py\n" \
+               "unextendOutput=${data}/${experiment_name}_unextended.maf\n" \
+               "python $unextend -i ${maf} -m ${unextendOutput}\n" \
+               "maf=$unextendOutput\n" \
+               "\n"
+	file.write(line)
+
+def writeStats(file, trimmed, extended):
+	if extended:
+		writeRemoveExtensions(file)
+
+	line = "############### Collecting data ###########\n" \
+                "echo 'Collecting data...'\n" \
+                "\n" \
+                "statsOutput=${data}/${experiment_name}.stats\n" \
+                "\n"
+	file.write(line)
+
+	if trimmed:
+		command = "$aligner stats -m ${maf} -o ${statsOutput} -t -p ${threads}\n\n"
+	else:
+		command = "$aligner stats -m ${maf} -o ${statsOutput} -p ${threads}\n\n"
+	file.write(command)
+
+	line = "input=${statsOutput}\n" \
+		"\n"
+	file.write(line)
+	line = "############## Summarizing statistics ############\n" \
+		"echo 'Summarizing statistics...'\n" \
+		"\n" \
+		"summarizeStats=${lrcstats}/src/statistics/summarize_stats.py\n" \
+		"statsOutput=${data}/${testName}_results.txt\n" \
+                        "\n"
+	file.write(line)
+
+	if trimmed:
+		line = "python ${summarizeStats} -i ${input} -o ${statsOutput}\n"
+	else:
+		line = "python ${summarizeStats} -i ${input} -b -o ${statsOutput}\n"
+	file.write(line)
+
+def writePipeline(file, experimentDetails):
+	trimmed = experimentDetails["trimmed"]
+	extended = experimentDetails["extended"]
+	writeSort(file)
+	writePrune(file)
+	if trimmed:
+		writeConcatenate(file)
+	writeAlignment(file,trimmed,extended)
+	writeStats(file,trimmed,extended)
+		
 MAJOR_VERSION = 1
 MINOR_VERSION = 0
 
 # Command line arguments go here.
 parser = argparse.ArgumentParser(description='''
-	Long Read Correction Stats (LRCStats) PBS script generator,
+	Long Read Correction Stats (LRCStats) Pipeline generator,
 	Version %d.%d
 	''' % (MAJOR_VERSION, MINOR_VERSION))
 
-parser.add_argument('-b', '--blank_config', metavar='CONFIG_NAME', type=str, help=
+parser.add_argument('-b', '--blank_config', metavar='CONFIG_PATH', type=str, help=
 	"""
-	create a new configuration file 
-	""")
-parser.add_argument('-s', '--simulate', action='store_true', help=
-	"""
-	create read simulation scripts
-	""")
-parser.add_argument('-c', '--correct', action='store_true', help=
-	"""
-	create correction job scripts
-	""")
-parser.add_argument('-a', '--align', action='store_true', help=
-	"""
-	create three-way alignment scripts
-	""") 
-parser.add_argument('-t', '--stats', action='store_true', help=
-	"""
-	create stats scripts
-	""")
-parser.add_argument('-u', '--test', action='store_true', help=
-	"""
-	perform unit tests for this module
+	create a new configuration file at CONFIG_PATH 
 	""")
 
-requiredNamed = parser.add_argument_group('required named arguments')
-requiredNamed.add_argument('-i', '--input_config', metavar='CONFIG', type=str, help=
+parser.add_argument('-i', '--input_config', metavar='CONFIG', type=str, help=
 	"""
 	path to the configuration file
 	""")
-requiredNamed.add_argument('-n', '--experiment_name', metavar='NAME', type=str, help=
+parser.add_argument('-n', '--experiment_name', metavar='NAME', type=str, help=
 	"""
-	name of the experiment; scripts will appear in the folder of this name
-	under the directory `scripts`
+	name of the experiment
+	""")
+parser.add_argument('-t', '--trimmed', action="store_true", help=
+	"""
+	corrected long reads are trimmed
+	""")
+parser.add_argument('-e', '--extended', action="store_true", help=
+	"""
+	corrected long reads are extended
+	""")
+parser.add_argument('-d', '--data', metavar='DATA_PATH', type=str, help=
+	"""
+	directory to store temporary and results files
+	""")
+parser.add_argument('-c', '--clr', metavar='CLR_PATH', type=str, help=
+	"""
+	path to the cLR FASTA file
+	""")
+parser.add_argument('-m', '--maf', metavar='MAF_PATH', type=str, help=
+	"""
+	path to the ref-uLR two-way alignment MAF file
+	""")
+parser.add_argument('-o', '--output', metavar='OUTPUT_PATH', type=str, help=
+	"""
+	output path for pipeline script
+	""")
+parser.add_argument('-p', '--threads', metavar="NUM_THREADS", type=str, help=
+	"""
+	number of threads to use
 	""")
 
 args = parser.parse_args()
 
-if args.test:
-	test()
-	sys.exit()
-
 if args.blank_config:
 	createBlankConfig(args.blank_config)
-	print("Created a new configuration file in config folder.")
+	print("Created a new configuration file.")
 	sys.exit()
 
-# If blank_config not checked, then do the rest of the pipeline
+experimentDetails = {}
+paths = {}
+initCommands = []
+pbsOptions = []
+outputPath = None
 
-optsIncomplete = False
-
-if args.experiment_name:
-	experimentName = args.experiment_name
-else:
-	optsIncomplete = True
-	print("Error; please provide the name of the experiment")
+# input_config must come before the rest of the command line options
 
 if args.input_config:
-	configPath = args.input_config
-	print( "Reading configuration file at %s..." % (configPath) )
-	configVariables = readConfig(configPath)
+	config = readConfig(args.input_config)	
+	experimentDetails = config["experimentDetails"]
+	paths = config["paths"]
+	initCommands = config["initCommands"]
+	pbsOptions = config["pbsOptions"]
+
+if args.experiment_name:
+	experimentDetails["experiment_name"] = args.experiment_name
+if args.trimmed:
+	experimentDetails["trimmed"] = True
 else:
-	optsIncomplete = True
-	print("Error; please provide a configuration file.")
+	experimentDetails["trimmed"] = False
+if args.extended:
+	experimentDetails["extended"] = True
+else:
+	experimentDetails["extended"] = False
+if args.threads:
+	experimentDetails["threads"] = args.threads
+if args.data:
+	paths["data"] = args.data
+if args.clr:
+	paths["clr"] = args.clr
+if args.maf:
+	paths["maf"] = args.maf
+if args.output:
+	outputPath = args.output
+	
 
-if optsIncomplete:
-	sys.exit(2) 
+if "experiment_name" not in experimentDetails or len(paths) != 3 or outputPath is None:
+	print("Error: please provide the experiment name, output path, and the paths to the cLR, MAF files and 
+               data directory")
+	sys.exit(1)
 
-paths = configVariables["paths"]
-experimentDetails = configVariables["experimentDetails"]
-
-# Create the necessary directories under `scripts`
-experimentDir = "experiments/%s" % (experimentName)
-if not os.path.exists(experimentDir):
-	os.makedirs(experimentDir)
-
-# Create results folder
-resultsDir = "%s/results" % (experimentDir)
-if not os.path.exists(resultsDir):
-	os.makedirs(resultsDir)
-
-# Create the scripts folder
-scriptsDir = "%s/scripts" % (experimentDir)
-if not os.path.exists(scriptsDir):
-	os.makedirs(scriptsDir)
-
-for stage in ["simulate", "correct", "align", "stats"]: 
-	stageDir = "%s/%s" % (scriptsDir, stage)
-	if not os.path.exists(stageDir):
-		os.makedirs(stageDir)
-
-	if stage is "simulate":
-		programs = ["simlord", "art"]
-	else:
-		programs = experimentDetails["programs"]	
-
-	for program in programs:
-			programDir = "%s/%s" % (stageDir, program)
-			if not os.path.exists(programDir):
-				os.makedirs(programDir)
-
-print("Creating PBS job scripts and quick-qsub scripts...")
-
-if args.simulate:
-	# Make the short and long read simulation scripts
-	longTestDetails = []
-	shortTestDetails = []
-
-	for genome in experimentDetails["genomes"]:
-		for shortCov in experimentDetails["short_coverages"]:
-			testDetail = {"genome": genome, "experimentName": experimentName, "shortCov": shortCov}
-			simulate.simulateArtShortReads(testDetail,paths)		
-			shortTestDetails.append(testDetail)	
-
-		for longCov in experimentDetails["long_coverages"]:
-			testDetail = {"genome": genome, "experimentName": experimentName, "longCov": longCov}
-			simulate.simulateSimlordLongReads(testDetail,paths)		
-			longTestDetails.append(testDetail)
-
-	# make the quick-qsub scripts for all the sim scripts
-	simulate.createQuickQsubScript(shortTestDetails, longTestDetails, paths, experimentName)	
-
-# Find all test cases
-tests = []
-
-for program in experimentDetails["programs"]:
-	for genome in experimentDetails["genomes"]:
-		for shortCov in experimentDetails["short_coverages"]:
-			for longCov in experimentDetails["long_coverages"]:
-				if int(shortCov) > int(longCov):
-					testDetails = {"program": program, "genome": genome, 
-							"experimentName": experimentName,
-							"shortCov": shortCov, "longCov": longCov}
-					tests.append(testDetails)
-# Create the rest of the pipeline
-if args.correct:
-	for testDetails in tests:
-		correct.generateCorrectionJob(testDetails,paths)
-	correct.createQuickQsubScript(tests, paths, experimentName)
-
-if args.align:
-	for testDetails in tests:
-		align.generateAlignmentJob(testDetails,paths)
-	align.createQuickQsubScript(tests, paths, experimentName)
-
-if args.stats:
-	for testDetails in tests:
-		stats.generateStatsJob(testDetails,paths)	
-	stats.createQuickQsubScript(tests, paths, experimentName)	
-
-print("PBS job and quick-qsub scripts are ready - they can be found under `experiments/%s`." % (experimentName))
+with open(outputPath,'w') as file:
+	writeHeader(file,pbsOptions)
+	writeInit(file,initCommands)
+	writePaths(file,paths)
+	writePipeline(file,experimentDetails)
