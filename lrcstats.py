@@ -8,27 +8,31 @@ def createBlankConfig(configPath):
 	'''
 	Creates a blank configuration file in the current directory.
 	'''
-	config ="[experiment details]\n" \
+	config ="[Experiment Details]\n" \
 		"experiment_name = example_name\n" \
+		"# Number of threads you'd like to run the aligner with\n" \
 		"threads = 1\n" \
 		"# true or false\n" \
 		"trimmed = false\n" \
 		"extended = false\n" \
-		"[paths]\n" \
+		"\n" \
+		"[Paths]\n" \
 		"# Directory to store read data\n" \
 		"data = \n" \
 		"clr = example.fasta\n" \
 		"# Paths to MAF two-way alignment file\n" \
 		"maf = example.maf\n" \
-		"[initialization commands]\n" \
-		"# List shell commands you would like to initialize before the alignment process starts\n" \
+		"\n" \
+		"[Initialization Commands]\n" \
+		"# List shell commands you would like to perform before alignment\n" \
 		"# Load python 2.7.2\n" \
 		"module load python/2.7.2\n" \
 		"# Load g++ 5.1.0\n" \
 		"module load gcc/gcc-5.1.0\n" \
-		"[PBS parameters]\n" \
-		"# Enter the PBS parameters that will appear in the header of the LRCStats job file\n" \
-		"# Do not prepend each line with a # character - this will be interpretted as a comment\n" \
+		"\n" \
+		"[PBS Parameters]\n" \
+		"# Enter the PBS Parameters that will appear in the header of the LRCStats job file\n" \
+		"# Do not prepend each line with a # character - this will be interpreted as a comment\n" \
 		"PBS -M email@domain.com\n" \
 		"PBS -m bea\n" \
 		"PBS -j oe\n" \
@@ -66,21 +70,17 @@ def readConfig(configPath):
 			line = line.split("#")[0].rstrip()
 			if len(line) > 0:
 				# check if new section and change section
-				if line == "[paths]":
+				if line == "[Paths]":
 					currentSection = "paths"
-					print("Reading paths...")
-				elif line == "[initialization commands]": 
+				elif line == "[Initialization Commands]": 
 					currentSection = "init"
-					print("Reading initialization commands...")
-				elif line == "[PBS parameters]": 
+				elif line == "[PBS Parameters]": 
 					currentSection = "pbs"
-					print("Reading PBS parameters...")
-				elif line == "[experiment details]":
-					currentSection = "experiment details"
-					print("Reading experiment details...")
+				elif line == "[Experiment Details]":
+					currentSection = "Experiment Details"
 				# if not in new section of config file, perform section specific operations
 				else:
-					if currentSection is "experiment details":
+					if currentSection is "Experiment Details":
 						# remove whitespace from line	
 						line = line.replace(" ","")
 						line = line.replace("	","")
@@ -97,10 +97,7 @@ def readConfig(configPath):
 						initCommands.append( line.rstrip() )
 					elif currentSection is "pbs":
 						pbsOptions.append( line.rstrip() )
-	print experimentDetails
-	print paths
-	print initCommands
-	print pbsOptions
+
 	return experimentDetails, paths, initCommands, pbsOptions
 
 def writeHeader(file, pbsOptions):
@@ -171,7 +168,7 @@ def writeConcatenateTrimmedReads(file):
                 "\n"
         file.write(line)
 
-def writeAlignment(file, trimmed, extended):
+def writeAlignment(file, trimmed, extended, threads):
         '''
         Write the commands to create a three-way alignment
         between the cLR, uLR and ref
@@ -184,13 +181,13 @@ def writeAlignment(file, trimmed, extended):
         file.write(line)
 
 	if trimmed and extended: 
-		command = "$aligner maf -m $maf -c $clr -t -e -o $mafOutput -p ${threads}\n"
+		command = "$aligner maf -m $maf -c $clr -t -e -o $mafOutput -p %s\n" % (threads)
         elif trimmed:
-                command = "$aligner maf -m $maf -c $clr -t -o $mafOutput -p ${threads}\n"
+                command = "$aligner maf -m $maf -c $clr -t -o $mafOutput -p %s\n" % (threads)
         elif extended:
-                command = "$aligner maf -m $maf -c $clr -e -o $mafOutput -p ${threads}\n"
+                command = "$aligner maf -m $maf -c $clr -e -o $mafOutput -p %s\n" % (threads)
         else:
-                command = "$aligner maf -m $maf -c $clr -o $mafOutput -p ${threads}\n"
+                command = "$aligner maf -m $maf -c $clr -o $mafOutput -p %s\n" % (threads)
 	file.write(command)
 	line = "maf=${mafOutput}\n"
 	file.write(line)
@@ -217,9 +214,9 @@ def writeStats(file, trimmed, extended):
 	file.write(line)
 
 	if trimmed:
-		command = "$aligner stats -m ${maf} -o ${statsOutput} -t -p ${threads}\n\n"
+		command = "$aligner stats -m ${maf} -o ${statsOutput} -t}\n\n"
 	else:
-		command = "$aligner stats -m ${maf} -o ${statsOutput} -p ${threads}\n\n"
+		command = "$aligner stats -m ${maf} -o ${statsOutput}\n\n"
 	file.write(command)
 
 	line = "input=${statsOutput}\n" \
@@ -242,11 +239,12 @@ def writeStats(file, trimmed, extended):
 def writePipeline(file, experimentDetails):
 	trimmed = experimentDetails["trimmed"]
 	extended = experimentDetails["extended"]
+	threads = experimentDetails["threads"]
 	writeSort(file)
 	writePrune(file)
 	if trimmed:
 		writeConcatenate(file)
-	writeAlignment(file,trimmed,extended)
+	writeAlignment(file,trimmed,extended,threads)
 	writeStats(file,trimmed,extended)
 		
 MAJOR_VERSION = 1
@@ -353,6 +351,9 @@ if "clr" not in paths:
 if "maf" not in paths:
 	argsIncomplete = True
 	print("Error: please provide the path to the ref-uLR two-way alignment MAF file.")
+if "threads" not in experimentDetails:
+	argsIncomplete = True
+	print("Error: please provide the number of threads you would like to use.")
 if outputPath is None:
 	argsIncomplete = True
 	print("Error: please provide an output path.")
@@ -365,3 +366,5 @@ with open(outputPath,'w') as file:
 	writeInit(file,initCommands)
 	writePaths(file,paths)
 	writePipeline(file,experimentDetails)
+
+print("LRCStats pipeline shell script created at %s" % (outputPath))
