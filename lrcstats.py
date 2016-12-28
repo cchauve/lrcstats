@@ -337,7 +337,6 @@ def writePipeline(file, experimentDetails):
 MAJOR_VERSION = 1
 MINOR_VERSION = 0
 
-# Command line arguments go here.
 parser = argparse.ArgumentParser(description='''
 	Long Read Correction Stats (LRCStats) Pipeline generator,
 	Version %d.%d
