@@ -3,10 +3,6 @@ import argparse
 import sys
 # For os.makedirs
 import os
-from pipeline import simulate
-from pipeline import correct
-from pipeline import align
-from pipeline import stats
 
 def createBlankConfig(configPath):
 	'''
@@ -33,7 +29,7 @@ def createBlankConfig(configPath):
 		"[PBS parameters]\n" \
 		"# Enter the PBS parameters that will appear in the header of the LRCStats job file\n" \
 		"# Do not prepend each line with a # character - this will be interpretted as a comment\n" \
-		"PBS -M email@domain.com\n"
+		"PBS -M email@domain.com\n" \
 		"PBS -m bea\n" \
 		"PBS -j oe\n" \
 		"PBS -N example_job\n" \
@@ -67,29 +63,33 @@ def readConfig(configPath):
 	with open(configPath, 'r') as config:
 		for line in config:
 			# Remove comments
-			line = line.split("#")[0]
+			line = line.split("#")[0].rstrip()
 			if len(line) > 0:
 				# check if new section and change section
 				if line == "[paths]":
 					currentSection = "paths"
+					print("Reading paths...")
 				elif line == "[initialization commands]": 
 					currentSection = "init"
+					print("Reading initialization commands...")
 				elif line == "[PBS parameters]": 
 					currentSection = "pbs"
+					print("Reading PBS parameters...")
 				elif line == "[experiment details]":
 					currentSection = "experiment details"
+					print("Reading experiment details...")
 				# if not in new section of config file, perform section specific operations
 				else:
 					if currentSection is "experiment details":
 						# remove whitespace from line	
-						line.replace(" ","")
-						line.replace("	","")
+						line = line.replace(" ","")
+						line = line.replace("	","")
 						tokens = line.split("=")
 						experimentDetails[tokens[0]] = parseToken(tokens[1])	
 					elif currentSection is "paths":
 						# remove whitespace from line	
-						line.replace(" ","")
-						line.replace("	","")
+						line = line.replace(" ","")
+						line = line.replace("	","")
 						tokens = line.split("=")
 						# add path to the dict
 						paths[tokens[0]] = parseToken(tokens[1])
@@ -97,10 +97,11 @@ def readConfig(configPath):
 						initCommands.append( line.rstrip() )
 					elif currentSection is "pbs":
 						pbsOptions.append( line.rstrip() )
-
-	config = {"experimentDetails": experimentDetails, "paths": paths, "initCommands": initCommands, 
-                  "pbsOptions": pbsOptions}
-	return config
+	print experimentDetails
+	print paths
+	print initCommands
+	print pbsOptions
+	return experimentDetails, paths, initCommands, pbsOptions
 
 def writeHeader(file, pbsOptions):
 	file.write("#!/bin/bash\n")
@@ -191,7 +192,6 @@ def writeAlignment(file, trimmed, extended):
         else:
                 command = "$aligner maf -m $maf -c $clr -o $mafOutput -p ${threads}\n"
 	file.write(command)
-`
 	line = "maf=${mafOutput}\n"
 	file.write(line)
 
@@ -316,11 +316,7 @@ outputPath = None
 # input_config must come before the rest of the command line options
 
 if args.input_config:
-	config = readConfig(args.input_config)	
-	experimentDetails = config["experimentDetails"]
-	paths = config["paths"]
-	initCommands = config["initCommands"]
-	pbsOptions = config["pbsOptions"]
+	experimentDetails, paths, initCommands, pbsOptions = readConfig(args.input_config)
 
 if args.experiment_name:
 	experimentDetails["experiment_name"] = args.experiment_name
@@ -342,13 +338,28 @@ if args.maf:
 	paths["maf"] = args.maf
 if args.output:
 	outputPath = args.output
-	
 
-if "experiment_name" not in experimentDetails or len(paths) != 3 or outputPath is None:
-	print("Error: please provide the experiment name, output path, and the paths to the cLR, MAF files and 
-               data directory")
+argsIncomplete = False
+
+if "experiment_name" not in experimentDetails:
+	argsIncomplete = True
+	print("Error: please provide the name of the experiment.")
+if "data" not in paths:
+	argsIncomplete = True
+	print("Error: please provide the path to the data directory.")
+if "clr" not in paths:
+	argsIncomplete = True
+	print("Error: please provide the path to the corrected long reads FASTA file.")
+if "maf" not in paths:
+	argsIncomplete = True
+	print("Error: please provide the path to the ref-uLR two-way alignment MAF file.")
+if outputPath is None:
+	argsIncomplete = True
+	print("Error: please provide an output path.")
+
+if argsIncomplete:
 	sys.exit(1)
-
+	
 with open(outputPath,'w') as file:
 	writeHeader(file,pbsOptions)
 	writeInit(file,initCommands)
