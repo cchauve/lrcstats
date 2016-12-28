@@ -18,9 +18,9 @@ def createBlankConfig(configPath):
 		"experiment_name = example_name\n" \
 		"# Number of threads you'd like to run the aligner with\n" \
 		"threads = 1\n" \
-		"# true or false\n" \
-		"trimmed = false\n" \
-		"extended = false\n" \
+		"# python style True or False\n" \
+		"trimmed = False\n" \
+		"extended = False\n" \
 		"\n" \
 		"[Paths]\n" \
 		"# Directory to store read data\n" \
@@ -60,9 +60,9 @@ def processToken(token):
 	Returns
 	- (bool) True/False or (str) token		
 	'''
-	if token.lower() == "false":
+	if token == "False":
 		return False
-	elif token.lower() == "true":
+	elif token == "True":
 		return True
 	else:
 		return token 
@@ -178,7 +178,8 @@ def writePaths(file, paths):
 	for key in paths:
 		line = "%s=%s\n" % (key, paths[key])
 		file.write(line)
-	file.write('\n')
+	line = "mkdir -p ${data}\n"
+	file.write(line)
 
 def writeSort(file):
         '''
@@ -186,15 +187,15 @@ def writeSort(file):
 	Input
 	- file: the file object to the outputted PBS script
         '''
-        line = "############### Sort FASTA ###########\n" \
+        line = "############### Sort cLR FASTA file ###########\n" \
                 "echo 'Sorting FASTA file...'\n" \
                 "\n" \
                 "sortfasta=${lrcstats}/src/preprocessing/sortfasta/sortfasta.py\n" \
                 "sortedOutput=${data}/sorted.fasta\n" \
                 "\n" \
-                "python $sortfasta -i $input -o $sortedOutput\n" \
+                "python ${sortfasta} -i ${clr} -o ${sortedOutput}\n" \
                 "\n" \
-                "clr=$sortedOutput\n" \
+                "clr=${sortedOutput}\n" \
                 "\n" 
         file.write(line)        
 
@@ -204,25 +205,25 @@ def writePrune(file):
 	Input
 	- file: the file object to the outputted PBS script
         '''
-        line = "############### Prune the maf file(s) ###########\n" \
-                "echo 'Pruning MAF file(s)...'\n" \
+        line = "############### Prune the maf file ###########\n" \
+                "echo 'Pruning MAF file...'\n" \
                 "\n" \
                 "prunemaf=${lrcstats}/src/preprocessing/prunemaf/prunemaf.py\n" \
                 "pruneOutput=${data}/pruned\n" \
-                "python $prunemaf -f $input -m $maf -o $pruneOutput\n" \
+                "python ${prunemaf} -f ${clr} -m ${maf} -o ${pruneOutput}\n" \
                 "\n" \
                 "maf=${pruneOutput}.maf\n" \
                 "\n"
         file.write(line)
 
-def writeConcatenateTrimmedReads(file):
+def writeConcatenate(file):
         '''
         Write the commands to concatenate trimmed reads.
 	Input
 	- file: the file object to the outputted PBS script
         '''
         line = "############### Concatenate Trimmed Reads ###########\n" \
-                "echo 'Processing trimmed reads...'\n" \
+                "echo 'Concatenating trimmed reads...'\n" \
                 "concatenate=${lrcstats}/src/preprocessing/concatenate_trimmed/concatenate_trimmed.py\n" \
                 "concatenated_output=${data}/concatenated.fasta\n" \
                 "\n" \
@@ -250,7 +251,7 @@ def writeAlignment(file, trimmed, extended, threads):
         file.write(line)
 
 	if trimmed and extended: 
-		command = "$aligner maf -m $maf -c $clr -t -e -o $mafOutput -p %s\n" % (threads)
+		command = "$aligner maf -m $maf -c $clr -t -e -o ${mafOutput} -p %s\n" % (threads)
         elif trimmed:
                 command = "$aligner maf -m $maf -c $clr -t -o $mafOutput -p %s\n" % (threads)
         elif extended:
@@ -267,7 +268,7 @@ def writeRemoveExtensions(file):
 	Input
 	- file: the file object to the outputted PBS script
 	'''
-	line = "############### Removing extended regions #############\n" \
+	line = "############### Remove extended regions #############\n" \
                "echo 'Removing extended regions...'\n" \
                "unextend=${lrcstats}/src/preprocessing/unextend_alignments/unextend_alignments.py\n" \
                "unextendOutput=${data}/${experiment_name}_unextended.maf\n" \
@@ -287,7 +288,7 @@ def writeStats(file, trimmed, extended):
 	if extended:
 		writeRemoveExtensions(file)
 
-	line = "############### Collecting data ###########\n" \
+	line = "############### Collect data ###########\n" \
                 "echo 'Collecting data...'\n" \
                 "\n" \
                 "statsOutput=${data}/${experiment_name}.stats\n" \
@@ -295,7 +296,7 @@ def writeStats(file, trimmed, extended):
 	file.write(line)
 
 	if trimmed:
-		command = "$aligner stats -m ${maf} -o ${statsOutput} -t}\n\n"
+		command = "$aligner stats -m ${maf} -o ${statsOutput} -t\n\n"
 	else:
 		command = "$aligner stats -m ${maf} -o ${statsOutput}\n\n"
 	file.write(command)
@@ -303,7 +304,7 @@ def writeStats(file, trimmed, extended):
 	line = "input=${statsOutput}\n" \
 		"\n"
 	file.write(line)
-	line = "############## Summarizing statistics ############\n" \
+	line = "############## Summarize statistics ############\n" \
 		"echo 'Summarizing statistics...'\n" \
 		"\n" \
 		"summarizeStats=${lrcstats}/src/statistics/summarize_stats.py\n" \
@@ -317,6 +318,9 @@ def writeStats(file, trimmed, extended):
 		line = "python ${summarizeStats} -i ${input} -b -o ${statsOutput}\n"
 	file.write(line)
 
+	line = "echo 'Statistics are done.'\n"
+	file.write(line)
+
 def writePipeline(file, experimentDetails):
 	'''
 	Construct the LRCStats pipeline
@@ -327,6 +331,11 @@ def writePipeline(file, experimentDetails):
 	trimmed = experimentDetails["trimmed"]
 	extended = experimentDetails["extended"]
 	threads = experimentDetails["threads"]
+
+	# ends script immediately if any error occurs
+	line = "set -e\n"
+	file.write(line)
+
 	writeSort(file)
 	writePrune(file)
 	if trimmed:
@@ -406,13 +415,9 @@ if args.experiment_name:
 
 if args.trimmed:
 	experimentDetails["trimmed"] = True
-else:
-	experimentDetails["trimmed"] = False
 
 if args.extended:
 	experimentDetails["extended"] = True
-else:
-	experimentDetails["extended"] = False
 
 if args.threads:
 	experimentDetails["threads"] = args.threads
