@@ -30,6 +30,7 @@ The rest of the pipeline is written in Python so you just need to make sure your
 
 ## Input ##
 The main two files that LRCStats takes as input are:
+
 1. a corrected long reads file in FASTA format
 2. a ref-uLR two-way alignment file in MAF format
 
@@ -39,6 +40,7 @@ If the corrected long reads file is given as a FASTQ file instead, the LRCStats 
 
 ## Configuration File ##
 LRCStats takes as input a configuration file specifying
+
 1. The details of the experiment
 2. Paths to files and directories on the user's machine
 3. Commands to be initialized prior to the start of the pipeline (optional)
@@ -46,27 +48,33 @@ LRCStats takes as input a configuration file specifying
 
 Details of the experiment (1) and paths on the user's machine (2) can also be provided as command line arguments. However, initialization commands (3) and PBS parameters (4), if the user wishes to include them in the script, must be provided in the configuration file.
 
-** 1. Experiment Details **
+### Experiment Details ###
+
 * Name of experiment
 * Number of threads to be provided to the dynamic programming alignment program
 * Whether the corrected long reads are trimmed
 * Whether the corrected long reads are extended
 
-** 2. Paths **
+### Paths ###
+
 * `data` the directory where the user wishes to store the files created by the LRCStats pipeline, such as temporary files and the result file
 * `clr` the path to the corrected long read FASTA file
 * `maf` the path to the ref-uLR two-way alignment MAF file
 
-** 3. Initialization Commands (Optional) **
+### Initialization Commands (Optional) ###
+
 Commands specified here could be those that load the dependencies onto the user's environment, such as
 * `module load python2.7`
 * `module load g++/5.1.0`
 
-** 4. PBS Parameters (Optional) **
+### PBS Parameters (Optional) ###
+
 The user may specify the PBS parameters that will appear in the header of the script if the user wishes to run the pipeline as a PBS job. Parameters may include the walltime limit, memory limit and the number of processors allocated to the job. Note that the number of cores specified in the PBS parameter list should be identical to the number of threads specified under the "Experiment Details" section.
 
 ## Output ##
+
 `lrcstats.py` outputs a script that can be run as either a bash script or submitted to a Moab/TORQUE compatible computing cluster. This script performs the following steps:
+
 1. Sorts the cLR FASTA file and removes Ref-uLR alignments in the MAF file that do not appear in the cLR FASTA file
 2. Constructs the three-way alignments between the corrected long reads, uncorrected long reads and the reference sequences
 3. Produces statistics on the three-way alignments
