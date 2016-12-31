@@ -87,5 +87,3 @@ If `data` is the user-specified output directory and `experiment-name` is the na
 * `scripts` contains example scripts for the simulation of short and long reads and the correction of long reads
 * `src` contains source code and Python scripts for LRCstats pipeline
 * `tests` contains scripts for unit and integration tests of LRCstats
-
-Further information for each subdirectory can be found in the respective subdirectories.
