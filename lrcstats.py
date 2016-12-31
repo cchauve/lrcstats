@@ -351,11 +351,11 @@ parser = argparse.ArgumentParser(description='''
 	Version %d.%d
 	''' % (MAJOR_VERSION, MINOR_VERSION))
 
-parser.add_argument('config', metavar='CONFIG_FILE', type=str, help=
+parser.add_argument('-i', '--config', metavar='CONFIG_FILE', type=str, help=
 	"""
 	path to the configuration file
 	""")
-parser.add_argument('output', metavar='OUTPUT_PATH', type=str, help=
+parser.add_argument('-o', '--output', metavar='OUTPUT_PATH', type=str, help=
 	"""
 	output path for pipeline script
 	""")
