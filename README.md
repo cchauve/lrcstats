@@ -36,7 +36,7 @@ The main two files that LRCstats takes as input are:
 
 The paths to these files can be provided in either a configuration file or as command line arguments.
 
-If the corrected long reads file is given as a FASTQ file instead, the LRCstats repo includes a python script `src/preprocessing/fastq2fasta.py` to convert FASTQ files into FASTA format. Likewise, SimLoRD outputs the alignment between the uncorrected long reads and the reference sequence in SAM format. The python script `src/preprocessing/sam2maf.py` converts SAM files into the MAF format.
+If the corrected long reads file is given as a FASTQ file instead, the LRCstats repo includes a python script `src/preprocessing/fastq2fasta/fastq2fasta.py` to convert FASTQ files into FASTA format. Likewise, SimLoRD outputs the alignment between the uncorrected long reads and the reference sequence in SAM format. The python script `src/preprocessing/sam2maf/sam2maf.py` converts SAM files into the MAF format.
 
 ## Configuration File ##
 LRCstats takes as input a configuration file specifying
