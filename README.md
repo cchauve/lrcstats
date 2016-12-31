@@ -80,3 +80,12 @@ The user may specify the PBS parameters that will appear in the header of the sc
 3. Produces statistics on the three-way alignments
 
 If `data` is the user-specified output directory and `experiment-name` is the name of the experiment, the correction statistics can be found at `data/experiment-name_results.txt`.
+
+## Directory Structure ##
+
+* `notebooks` contains notebooks describing experiments featured in the LRCstats paper and other past experiments
+* `scripts` contains example scripts for the simulation of short and long reads and the correction of long reads
+* `src` contains source code and Python scripts for LRCstats pipeline
+* `tests` contains scripts for unit and integration tests of LRCstats
+
+Further information for each subdirectory can be found in the respective subdirectories.
