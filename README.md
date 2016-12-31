@@ -44,7 +44,7 @@ LRCstats takes as input a configuration file specifying
 1. The details of the experiment
 2. Paths to files and directories on the user's machine
 3. Commands to be initialized prior to the start of the pipeline (optional)
-4. PBS parameters to include in the header of the script outputted by LRCStats (optional)
+4. PBS parameters to include in the header of the script outputted by LRCstats (optional)
 
 Details of the experiment (1) and paths on the user's machine (2) can also be provided as command line arguments. However, initialization commands (3) and PBS parameters (4), if the user wishes to include them in the script, must be provided in a configuration file.
 
