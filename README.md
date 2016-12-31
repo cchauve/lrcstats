@@ -1,7 +1,7 @@
 # LRCstats: Long Read Correction Statistics #
 LRCstats is an open-source pipeline for benchmarking DNA long read correction algorithms for long reads outputted by third generation sequencing technology such as machines produced by Pacific Biosciences. The reads produced by third generation sequencing technology, as the name suggests, are longer in length than reads produced by next generation sequencing technologies, such as those produced by Illumina. However, long reads are plagued by high error rates, which can cause issues in downstream analysis. Long read correction algorithms reduce the error rate of long reads either through self-correcting methods or using accurate, short reads outputted by next generation sequencing technologies to correct long reads.
 
-Of course, some long read correction algorithms are better than others, and developers of long read correction algorithms will wish to compare their algorithm with others currently available. LRCstats benchmarks long read correction algorithms using long reads produced by simulators (such as SimLoRD or PBSim) where the two-alignment between the uncorrected long reads (uLR) and the corresponding sequences in the reference genome (ref) is given in a Multiple Alignment Format (MAF) file, and then aligning the corrected long reads (cLR) to the ref-uLR two-way alignments to create three-way alignments using a dynamic programming algorithm. Statistics on these three-way alignments are then collected, such as the overall error rates of the corrected long reads.
+Of course, some long read correction algorithms are better than others, and developers of long read correction algorithms will wish to compare their algorithm with others currently available. LRCstats benchmarks long read correction algorithms using long reads produced by simulators (such as SimLoRD or PBSim) where the two-alignment between the uncorrected long reads (uLR) and the corresponding sequences in the reference genome (Ref) is given in a Multiple Alignment Format (MAF) file, and then aligning the corrected long reads (cLR) to the Ref-uLR two-way alignments to create three-way alignments using a dynamic programming algorithm. Statistics on these three-way alignments are then collected, such as the overall error rates of the corrected long reads.
 
 ![LRCstats pipeline](lrcstats_pipeline.png)
 
@@ -24,7 +24,7 @@ The rest of the pipeline is written in Python so you just need to make sure your
 
 ## Usage ##
 1. Create your own configuration file with `python lrcstats.py --blank_config CONFIG_PATH`. The configuration file will be created at the path specified by `CONFIG_PATH`.
-2. Modify the configuration file to contain the paths to the cLR FASTA and ref-uLR MAF files along with the directory on your system at which you would like to store the temporary and result files.
+2. Modify the configuration file to contain the paths to the cLR FASTA and Ref-uLR MAF files along with the directory on your system at which you would like to store the temporary and result files.
 3. Construct the LRCstats script with the command `python lrcstats.py CONFIG_FILE OUTPUT_PATH` where `CONFIG_FILE` is the path to your configuration file and `OUTPUT_PATH` is the path at which the LRCstats script will be created.
 4. Execute the LRCstats benchmarking pipeline by either running it as a bash shell script or submitting it as a job to your TORQUE/MOAB compatible computing cluster.
 
@@ -32,7 +32,7 @@ The rest of the pipeline is written in Python so you just need to make sure your
 The main two files that LRCstats takes as input are:
 
 1. a corrected long reads file in FASTA format
-2. a ref-uLR two-way alignment file in MAF format
+2. a Ref-uLR two-way alignment file in MAF format
 
 The paths to these files can be provided in either a configuration file or as command line arguments.
 
@@ -59,7 +59,7 @@ Details of the experiment (1) and paths on the user's machine (2) can also be pr
 
 * `data` the directory where the user wishes to store the files created by the LRCstats pipeline, such as temporary files and the result file
 * `clr` the path to the corrected long read FASTA file
-* `maf` the path to the ref-uLR two-way alignment MAF file
+* `maf` the path to the Ref-uLR two-way alignment MAF file
 
 ### Initialization Commands (Optional) ###
 
