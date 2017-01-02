@@ -12,8 +12,6 @@ LRCstats is an open-source pipeline for benchmarking DNA long read correction al
 
 Of course, some long read correction algorithms are better than others, and developers of long read correction algorithms will wish to compare their algorithm with others currently available. LRCstats benchmarks long read correction algorithms using long reads produced by simulators (such as SimLoRD or PBSim) where the two-way alignments between the uncorrected long reads (uLR) and the corresponding sequences in the reference genome (Ref) are given in a Multiple Alignment Format (MAF) file, and then aligning the corrected long reads (cLR) to the Ref-uLR two-way alignments to create three-way alignments using a dynamic programming algorithm. Statistics on these three-way alignments are then collected, such as the overall error rates of the corrected long reads.
 
-![LRCstats pipeline](lrcstats_pipeline.png)
-
 ## Dependencies ##
 * Python 2.7.2
 * Any version of g++ with c++11 support
