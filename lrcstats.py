@@ -179,8 +179,6 @@ def writePaths(file, paths):
 	for key in paths:
 		line = "%s=%s\n" % (key, paths[key])
 		file.write(line)
-	line = "mkdir -p ${data}\n"
-	file.write(line)
 
 def writeSort(file):
         '''
@@ -309,7 +307,7 @@ def writeStats(file, trimmed, extended):
 		"echo 'Summarizing statistics...'\n" \
 		"\n" \
 		"summarizeStats=${lrcstats}/src/statistics/summarize_stats.py\n" \
-		"statsOutput=${data}/${testName}_results.txt\n" \
+		"statsOutput=${data}/${experiment_name}_results.txt\n" \
                         "\n"
 	file.write(line)
 
@@ -332,6 +330,9 @@ def writePipeline(file, experimentDetails):
 	trimmed = experimentDetails["trimmed"]
 	extended = experimentDetails["extended"]
 	threads = experimentDetails["threads"]
+
+	line = "experiment_name=%s\n" % (experimentDetails["experiment_name"])
+	file.write(line)
 
 	# ends script immediately if any error occurs
 	line = "set -e\n"
