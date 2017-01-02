@@ -32,7 +32,7 @@ The rest of the pipeline is written in Python so you just need to make sure your
 ## Usage ##
 1. Create your own configuration file with `python lrcstats.py --blank_config CONFIG_PATH`. The configuration file will be created at the path specified by `CONFIG_PATH`.
 2. Modify the configuration file to contain the paths to the cLR FASTA and Ref-uLR MAF files along with the directory on your system at which you would like to store the temporary and result files.
-3. Construct the LRCstats script with the command `python lrcstats.py CONFIG_FILE OUTPUT_PATH` where `CONFIG_FILE` is the path to your configuration file and `OUTPUT_PATH` is the path at which the LRCstats script will be created.
+3. Construct the LRCstats script with the command `python lrcstats.py -i CONFIG_FILE -o OUTPUT_PATH` where `CONFIG_FILE` is the path to your configuration file and `OUTPUT_PATH` is the path at which the LRCstats script will be created.
 4. Execute the LRCstats benchmarking pipeline by either running it as a bash shell script or submitting it as a job to your TORQUE/MOAB compatible computing cluster.
 
 ## Input ##
