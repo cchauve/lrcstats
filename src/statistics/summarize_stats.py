@@ -3,7 +3,7 @@ import data
 import sys
 import getopt
 
-def collectStatistics(trimmedData):
+def collectStatistics(data):
 	'''
 	Collect statistics from data.
 	Inputs
@@ -11,7 +11,8 @@ def collectStatistics(trimmedData):
 	Outputs
 	- (dict of ints) statistics: contains the statistics
 	'''
-	statistics = {correctedBases_k : 0,
+	statistics = {  alignmentLength_k: 0,
+                        correctedBases_k : 0,
 			correctedDeletions_k : 0,
 			correctedInsertions_k : 0,
 			correctedSubstitutions_k : 0,
@@ -20,7 +21,9 @@ def collectStatistics(trimmedData):
 			uncorrectedInsertions_k : 0,
 			uncorrectedSubstitutions_k : 0}	
 			
-	for datum in trimmedData:
+	for datum in data:
+		# Get the alignment length
+		statistics[alignmentLength_k] += datum.getAlignmentLength()
 		# Corrected read statistics
 		statistics[correctedBases_k] += datum.getCorrLength()
 		statistics[correctedDeletions_k] += datum.getCorrDel()
@@ -43,62 +46,85 @@ def writeStatisticsSummary(outputPath, trimmedStatistics, untrimmedStatistics, d
 	'''
 	# Trimmed read statistics
 	# Get the corrected read statistics
-	correctedThroughputTrimmed = trimmedStatistics[correctedBases_k]
-	correctedMutationsTrimmed = trimmedStatistics[correctedDeletions_k] + trimmedStatistics[correctedInsertions_k] + trimmedStatistics[correctedSubstitutions_k]
-	correctedTruePositivesTrimmed = correctedThroughputTrimmed - correctedMutationsTrimmed
-	correctedErrorRateTrimmed = correctedMutationsTrimmed/correctedThroughputTrimmed
+	totalTrimmedAlignmentBases = trimmedStatistics[alignmentLength_k]
+
+	# Number of corrected read bases
+	trimmedCorrectedThroughput = trimmedStatistics[correctedBases_k]
+	# Total number of errors in the corrected reads
+	trimmedCorrectedErrors = trimmedStatistics[correctedDeletions_k] \
+                                  + trimmedStatistics[correctedInsertions_k] \
+                                  + trimmedStatistics[correctedSubstitutions_k]
+	# Total error rate over all bases of the corrected read alignments
+	trimmedCorrectedErrorRate = trimmedCorrectedErrors/totalTrimmedAlignmentBases
+
 
 	# Get the uncorrected read statistics
-	uncorrectedThroughputTrimmed = trimmedStatistics[uncorrectedBases_k]
-	uncorrectedMutationsTrimmed = trimmedStatistics[uncorrectedDeletions_k] + trimmedStatistics[uncorrectedInsertions_k] + trimmedStatistics[uncorrectedSubstitutions_k]
-	uncorrectedTruePositivesTrimmed = uncorrectedThroughputTrimmed - uncorrectedMutationsTrimmed
-	uncorrectedErrorRateTrimmed = uncorrectedMutationsTrimmed/uncorrectedThroughputTrimmed
+	# Number of uncorrected read bases
+	trimmedUncorrectedThroughput = trimmedStatistics[uncorrectedBases_k]
+	# Total number of errors in the uncorrected reads
+	trimmedUncorrectedErrors = trimmedStatistics[uncorrectedDeletions_k] \
+                                    + trimmedStatistics[uncorrectedInsertions_k] \
+                                    + trimmedStatistics[uncorrectedSubstitutions_k]
+	# Total error rate over all bases of the uncorrected read alignment
+	trimmedUncorrectedErrorRate = trimmedUncorrectedErrors/totalTrimmedAlignmentBases
 
 	if doBoth:
+		totalUntrimmedAlignmentBases = untrimmedStatistics[alignmentLength_k]
+
 		# Untrimmed statistics
 		# Get the corrected read statistics
-		correctedThroughputUntrimmed = untrimmedStatistics[correctedBases_k]
-		correctedMutationsUntrimmed = untrimmedStatistics[correctedDeletions_k] + untrimmedStatistics[correctedInsertions_k] + untrimmedStatistics[correctedSubstitutions_k]
-		correctedTruePositivesUntrimmed = correctedThroughputUntrimmed - correctedMutationsUntrimmed
-		correctedErrorRateUntrimmed = correctedMutationsUntrimmed/correctedThroughputUntrimmed
+		untrimmedCorrectedThroughput = untrimmedStatistics[correctedBases_k]
+		untrimmedCorrectedErrors = untrimmedStatistics[correctedDeletions_k] \
+                                            + untrimmedStatistics[correctedInsertions_k] \
+                                            + untrimmedStatistics[correctedSubstitutions_k]
+		untrimmedCorrectedErrorRate = untrimmedCorrectedErrors/totalUntrimmedAlignmentBases
 
 	# Get the uncorrected read statistics
-		uncorrectedThroughputUntrimmed = untrimmedStatistics[uncorrectedBases_k]
-		uncorrectedMutationsUntrimmed = untrimmedStatistics[uncorrectedDeletions_k] + untrimmedStatistics[uncorrectedInsertions_k] + untrimmedStatistics[uncorrectedSubstitutions_k]
-		uncorrectedTruePositivesUntrimmed = uncorrectedThroughputUntrimmed - uncorrectedMutationsUntrimmed
-		uncorrectedErrorRateUntrimmed = uncorrectedMutationsUntrimmed/uncorrectedThroughputUntrimmed
+		untrimmedUncorrectedThroughput = untrimmedStatistics[uncorrectedBases_k]
+		untrimmedUncorrectedErrors = untrimmedStatistics[uncorrectedDeletions_k] \
+                                              + untrimmedStatistics[uncorrectedInsertions_k] \
+                                              + untrimmedStatistics[uncorrectedSubstitutions_k]
+		untrimmedUncorrectedErrorRate = untrimmedUncorrectedErrors/totalUntrimmedAlignmentBases
 
 	with open(outputPath, 'w') as file:
-		header = "            Error Rate   Throughput   Correct   Incorrect   Deletions   Insertions   Substitutions\n"
+		header = "            [Error Rate] [Throughput] [Deletions] [Insertions] [Substitutions]\n"
 		file.write(header)
 
-		correctedLine = "Corrected - trimmed   %f %d %d %d %d %d %d\n" \
-				% (correctedErrorRateTrimmed, correctedThroughputTrimmed, correctedTruePositivesTrimmed, 
-					correctedMutationsTrimmed, trimmedStatistics[correctedDeletions_k], trimmedStatistics[correctedInsertions_k], trimmedStatistics[correctedSubstitutions_k])	
+		correctedLine = "Corrected - trimmed   %f %d %d %d %d\n" \
+				% (trimmedCorrectedErrorRate,
+                                   trimmedCorrectedThroughput,
+                                   trimmedStatistics[correctedDeletions_k],
+                                   trimmedStatistics[correctedInsertions_k],
+                                   trimmedStatistics[correctedSubstitutions_k])	
 		file.write(correctedLine)
 
-		uncorrectedLine = "Uncorrected - trimmed %f %d %d %d %d %d %d\n" \
-				% (uncorrectedErrorRateTrimmed, uncorrectedThroughputTrimmed, uncorrectedTruePositivesTrimmed, 
-					uncorrectedMutationsTrimmed, trimmedStatistics[uncorrectedDeletions_k], 
-					trimmedStatistics[uncorrectedInsertions_k], trimmedStatistics[uncorrectedSubstitutions_k])	
+		uncorrectedLine = "Uncorrected - trimmed %f %d %d %d %d\n" \
+				% (trimmedUncorrectedErrorRate,
+                                   trimmedUncorrectedThroughput,
+                                   trimmedStatistics[uncorrectedDeletions_k],
+                                   trimmedStatistics[uncorrectedInsertions_k],
+                                   trimmedStatistics[uncorrectedSubstitutions_k])	
 		file.write(uncorrectedLine)
 
 		if doBoth:
-			correctedLine = "Corrected - untrimmed   %f %d %d %d %d %d %d\n" \
-				% (correctedErrorRateUntrimmed, correctedThroughputUntrimmed, correctedTruePositivesUntrimmed, 
-					correctedMutationsUntrimmed, untrimmedStatistics[correctedDeletions_k], 
-					untrimmedStatistics[correctedInsertions_k], 
-					untrimmedStatistics[correctedSubstitutions_k])	
+			correctedLine = "Corrected - untrimmed   %f %d %d %d %d\n" \
+				% (untrimmedCorrectedErrorRate,
+                                   untrimmedCorrectedThroughput,
+                                   untrimmedStatistics[correctedDeletions_k], 
+                                   untrimmedStatistics[correctedInsertions_k], 
+                                   untrimmedStatistics[correctedSubstitutions_k])	
 			file.write(correctedLine)
 
-			uncorrectedLine = "Uncorrected - untrimmed %f %d %d %d %d %d %d\n" \
-				% (uncorrectedErrorRateUntrimmed, uncorrectedThroughputUntrimmed, uncorrectedTruePositivesUntrimmed,
-					uncorrectedMutationsUntrimmed, untrimmedStatistics[uncorrectedDeletions_k], 
-					untrimmedStatistics[uncorrectedInsertions_k], 
-					untrimmedStatistics[uncorrectedSubstitutions_k])	
+			uncorrectedLine = "Uncorrected - untrimmed %f %d %d %d %d\n" \
+				% (untrimmedUncorrectedErrorRate, 
+                                   untrimmedUncorrectedThroughput,
+                                   untrimmedStatistics[uncorrectedDeletions_k], 
+                                   untrimmedStatistics[uncorrectedInsertions_k], 
+                                   untrimmedStatistics[uncorrectedSubstitutions_k])	
 			file.write(uncorrectedLine)
 
 # Global variables for data dict
+alignmentLength_k = "ALIGNMENT LENGTH"
 correctedBases_k = "CORRECTED BASES"
 correctedDeletions_k = "CORRECTED DELETIONS"
 correctedInsertions_k = "CORRECTED INSERTIONS"
@@ -155,7 +181,6 @@ if optsIncomplete:
 	print usageMessage
 	sys.exit(2)
 
-# We don't use the untrimmedData
 trimmedData, untrimmedData = data.retrieveRawData(inputPath)
 
 trimmedStatistics = collectStatistics(trimmedData)

@@ -231,12 +231,9 @@ std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int6
 	statistics.push_back(cSize);
 	statistics.push_back(uSize);
 
-	// Length of the alignments (i.e. sequences including gaps)
-	int64_t cAlignmentLength = cRead.length();
-	statistics.push_back( cAlignmentLength );
-
-	int64_t uAlignmentLength = uRead.length();
-	statistics.push_back( uAlignmentLength );
+	// Length of the alignment
+	int64_t alignmentLength = cRead.length();
+	statistics.push_back( alignmentLength );
 
 	// Find the number of mutations for the corrected and uncorrected reads
 	statistics.push_back( getDeletions(ref,cRead) );
@@ -247,12 +244,14 @@ std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int6
 	statistics.push_back( getInsertions(ref,uRead) );
 	statistics.push_back( getSubstitutions(ref,uRead) );
 
+	/*
 	// True and false positive numbers in the corrected long read
 	statistics.push_back( correctedTruePositives(ref,cRead) );
 	statistics.push_back( correctedFalsePositives(ref,cRead) );
 
 	statistics.push_back( uncorrectedTruePositives(ref,cRead) );
 	statistics.push_back( uncorrectedFalsePositives(ref,cRead) );
+	*/
 
 	return statistics;
 }
@@ -274,11 +273,8 @@ std::vector<int64_t> trimmedReadStats(CorrespondingSegments segments)
 	statistics.push_back(uLength);
 
 	// Length of the alignments (i.e. sequences including gaps)
-	int64_t cAlignmentLength = clr.length();
-	statistics.push_back( cAlignmentLength );
-
-	int64_t uAlignmentLength = ulr.length();
-	statistics.push_back( uAlignmentLength );
+	int64_t alignmentLength = clr.length();
+	statistics.push_back( alignmentLength );
 
 	// Push the number of mutations in the corrected segments and its
 	// corresponding segment in the uncorrected long read
@@ -298,6 +294,19 @@ std::vector<int64_t> trimmedReadStats(CorrespondingSegments segments)
 	return statistics;
 }
 
+std::string stripReadIdSuffix(std::string readId)
+/* Removes the suffix of the read ID token
+ */
+{
+	std::string strippedReadId = "";	
+	int index = 0;
+	while (index < readId.length() and readId[index] != '.') {
+		strippedReadId += readId[index];
+		index++;
+	}
+	return strippedReadId;
+}
+
 void createStats()
 /* Given a 3-way MAF file between cLR, uLR and ref sequences, outputs a text file containing stats
  */
@@ -307,6 +316,7 @@ void createStats()
 	std::string line = "";
 
 	// Indices where each respective information lies in the MAF file line
+	int readIdIndex = 1;
 	int sizeIndex = 3; 
 	int seqIndex = 6;
 	// Number of statistics we consider
@@ -317,6 +327,25 @@ void createStats()
 		assert( !mafFile.eof() );	
 		std::getline(mafFile, line); 
 	} 
+
+	//write the legend
+	std::string legend = "# [Read ID]: The ID of the read. Takes on any string value.\n"
+		"# [Type]: If 't', indicates that the statistics are for only corrected segments of the read.\n"
+                "#         If 'u', indicates that the statistics are for the entire segment of the read.\n"
+		"# [cLR Length]: Length of the corrected long read segment without '-'. Takes on values > 0.\n"
+		"# [uLR Length]: Length of the uncorrected long read segment without '-'. Takes on values > 0.\n"
+		"# [Alignment Length]: Length of the segment of the alignment. Takes on values > 0.\n"
+                "# [cLR Del]: Number of deletions in the cLR alignment segment. Positive integer values.\n"
+                "# [cLR Ins]: Number of insertions in the cLR alignment segment. Positive integer values.\n"
+                "# [cLR Sub]: Number of substitutions in the cLR alignment segment. Positive integer values.\n"
+                "# [uLR Del]: Number of deletions in the uLR alignment segment. Positive integer values.\n"
+                "# [uLR Ins]: Number of insertions in the uLR alignment segment. Positive integer values.\n"
+                "# [uLR Sub]: Number of substitutions in the uLR alignment segment. Positive integer values.\n";
+	output << legend;
+
+	// write the header line
+	std::string header = "# [Read ID] [Type] [cLR Length] [uLR Length] [Alignment Length] [cLR Del] [cLR Ins] [cLR Sub] [uLR Del] [uLR Ins] [uLR Sub]";
+	output << header << std::endl;
 
 	// The getline in the while loop condition skips the "a" line
 	while (std::getline(mafFile, line)) {
@@ -329,7 +358,12 @@ void createStats()
 		// Read ulr line
 		std::getline(mafFile, line);
 
-		std::string ulr = split(line).at(seqIndex);
+		std::vector< std::string > tokens = split(line);
+
+		std::string readId = tokens.at(readIdIndex);
+		readId = stripReadIdSuffix(readId); 
+
+		std::string ulr = tokens.at(seqIndex);
 		assert(ulr != "");
 
 		int64_t ulrSize = atoi( split(line).at(sizeIndex).c_str() );
@@ -350,7 +384,7 @@ void createStats()
 		// If the read type if untrimmed, then do untrimmed statistics 
 		if (g_trimType == Untrimmed) {
 			std::vector<int64_t> statistics = untrimmedReadStats(ref,clr,clrSize,ulr,ulrSize);
-
+			output << readId << " ";
 			output << "u ";
 			for (int index = 0; index < statistics.size(); index++) {
 				output << statistics.at(index) << " ";
@@ -364,7 +398,7 @@ void createStats()
 		for (int index = 0; index < correspondingSegmentsList.size(); index++) {
 			CorrespondingSegments segments = correspondingSegmentsList.at(index);
 			std::vector<int64_t> statistics = trimmedReadStats(segments);
-
+			output << readId << " ";
 			output << "t ";
 			for (int i = 0; i < statistics.size(); i++) {
 				output << statistics.at(i) << " ";

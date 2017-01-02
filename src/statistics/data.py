@@ -3,8 +3,7 @@ class ReadDatum(object):
 	corrReadLength_k = "CORRECTED READ LENGTH"
 	uncorrReadLength_k = "UNCORRECTED READ LENGTH"
 
-	corrAlignmentLength_k = "CORRECTED ALIGNMENT LENGTH"
-	uncorrAlignmentLength_k = "UNCORRECTED ALIGNMENT LENGTH"
+	alignmentLength_k = "ALIGNMENT LENGTH"
 
 	corrDel_k = "CORRECTED DELETION"
 	corrIns_k = "CORRECTED INSERTION"
@@ -14,25 +13,16 @@ class ReadDatum(object):
 	uncorrIns_k = "UNCORRECTED INSERTION"
 	uncorrSub_k = "UNCORRECTED SUBSTITUTION"
 
-	cTruePos_k = "CORRECTED TRUE POSITIVE"
-	cFalsePos_k = "CORRECTED FALSE POSITIVE"
-	uTruePos_k = "UNCORRECTED TRUE POSITIVE"
-	uFalsePos_k = "UNCORRECTED FALSE POSITIVE"
-
 	keys = [corrReadLength_k,
 		uncorrReadLength_k,
-		corrAlignmentLength_k,
-		uncorrAlignmentLength_k,
+		alignmentLength_k,
 		corrDel_k,
 		corrIns_k,
 		corrSub_k,
 		uncorrDel_k,
 		uncorrIns_k,
-		uncorrSub_k,
-		cTruePos_k,
-		cFalsePos_k,
-		uTruePos_k,
-		uFalsePos_k]
+		uncorrSub_k
+		]
 	'''
 	Preprocesses and outputs general statistics for reads.
 	'''
@@ -44,10 +34,18 @@ class ReadDatum(object):
 		self.data = {}
 		# keys is a class variable and contains the keys
 		# for the data dictionary in ReadDatum objects.
-		assert len(data) == 11 or len(data) == 15
 
-		for i in range(1, len(data)):
-			self.data[ ReadDatum.keys[i-1] ] = int(data[i])
+		# ignore the read ID and read type
+		data = data[2:]
+
+		for i in range(0, len(data)):
+			self.data[ReadDatum.keys[i]] = int(data[i])
+
+	def getAlignmentLength(self):
+		'''
+		Returns the length of the alignment
+		'''
+		return self.data[ReadDatum.alignmentLength_k]
 
 	def getCorrLength(self):
 		'''
@@ -55,61 +53,12 @@ class ReadDatum(object):
 		'''
 		return self.data[ReadDatum.corrReadLength_k]
 
-	def getCorrErrors(self):
-		'''
-		Returns the number of errors in the read.
-		'''
-		cDel = self.data[ReadDatum.corrDel_k]
-		cIns = self.data[ReadDatum.corrIns_k]
-		cSub = self.data[ReadDatum.corrSub_k]
-		return cDel + cIns + cSub
-
-	def getCorrErrorRate(self):
-		'''
-		Returns the error rate of the corrected trimmed long read,
-		which is defined as the number of mutations divided by
-		the length of the read.
-		'''
-		cDel = self.data[ReadDatum.corrDel_k]
-		cIns = self.data[ReadDatum.corrIns_k]
-		cSub = self.data[ReadDatum.corrSub_k]
-
-		mutations = cDel + cIns + cSub
-		length = self.data[ReadDatum.corrAlignmentLength_k]
-
-		return mutations/length
-
 	def getUncorrLength(self):
 		'''
 		Returns the length of the corresponding uncorrected long read.
 		'''
 		uLength = self.data[ReadDatum.uncorrReadLength_k]
 		return uLength
-
-	def getUncorrErrorRate(self):
-		'''
-		Returns the error rate of the corresponding long read,
-		which is defined as the number of mutations divided by
-		the length of the read.
-		'''
-		uDel = self.data[ReadDatum.uncorrDel_k]
-		uIns = self.data[ReadDatum.uncorrIns_k]
-		uSub = self.data[ReadDatum.uncorrSub_k]
-
-		mutations = uDel + uIns + uSub
-		length = self.data[ReadDatum.uncorrAlignmentLength_k]
-
-		return mutations/length
-
-	def getUncorrErrors(self):
-		'''
-		Returns the number of erroreneous bases in the uncorrected
-		long read.
-		'''
-		uDel = self.data[ReadDatum.uncorrDel_k]
-		uIns = self.data[ReadDatum.uncorrIns_k]
-		uSub = self.data[ReadDatum.uncorrSub_k]
-		return uDel + uIns + uSub
 
 	def getCorrDel(self):
 		cDel = self.data[ReadDatum.corrDel_k]
@@ -135,78 +84,6 @@ class ReadDatum(object):
 		uSub = self.data[ReadDatum.uncorrSub_k]
 		return uSub
 
-
-class UntrimmedDatum(ReadDatum):
-	'''
-	Similar to ReadDatum object, but also outputs statistics related
-	specifically for trimmed reads.
-	'''
-	def __init__(self, data):
-		'''
-		Accepts as input list of untrimmed read data points obtained
-		directly from the STATS file outputted by lrcstats
-		'''
-		ReadDatum.__init__(self, data)
-
-	def getCorrTruePositives(self):
-		'''
-		Corrected true positives are defined as bases that
-		have been corrected and are equivalent to its respective
-		base in the referene alignment (not reference sequence)
-		'''
-		correctedTruePos = self.data[ReadDatum.cTruePos_k]
-		return correctedTruePos
-
-	def getCorrFalsePositives(self):
-		'''
-		Corrected false positives are defined as bases that
-		have been corrected and are NOT equivalent to its
-		respective base in the reference alignment (not reference
-		sequence)
-		'''
-		correctedFalsePos = self.data[ReadDatum.cFalsePos_k]
-		return correctedFalsePos
-
-	def getCorrSegmentErrorRate(self):
-		'''
-		Returns the error rate over only those segments
-		in the corrected long read which have been
-		corrected.
-		'''
-		correctedTruePos = self.data[ReadDatum.cTruePos_k]
-		correctedFalsePos = self.data[ReadDatum.cFalsePos_k]
-		return (correctedFalsePos)/(correctedTruePos + correctedFalsePos)
-
-	# These methods apply to the uncorrected segments of corrected long reads
-
-	def getUncorrTruePositives(self):
-		'''
-		Uncorrected true positives are defined as bases
-		that have NOT been corrected and are equivalent
-		to its respective base in the reference alignment.
-		'''
-		uncorrectedTruePos = self.data[ReadDatum.uTruePos_k]
-		return uncorrectedTruePos
-
-	def getUncorrFalsePositives(self):
-		'''
-		Uncorrected false positives are defined as bases that
-		have NOT been corrected and are NOT equivalent to its
-		respective base in the reference alignment.
-		'''
-		uncorrectedFalsePos = self.data[ReadDatum.uFalsePos_k]
-		return uncorrectedFalsePos
-
-	def getUncorrSegmentErrorRate(self):
-		'''
-		Returns the error rate over only those segments of
-		the corrected long read which have not been
-		corrected.
-		'''
-		uncorrectedTruePos = self.data[ReadDatum.uTruePos_k]
-		uncorrectedFalsePos = self.data[ReadDatum.uFalsePos_k]
-		return (uncorrectedFalsePos)/(uncorrectedTruePos + uncorrectedFalsePos)
-
 def retrieveRawData(dataPath):
 	'''
 	Accepts the path to the STATS file outputted by lrcstats.
@@ -223,10 +100,10 @@ def retrieveRawData(dataPath):
 
 	for datum in rawData:
 		datum = datum.split()
-		if datum[0] == 'u':
-			datum = UntrimmedDatum(datum)
+		if datum[1] == 'u':
+			datum = ReadDatum(datum)
 			UntrimmedData.append(datum)
-		elif datum[0] == 't':
+		elif datum[1] == 't':
 			datum = ReadDatum(datum)
 			TrimmedData.append(datum)
 

@@ -22,6 +22,8 @@ Alignments::Alignments()
 	ulrAlignment = "";
 	clrAlignment = "";
 	matrix = NULL;
+	cost = 10;
+	fractionalCost = 1;
 }
 
 Alignments::~Alignments()
@@ -68,7 +70,8 @@ void Alignments::createMatrix()
 		}
 	}
 	// Set the base cases for the DP matrix
-	for (int64_t rowIndex = 0; rowIndex < rows; rowIndex++) {
+	matrix[0][0] = 0;
+	for (int64_t rowIndex = 1; rowIndex < rows; rowIndex++) {
 		matrix[rowIndex][0] = rowBaseCase(rowIndex);	
 	}
 	for (int64_t columnIndex = 1; columnIndex < columns; columnIndex++) {
@@ -96,12 +99,17 @@ void Alignments::deleteMatrix()
 
 int64_t Alignments::rowBaseCase(int64_t rowIndex)
 {
-	return rowIndex*10;
+	return rowIndex*cost;
 }
 
 int64_t Alignments::columnBaseCase(int64_t columnIndex)
 {
-	return columnIndex*10;
+	return columnIndex*cost;
+	/*
+	assert( columnIndex > 0 );
+	int64_t urIndex = columnIndex - 1;
+	return matrix[0][columnIndex-1] + cost - delta(ulr[urIndex],'-');
+	*/
 }	
 
 int64_t Alignments::editDistance(int64_t rowIndex, int64_t columnIndex) {}
@@ -109,13 +117,13 @@ int64_t Alignments::editDistance(int64_t rowIndex, int64_t columnIndex) {}
 
 void Alignments::findAlignments() {}
 
-int64_t Alignments::cost(char refBase, char cBase)
+int64_t Alignments::delta(char refBase, char cBase)
 /* Cost function for dynamic programming algorithm */
 {
 	if ( toupper(refBase) == toupper(cBase) ) {
 		return 0;
 	} else {
-		return 10;
+		return cost;
 	}
 }
 
@@ -179,9 +187,9 @@ int64_t UntrimmedAlignments::levenshteinDistance(int64_t rowIndex, int64_t colum
 {
 	int64_t cIndex = rowIndex - 1;
 	int64_t urIndex = columnIndex - 1;
-	int64_t deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
-	int64_t insert = std::abs( matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]) );
-	int64_t substitute = std::abs( matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]) );
+	int64_t deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost );
+	int64_t insert = std::abs( matrix[rowIndex-1][columnIndex] + cost );
+	int64_t substitute = std::abs( matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]) );
 	return std::min( deletion, std::min(insert,substitute) );
 }
 
@@ -200,19 +208,21 @@ int64_t UntrimmedAlignments::editDistance(int64_t rowIndex, int64_t columnIndex)
 		// clr. If they are different, we can't keep both so we can only consider deleting the
 		// one from clr.
 		if ( toupper(ulr[urIndex]) == toupper(clr[cIndex]) ) {
-			int64_t keep = std::abs(matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]));
-			int64_t deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
-			return std::min(keep, deletion); 
+			int64_t keep = std::abs(matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]));
+			int64_t del = std::abs(matrix[rowIndex][columnIndex-1] + cost - delta(ref[urIndex], '-'));
+			return std::min(keep, del); 
 		} else {
-			return std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') ); 
+			// deletion
+			int64_t del = std::abs(matrix[rowIndex][columnIndex-1] + cost - delta(ref[urIndex], '-'));
+			return del;
 		}
 	} else if (islower(clr[cIndex])) {
 		if ( toupper( ulr[urIndex] ) == toupper( clr[cIndex] ) ) {
-			// Keep the characters if they are the same
-			return std::abs( matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]) );
+			// substitution
+			return std::abs( matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]) );
 		} else if (ulr[urIndex] == '-') {
-			// If uLR has a dash, the optimal solution is just to call a deletion.
-			return matrix[rowIndex][columnIndex-1]; //Zero cost deletion
+			// deletion
+			return std::abs(matrix[rowIndex][columnIndex-1] + cost);
 		} else {
 			// Setting the position in the matrix to infinity ensures that we can never
 			// find an alignment where the uncorrected segments are not perfectly aligned.
@@ -229,18 +239,28 @@ void UntrimmedAlignments::operationCosts(int64_t rowIndex, int64_t columnIndex,
 	int64_t infinity = std::numeric_limits<int64_t>::max();
 	int64_t cIndex = rowIndex - 1;
 	int64_t urIndex = columnIndex - 1;
+	deletion = infinity;
+	insert = infinity;
+	substitute = infinity;
+
+	bool isEndingLC = checkIfEndingLowerCase(cIndex);
+
 	if (rowIndex > 0 and columnIndex > 0) {
-		deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-'));
-		insert = std::abs(matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]));
-		substitute = std::abs(matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]));
+		if (isEndingLC) {
+			deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost - delta(ref[urIndex], '-'));
+		} else {
+			deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost);
+		}
+		insert = std::abs(matrix[rowIndex-1][columnIndex] + cost);
+		substitute = std::abs(matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]));
 	} else if (rowIndex <= 0 and columnIndex > 0) {
-		deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-'));
-		insert = infinity;
-		substitute = infinity;
+		if (isEndingLC) {
+			deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost - delta(ref[urIndex], '-'));
+		} else {
+			deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost);
+		}
 	} else if (rowIndex > 0 and columnIndex <= 0) {
-		deletion = infinity;
-		insert = std::abs(matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]));
-		substitute = infinity;
+		insert = std::abs(matrix[rowIndex-1][columnIndex] + cost);
 	} 
 }
 
@@ -368,7 +388,6 @@ void UntrimmedAlignments::findAlignments()
 					std::exit(1);
 				}
 			} else if (ulr[urIndex] == '-') {
-				deletion = matrix[rowIndex][columnIndex-1];
 				if (deletion == currentCost) {
 					clrMaf = '-' + clrMaf;
 					ulrMaf = ulr[urIndex] + ulrMaf;
@@ -509,10 +528,10 @@ int64_t TrimmedAlignments::editDistance(int64_t rowIndex, int64_t columnIndex)
 	if (lastBase) {
 		deletion = matrix[rowIndex][columnIndex-1];
 	} else {
-		deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
+		deletion = matrix[rowIndex][columnIndex-1] + cost;
 	}	
-	insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
-	substitute = matrix[rowIndex-1][columnIndex-1] + cost(clr[cIndex], ref[urIndex]);
+	insert = matrix[rowIndex-1][columnIndex] + cost;
+	substitute = matrix[rowIndex-1][columnIndex-1] + delta(clr[cIndex], ref[urIndex]);
 	return std::min( deletion, std::min( insert, substitute ) );
 }
 
@@ -525,28 +544,28 @@ void TrimmedAlignments::operationCosts(int64_t rowIndex, int64_t columnIndex, in
 	bool lastBase = isLastBase(cIndex);
 	// Set the costs of the different operations, 
 	// ensuring we don't go out of bounds of the matrix.
+	insert = infinity;
+	deletion = infinity;
+	substitute = infinity;
+
 	if (rowIndex > 0 and columnIndex > 0) {
 		// if we're at the end of the read, zero cost deletion
 		if (lastBase) {
 			deletion = matrix[rowIndex][columnIndex-1]; 
 		} else {
-			deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
+			deletion = matrix[rowIndex][columnIndex-1] + cost;
 		}
-		insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
-		substitute = matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]);	
+		insert = matrix[rowIndex-1][columnIndex] + cost;
+		substitute = matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]);	
 	} else if (rowIndex <= 0 and columnIndex > 0) {
 		// if we're at the end of the read, zero cost deletion
 		if (lastBase) {
 			deletion = matrix[rowIndex][columnIndex-1];
 		} else {
-			deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
+			deletion = matrix[rowIndex][columnIndex-1] + cost;
 		}
-		insert = infinity;
-		substitute = infinity;
 	} else if (rowIndex > 0 and columnIndex <= 0) {
-		deletion = infinity;
-		insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
-		substitute = infinity;
+		insert = matrix[rowIndex-1][columnIndex] + cost;
 	}	
 }
 
@@ -648,21 +667,32 @@ ExtendedUntrimmedAlignments::ExtendedUntrimmedAlignments() : UntrimmedAlignments
 
 int64_t ExtendedUntrimmedAlignments::rowBaseCase(int64_t rowIndex)
 {
-	return 0;
+	int64_t infinity = std::numeric_limits<int64_t>::max();
+
+	int64_t cIndex = rowIndex - 1;
+
+	if ( cIndex >= 0 and islower(clr[cIndex]) ) {
+		return infinity;
+	} else {
+		return matrix[rowIndex-1][0];
+	}
+	//return 0;
 }
 
 int64_t ExtendedUntrimmedAlignments::levenshteinDistance(int64_t rowIndex, int64_t columnIndex)
 {
 	int64_t cIndex = rowIndex - 1;
 	int64_t urIndex = columnIndex - 1;
-	int64_t deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-') );
+
 	int64_t insert;
 	if (columnIndex == columns - 1) {
 		insert = matrix[rowIndex-1][columnIndex];
 	} else {
-		insert = std::abs( matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]) );
+		insert = std::abs(matrix[rowIndex-1][columnIndex] + cost);
 	}
-	int64_t substitute = std::abs( matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]) );
+	int64_t deletion = std::abs( matrix[rowIndex][columnIndex-1] + cost);
+	int64_t substitute = std::abs( matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]) );
+
 	return std::min( deletion, std::min(insert, substitute) );
 }
 
@@ -674,26 +704,37 @@ void ExtendedUntrimmedAlignments::operationCosts(int64_t rowIndex, int64_t colum
 	int64_t urIndex = columnIndex - 1;
 	// Set the costs of the different operations, 
 	// also ensuring we don't go out of bounds of the matrix.
+	deletion = infinity;
+	insert = infinity;
+	substitute = infinity;
+
+	bool isEndingLC = checkIfEndingLowerCase(cIndex);
+
 	if (rowIndex > 0 and columnIndex > 0) {
-		deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-'));
+		if (isEndingLC) {
+			deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost - delta(ref[urIndex], '-'));
+		} else {
+			deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost);
+		}
 		if (columnIndex == columns - 1) {
 			insert = matrix[rowIndex-1][columnIndex];
 		} else {
-			insert = std::abs(matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]));
+			insert = std::abs(matrix[rowIndex-1][columnIndex] + cost);
 		}
-		substitute = std::abs(matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]));
+		substitute = std::abs(matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]));
+
 	} else if (rowIndex <= 0 and columnIndex > 0) {
-		deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-'));
-		insert = infinity;
-		substitute = infinity;
+		if (isEndingLC) {
+			deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost - delta(ref[urIndex], '-'));
+		} else {
+			deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost);
+		}
 	} else if (rowIndex > 0 and columnIndex <= 0) {
-		deletion = infinity;
 		if (columnIndex == columns - 1) {
 			insert = matrix[rowIndex-1][columnIndex];
 		} else {
-			insert = std::abs(matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]));
+			insert = std::abs(matrix[rowIndex-1][columnIndex] + cost);
 		}
-		substitute = infinity;
 	} 
 }
 
@@ -701,7 +742,7 @@ ExtendedTrimmedAlignments::ExtendedTrimmedAlignments() : TrimmedAlignments() {}
 
 int64_t ExtendedTrimmedAlignments::rowBaseCase(int64_t rowIndex)
 {
-	return rowIndex;
+	return rowIndex*fractionalCost;
 }
 
 int64_t ExtendedTrimmedAlignments::editDistance(int64_t rowIndex, int64_t columnIndex)
@@ -716,14 +757,15 @@ int64_t ExtendedTrimmedAlignments::editDistance(int64_t rowIndex, int64_t column
 	if (lastBase) {
 		deletion = matrix[rowIndex][columnIndex-1];
 	} else {
-		deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
+		deletion = matrix[rowIndex][columnIndex-1] + cost;
 	}	
 	if (columnIndex == columns - 1) {
-		insert = matrix[rowIndex-1][columnIndex] + 1;
+		insert = matrix[rowIndex-1][columnIndex] + fractionalCost;
 	} else {
-		insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
+		insert = matrix[rowIndex-1][columnIndex] + cost;
 	}
-	substitute = matrix[rowIndex-1][columnIndex-1] + cost(clr[cIndex], ref[urIndex]);
+	substitute = matrix[rowIndex-1][columnIndex-1] + delta(clr[cIndex], ref[urIndex]);
+
 	return std::min( deletion, std::min( insert, substitute ) );
 }
 
@@ -734,6 +776,11 @@ void ExtendedTrimmedAlignments::operationCosts(int64_t rowIndex, int64_t columnI
 	int64_t cIndex = rowIndex - 1;
 	int64_t urIndex = columnIndex - 1;
 	bool lastBase = isLastBase(cIndex);
+
+	deletion = infinity;
+	insert = infinity;
+	substitute = infinity;
+
 	// Set the costs of the different operations, 
 	// ensuring we don't go out of bounds of the matrix.
 	if (rowIndex > 0 and columnIndex > 0) {
@@ -741,30 +788,28 @@ void ExtendedTrimmedAlignments::operationCosts(int64_t rowIndex, int64_t columnI
 		if (lastBase) {
 			deletion = matrix[rowIndex][columnIndex-1]; 
 		} else {
-			deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
+			deletion = matrix[rowIndex][columnIndex-1] + cost;
 		}
 		if (columnIndex == columns - 1) {
-			insert = matrix[rowIndex-1][columnIndex] + 1;
+			insert = matrix[rowIndex-1][columnIndex] + fractionalCost;
 		} else {
-			insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
+			insert = matrix[rowIndex-1][columnIndex] + cost;
 		}
-		substitute = matrix[rowIndex-1][columnIndex-1] + cost(ref[urIndex], clr[cIndex]);	
+		substitute = matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]);	
+
 	} else if (rowIndex <= 0 and columnIndex > 0) {
 		// if we're at the end of the read, zero cost deletion
 		if (lastBase) {
 			deletion = matrix[rowIndex][columnIndex-1];
 		} else {
-			deletion = matrix[rowIndex][columnIndex-1] + cost(ref[urIndex], '-');
+			deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost);
 		}
-		insert = infinity;
-		substitute = infinity;
+
 	} else if (rowIndex > 0 and columnIndex <= 0) {
-		deletion = infinity;
 		if (columnIndex == columns - 1) {
-			insert = matrix[rowIndex-1][columnIndex] + 1;
+			insert = std::abs(matrix[rowIndex-1][columnIndex] + fractionalCost);
 		} else {
-			insert = matrix[rowIndex-1][columnIndex] + cost('-', clr[cIndex]);
+			insert = std::abs(matrix[rowIndex-1][columnIndex] + cost);
 		}
-		substitute = infinity;
 	}	
 }
