@@ -94,3 +94,8 @@ If `data` is the user-specified output directory and `experiment-name` is the na
 * `scripts` contains example scripts for the simulation of short and long reads and the correction of long reads.
 * `src` contains source code and Python scripts for LRCstats pipeline. Users may find scripts in here useful.
 * `tests` contains scripts for unit and integration tests of LRCstats.
+
+## Contact ##
+If you have any questions or comments, please either submit a GitHub issue or write an email to:
+* Sean La - laseanl@sfu.ca
+* Cedric Chauve - cedric.chauve@sfu.ca
