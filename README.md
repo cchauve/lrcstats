@@ -1,9 +1,16 @@
 # LRCstats: Long Read Correction Statistics #
+
+## Build Status ##
+
+|Branch   | Status |
+|:-------:|:-------------------------------------------------------------------------------------------:|
+| Master  | ![Master Build Status](https://travis-ci.org/thefantasticdron/lrcstats.svg?branch=master)   |
+| Develop | ![Develop Build Status](https://travis-ci.org/thefantasticdron/lrcstats.svg?branch=develop) |
+
+## Description ##
 LRCstats is an open-source pipeline for benchmarking DNA long read correction algorithms for long reads outputted by third generation sequencing technology such as machines produced by Pacific Biosciences. The reads produced by third generation sequencing technology, as the name suggests, are longer in length than reads produced by next generation sequencing technologies, such as those produced by Illumina. However, long reads are plagued by high error rates, which can cause issues in downstream analysis. Long read correction algorithms reduce the error rate of long reads either through self-correcting methods or using accurate, short reads outputted by next generation sequencing technologies to correct long reads.
 
-Of course, some long read correction algorithms are better than others, and developers of long read correction algorithms will wish to compare their algorithm with others currently available. LRCstats benchmarks long read correction algorithms using long reads produced by simulators (such as SimLoRD or PBSim) where the two-alignment between the uncorrected long reads (uLR) and the corresponding sequences in the reference genome (Ref) is given in a Multiple Alignment Format (MAF) file, and then aligning the corrected long reads (cLR) to the Ref-uLR two-way alignments to create three-way alignments using a dynamic programming algorithm. Statistics on these three-way alignments are then collected, such as the overall error rates of the corrected long reads.
-
-![LRCstats pipeline](lrcstats_pipeline.png)
+Of course, some long read correction algorithms are better than others, and developers of long read correction algorithms will wish to compare their algorithm with others currently available. LRCstats benchmarks long read correction algorithms using long reads produced by simulators (such as SimLoRD or PBSim) where the two-way alignments between the uncorrected long reads (uLR) and the corresponding sequences in the reference genome (Ref) are given in a Multiple Alignment Format (MAF) file, and then aligning the corrected long reads (cLR) to the Ref-uLR two-way alignments to create three-way alignments using a dynamic programming algorithm. Statistics on these three-way alignments are then collected, such as the overall error rates of the corrected long reads.
 
 ## Dependencies ##
 * Python 2.7.2
@@ -31,12 +38,14 @@ The rest of the pipeline is written in Python so you just need to make sure your
 ## Input ##
 The main two files that LRCstats takes as input are:
 
-1. a corrected long reads file in FASTA format
-2. a Ref-uLR two-way alignment file in MAF format
+1. a corrected simulated long reads file in FASTA format
+2. a Ref-uLR two-way alignment file in [MAF format](https://genome.ucsc.edu/FAQ/FAQformat#format5)
 
 The paths to these files can be provided in either a configuration file or as command line arguments.
 
 If the corrected long reads file is given as a FASTQ file instead, the LRCstats repo includes a python script `src/preprocessing/fastq2fasta/fastq2fasta.py` to convert FASTQ files into FASTA format. Likewise, SimLoRD outputs the alignment between the uncorrected long reads and the reference sequence in SAM format. The python script `src/preprocessing/sam2maf/sam2maf.py` converts SAM files into the MAF format.
+
+Additionally, the directory `scripts` contains example scripts for simulating short and long reads using SimLoRD and correcting simulated long reads using simulated short reads with proovread, LoRDEC, Jabba and CoLoRMap.
 
 ## Configuration File ##
 LRCstats takes as input a configuration file specifying
@@ -87,3 +96,8 @@ If `data` is the user-specified output directory and `experiment-name` is the na
 * `scripts` contains example scripts for the simulation of short and long reads and the correction of long reads.
 * `src` contains source code and Python scripts for LRCstats pipeline. Users may find scripts in here useful.
 * `tests` contains scripts for unit and integration tests of LRCstats.
+
+## Contact ##
+If you have any questions or comments, please either submit a GitHub issue or write an email to:
+* Sean La - laseanl@sfu.ca
+* Cedric Chauve - cedric.chauve@sfu.ca
