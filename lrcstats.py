@@ -23,6 +23,7 @@ def createBlankConfig(configPath):
 		"extended = False\n" \
 		"\n" \
 		"[Paths]\n" \
+		"# For each path, please don't include the ending / !\n" \
 		"# Directory to store read data\n" \
 		"data = \n" \
 		"clr = example.fasta\n" \
