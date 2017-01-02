@@ -183,6 +183,20 @@ bool UntrimmedAlignments::isEndingCorrectedIndex(int64_t cIndex)
 	} 
 }
 
+int64_t UntrimmedAlignments::rowBaseCase(int64_t rowIndex) 
+{
+	int64_t infinity = std::numeric_limits<int64_t>::max();
+
+	int64_t cIndex = rowIndex - 1;
+
+	if ( cIndex >= 0 and islower(clr[cIndex]) ) {
+		return infinity;
+	} else {
+		return matrix[rowIndex-1][0] + cost;
+	}
+	//return 0;
+}
+
 int64_t UntrimmedAlignments::levenshteinDistance(int64_t rowIndex, int64_t columnIndex)
 {
 	int64_t cIndex = rowIndex - 1;
