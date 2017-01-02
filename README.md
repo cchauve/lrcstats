@@ -38,12 +38,14 @@ The rest of the pipeline is written in Python so you just need to make sure your
 ## Input ##
 The main two files that LRCstats takes as input are:
 
-1. a corrected long reads file in FASTA format
+1. a corrected simulated long reads file in FASTA format
 2. a Ref-uLR two-way alignment file in [MAF format](https://genome.ucsc.edu/FAQ/FAQformat#format5)
 
 The paths to these files can be provided in either a configuration file or as command line arguments.
 
 If the corrected long reads file is given as a FASTQ file instead, the LRCstats repo includes a python script `src/preprocessing/fastq2fasta/fastq2fasta.py` to convert FASTQ files into FASTA format. Likewise, SimLoRD outputs the alignment between the uncorrected long reads and the reference sequence in SAM format. The python script `src/preprocessing/sam2maf/sam2maf.py` converts SAM files into the MAF format.
+
+Additionally, the directory `scripts` contains example scripts for simulating short and long reads using SimLoRD and correcting simulated long reads using simulated short reads with proovread, LoRDEC, Jabba and CoLoRMap.
 
 ## Configuration File ##
 LRCstats takes as input a configuration file specifying
