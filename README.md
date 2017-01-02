@@ -32,7 +32,7 @@ The rest of the pipeline is written in Python so you just need to make sure your
 The main two files that LRCstats takes as input are:
 
 1. a corrected long reads file in FASTA format
-2. a Ref-uLR two-way alignment file in MAF format
+2. a Ref-uLR two-way alignment file in [MAF format](https://genome.ucsc.edu/FAQ/FAQformat#format5)
 
 The paths to these files can be provided in either a configuration file or as command line arguments.
 
