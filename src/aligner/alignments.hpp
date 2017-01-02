@@ -11,6 +11,7 @@ class Alignments
 		~Alignments();
 		// Returns the ref, uLR and cLR alignments
 		Read_t align(std::string reference, std::string uRead, std::string cRead);
+		void printMatrix();	
 	protected:
 		std::string clr;
 		std::string ulr;
@@ -21,13 +22,15 @@ class Alignments
                 int64_t rows;
                 int64_t columns;
                 int64_t** matrix;
+		// Costs of mutations
+		int64_t cost;
+		int64_t fractionalCost;
 		// Allocate and delete the dynamic programming matrix in the heap
 		void createMatrix();
 		void deleteMatrix();
 		// Cost function for dynamic programming matrix
-                int64_t cost(char refBase, char cBase);
+                int64_t delta(char refBase, char cBase);
 		// Print the matrix - debugging purposes only
-		void printMatrix();	
 		virtual void preprocessReads();
 		virtual int64_t rowBaseCase(int64_t rowIndex);
 		virtual int64_t columnBaseCase(int64_t columnIndex);
