@@ -54,6 +54,7 @@ class UntrimmedAlignments : public Alignments
 		// Returns true if the current base in the cLR is the last base of a corrected segment;
 		// false otherwise
 		bool isEndingCorrectedIndex(int64_t cIndex);
+		int64_t rowBaseCase(int64_t rowIndex) override;
 		// Returns the conventional levenshtein distance for alignments, sans the base case
 		virtual int64_t levenshteinDistance(int64_t rowIndex, int64_t columnIndex);
 		// Fill the dynamic programming matrix
