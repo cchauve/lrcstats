@@ -232,7 +232,8 @@ std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int6
 	statistics.push_back(uSize);
 
 	// Length of the alignment
-	int64_t alignmentLength = cRead.length();
+	//int64_t alignmentLength = cRead.length();
+	int64_t alignmentLength = boundarylessLength(cRead);
 	statistics.push_back( alignmentLength );
 
 	// Find the number of mutations for the corrected and uncorrected reads

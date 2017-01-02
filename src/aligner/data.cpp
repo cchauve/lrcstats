@@ -28,6 +28,14 @@ int64_t gaplessLength(std::string read)
 /* Returns the gapless length of MAF formatted reads */
 {
 	read.erase(std::remove(read.begin(), read.end(), '-'), read.end());
+	read.erase(std::remove(read.begin(), read.end(), 'X'), read.end());
+	return read.length(); 
+}
+
+int64_t boundarylessLength(std::string read)
+/* Returns the length of MAF formatted reads without the 'X' boundaries */
+{
+	read.erase(std::remove(read.begin(), read.end(), 'X'), read.end());
 	return read.length(); 
 }
 

@@ -7,6 +7,9 @@ std::vector<std::string> split(const std::string &str);
 int64_t gaplessLength(std::string read);
 /* Returns the length of a sequence without gaps. */
 
+int64_t boundarylessLength(std::string read);
+/* Returns the length of a sequecne without boundaries */
+
 struct ReadInfo
 /* Contains the read information for the two-way MAF file for the uncorrected long read and reference sequence 
  */
