@@ -101,5 +101,5 @@ If `data` is the user-specified output directory and `experiment-name` is the na
 
 ## Contact ##
 If you have any questions or comments, please either submit a GitHub issue or write an email to:
-* Sean La - laseanl@sfu.ca
-* Cedric Chauve - cedric.chauve@sfu.ca
+* Sean La - laseanl[at]sfu[dot]ca
+* Cedric Chauve - cedric.chauve[at]sfu[dot]ca
