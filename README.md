@@ -100,6 +100,5 @@ If `data` is the user-specified output directory and `experiment-name` is the na
 * `tests` contains scripts for unit and integration tests of LRCstats.
 
 ## Contact ##
-If you have any questions or comments, please either submit a GitHub issue or write an email to:
+If you have any questions or comments, please submit a GitHub issue or send an email to:
 * Sean La - laseanl[at]sfu[dot]ca
-* Cedric Chauve - cedric.chauve[at]sfu[dot]ca
