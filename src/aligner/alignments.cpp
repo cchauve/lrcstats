@@ -105,11 +105,6 @@ int64_t Alignments::rowBaseCase(int64_t rowIndex)
 int64_t Alignments::columnBaseCase(int64_t columnIndex)
 {
 	return columnIndex*cost;
-	/*
-	assert( columnIndex > 0 );
-	int64_t urIndex = columnIndex - 1;
-	return matrix[0][columnIndex-1] + cost - delta(ulr[urIndex],'-');
-	*/
 }	
 
 int64_t Alignments::editDistance(int64_t rowIndex, int64_t columnIndex) {}
@@ -194,7 +189,12 @@ int64_t UntrimmedAlignments::rowBaseCase(int64_t rowIndex)
 	} else {
 		return matrix[rowIndex-1][0] + cost;
 	}
-	//return 0;
+}
+
+int64_t UntrimmedAlignments::columnBaseCase(int64_t columnIndex)
+{
+	int64_t uIndex = columnIndex - 1; 
+	return matrix[0][columnIndex-1] + delta(ulr[uIndex],'-');	
 }
 
 int64_t UntrimmedAlignments::levenshteinDistance(int64_t rowIndex, int64_t columnIndex)
