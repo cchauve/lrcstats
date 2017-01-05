@@ -55,7 +55,6 @@ class UntrimmedAlignments : public Alignments
 		// false otherwise
 		bool isEndingCorrectedIndex(int64_t cIndex);
 		virtual int64_t rowBaseCase(int64_t rowIndex) override;
-		int64_t columnBaseCase(int64_t columnIndex) override;
 		// Returns the conventional levenshtein distance for alignments, sans the base case
 		virtual int64_t levenshteinDistance(int64_t rowIndex, int64_t columnIndex);
 		// Fill the dynamic programming matrix

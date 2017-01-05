@@ -104,7 +104,8 @@ int64_t Alignments::rowBaseCase(int64_t rowIndex)
 
 int64_t Alignments::columnBaseCase(int64_t columnIndex)
 {
-	return columnIndex*cost;
+	int64_t rIndex = columnIndex - 1;
+	return matrix[0][columnIndex-1] + delta(ref[rIndex],'-');
 }	
 
 int64_t Alignments::editDistance(int64_t rowIndex, int64_t columnIndex) {}
@@ -189,12 +190,6 @@ int64_t UntrimmedAlignments::rowBaseCase(int64_t rowIndex)
 	} else {
 		return matrix[rowIndex-1][0] + cost;
 	}
-}
-
-int64_t UntrimmedAlignments::columnBaseCase(int64_t columnIndex)
-{
-	int64_t uIndex = columnIndex - 1; 
-	return matrix[0][columnIndex-1] + delta(ulr[uIndex],'-');	
 }
 
 int64_t UntrimmedAlignments::levenshteinDistance(int64_t rowIndex, int64_t columnIndex)
@@ -294,12 +289,14 @@ void UntrimmedAlignments::findAlignments()
 		int64_t urIndex = columnIndex - 1;
 		int64_t cIndex = rowIndex - 1;
 		int64_t currentCost = matrix[rowIndex][columnIndex];
+
+		// Set the costs of the different operations, 
+		// also ensuring we don't go out of bounds of the matrix.
 		int64_t deletion;
 		int64_t insert;
 		int64_t substitute;
-		// Set the costs of the different operations, 
-		// also ensuring we don't go out of bounds of the matrix.
 		operationCosts(rowIndex,columnIndex,deletion,insert,substitute);
+
 		// check to see if the current base in the corrected long read is lowercase
 		bool isEndingLC = checkIfEndingLowerCase(cIndex);
 		bool endingCorrectedBase = isEndingCorrectedIndex(cIndex);
@@ -354,8 +351,6 @@ void UntrimmedAlignments::findAlignments()
 					columnIndex--;
 				} else {
 					std::cout << "ERROR CODE 1: No paths found. Terminating backtracking.\n";
-					std::cout << "cIndex is " << cIndex << "\n";
-					std::cout << "urIndex is " << urIndex << "\n";
 					std::exit(1);
 				}
 			} else {
@@ -366,8 +361,6 @@ void UntrimmedAlignments::findAlignments()
 					columnIndex--;
 				} else {
 					std::cout << "ERROR CODE 2: No paths found. Terminating backtracking.\n";
-					std::cout << "cIndex is " << cIndex << "\n";
-					std::cout << "urIndex is " << urIndex << "\n";
 					std::exit(1);
 				}
 			}
@@ -393,8 +386,6 @@ void UntrimmedAlignments::findAlignments()
 					columnIndex--;
 				} else {
 					std::cout << "ERROR CODE 3: No paths found. Terminating backtracking.\n";
-					std::cout << "cIndex is " << cIndex << "\n";
-					std::cout << "urIndex is " << urIndex << "\n";
 					std::exit(1);
 				}
 			} else if (ulr[urIndex] == '-') {
@@ -405,14 +396,10 @@ void UntrimmedAlignments::findAlignments()
 					columnIndex--;
 				} else {
 					std::cout << "ERROR CODE 4: No paths found. Terminating backtracking.\n";
-					std::cout << "cIndex is " << cIndex << "\n";
-					std::cout << "urIndex is " << urIndex << "\n";
 					std::exit(1);
 				}
 			} else {
 				std::cout << "ERROR CODE 5: No paths found. Terminating backtracking.\n";
-				std::cout << "cIndex is " << cIndex << "\n";
-				std::cout << "urIndex is " << urIndex << "\n";
 				std::exit(1);	
 			}
 		// This condition is performed if the current corrected long read base is uppercase
@@ -459,8 +446,6 @@ void UntrimmedAlignments::findAlignments()
 				columnIndex--;
 			} else {
 				std::cout << "ERROR CODE 6: No paths found. Terminating backtracking.\n";
-				std::cout << "cIndex is " << cIndex << "\n";
-				std::cout << "urIndex is " << urIndex << "\n";
 				std::exit(1);	
 			}
 		} 		
@@ -572,27 +557,6 @@ void TrimmedAlignments::operationCosts(int64_t rowIndex, int64_t columnIndex, in
 	if (rowIndex > 0 and columnIndex > 0) {
 		substitute = matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]);	
 	}
-	/*
-	if (rowIndex > 0 and columnIndex > 0) {
-		// if we're at the end of the read, zero cost deletion
-		if (lastBase) {
-			deletion = matrix[rowIndex][columnIndex-1]; 
-		} else {
-			deletion = matrix[rowIndex][columnIndex-1] + cost;
-		}
-		insert = matrix[rowIndex-1][columnIndex] + cost;
-		substitute = matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]);	
-	} else if (rowIndex <= 0 and columnIndex > 0) {
-		// if we're at the end of the read, zero cost deletion
-		if (lastBase) {
-			deletion = matrix[rowIndex][columnIndex-1];
-		} else {
-			deletion = matrix[rowIndex][columnIndex-1] + cost;
-		}
-	} else if (rowIndex > 0 and columnIndex <= 0) {
-		insert = matrix[rowIndex-1][columnIndex] + cost;
-	}	
-	*/
 }
 
 void TrimmedAlignments::findAlignments()
@@ -774,12 +738,12 @@ int64_t ExtendedTrimmedAlignments::editDistance(int64_t rowIndex, int64_t column
 	if (lastBase) {
 		deletion = matrix[rowIndex][columnIndex-1];
 	} else {
-		deletion = matrix[rowIndex][columnIndex-1] + cost;
+		deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost);
 	}	
 	if (columnIndex == columns - 1) {
-		insert = matrix[rowIndex-1][columnIndex] + fractionalCost;
+		insert = std::abs(matrix[rowIndex-1][columnIndex] + fractionalCost);
 	} else {
-		insert = matrix[rowIndex-1][columnIndex] + cost;
+		insert = std::abs(matrix[rowIndex-1][columnIndex] + cost);
 	}
 	substitute = matrix[rowIndex-1][columnIndex-1] + delta(clr[cIndex], ref[urIndex]);
 
@@ -815,6 +779,6 @@ void ExtendedTrimmedAlignments::operationCosts(int64_t rowIndex, int64_t columnI
 		}
 	}
 	if (rowIndex > 0 and columnIndex > 0) {
-		substitute = matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]);	
+		substitute = std::abs(matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]));	
 	}
 }
