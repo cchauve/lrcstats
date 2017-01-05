@@ -150,7 +150,7 @@ def writeHeader(file, pbsOptions):
 	'''
 	file.write("#!/bin/bash\n")
 	for option in pbsOptions:
-		line = "# %s\n" %(option)
+		line = "#%s\n" %(option)
 		file.write(line)
 	file.write('\n')
 
