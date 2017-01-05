@@ -45,7 +45,7 @@ def createBlankConfig(configPath):
 		"PBS -j oe\n" \
 		"PBS -N example_job\n" \
 		"PBS -l mem=8gb\n" \
-		"PBS -l nodes:1:ppn=1\n" \
+		"PBS -l nodes=1:ppn=1\n" \
 		"PBS -l walltime=01:00:00\n"
 
 	blankConfigPath = "%s" % (configPath)
@@ -150,7 +150,7 @@ def writeHeader(file, pbsOptions):
 	'''
 	file.write("#!/bin/bash\n")
 	for option in pbsOptions:
-		line = "# %s\n" %(option)
+		line = "#%s\n" %(option)
 		file.write(line)
 	file.write('\n')
 
