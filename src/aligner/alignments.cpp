@@ -249,23 +249,13 @@ void UntrimmedAlignments::operationCosts(int64_t rowIndex, int64_t columnIndex,
 	int64_t urIndex = columnIndex - 1;
 	bool isEndingLC = checkIfEndingLowerCase(cIndex);
 
-	deletion = infinity;
-	insert = infinity;
-	substitute = infinity;
-
-	if (rowIndex > 0) {
-		insert = std::abs(matrix[rowIndex-1][columnIndex] + cost);
+	insert = std::abs(matrix[rowIndex-1][columnIndex] + cost);
+	if (isEndingLC) {
+		deletion = std::abs(matrix[rowIndex][columnIndex-1] + delta(ref[urIndex], '-'));
+	} else {
+		deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost);
 	}
-	if (columnIndex > 0) {
-		if (isEndingLC) {
-			deletion = std::abs(matrix[rowIndex][columnIndex-1] + delta(ref[urIndex], '-'));
-		} else {
-			deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost);
-		}
-	}
-	if (rowIndex > 0 and columnIndex > 0) {
-		substitute = std::abs(matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]));
-	}
+	substitute = std::abs(matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]));
 }
 
 void UntrimmedAlignments::findAlignments()
@@ -289,15 +279,6 @@ void UntrimmedAlignments::findAlignments()
 		int64_t cIndex = rowIndex - 1;
 		int64_t currentCost = matrix[rowIndex][columnIndex];
 
-		// Set the costs of the different operations, 
-		// also ensuring we don't go out of bounds of the matrix.
-		int64_t deletion;
-		int64_t insert;
-		int64_t substitute;
-		operationCosts(rowIndex,columnIndex,deletion,insert,substitute);
-
-		// check to see if the current base in the corrected long read is lowercase
-		bool isEndingLC = checkIfEndingLowerCase(cIndex);
 		bool endingCorrectedBase = isEndingCorrectedIndex(cIndex);
 		bool beginningCorrectedBase = isBeginningCorrectedIndex(cIndex);
 
@@ -323,19 +304,126 @@ void UntrimmedAlignments::findAlignments()
 				clrMaf = 'X' + clrMaf;	
 			}
 			rowIndex--;
-		} else if (isEndingLC) {
-			if ( toupper( ulr[urIndex] ) == toupper( clr[cIndex] ) ) {
+		} else {
+			// Set the costs of the different operations, 
+			// also ensuring we don't go out of bounds of the matrix.
+			int64_t deletion;
+			int64_t insert;
+			int64_t substitute;
+			operationCosts(rowIndex,columnIndex,deletion,insert,substitute);
+
+			// check to see if the current base in the corrected long read is lowercase
+			bool isEndingLC = checkIfEndingLowerCase(cIndex);
+			if (isEndingLC) {
+				if ( toupper( ulr[urIndex] ) == toupper( clr[cIndex] ) ) {
+					if (deletion == currentCost) {
+						clrMaf = '-' + clrMaf;
+						ulrMaf = ulr[urIndex] + ulrMaf;
+						refMaf = ref[urIndex] + refMaf;
+						columnIndex--;
+					} else if (substitute == currentCost) {
+						// Insert the right boundary of a corrected segment
+						if (endingCorrectedBase) {
+							refMaf = '-' + refMaf;
+							ulrMaf = 'X' + ulrMaf;
+							clrMaf = 'X' + clrMaf;	
+						}
+						clrMaf = clr[cIndex] + clrMaf;
+						ulrMaf = ulr[urIndex] + ulrMaf;
+						refMaf = ref[urIndex] + refMaf;
+						// Insert the left boundary of the corrected segment
+						if (beginningCorrectedBase) {
+							refMaf = '-' + refMaf;
+							ulrMaf = 'X' + ulrMaf;
+							clrMaf = 'X' + clrMaf;	
+						}
+						rowIndex--;
+						columnIndex--;
+					} else {
+						std::cout << "ERROR CODE 1: Terminating backtracking.\n";
+						std::exit(1);
+					}
+				} else {
+					if (deletion == currentCost) {
+						clrMaf = '-' + clrMaf;
+						ulrMaf = ulr[urIndex] + ulrMaf;
+						refMaf = ref[urIndex] + refMaf;
+						columnIndex--;
+					} else {
+						std::cout << "ERROR CODE 2: No paths found. Terminating backtracking.\n";
+						std::exit(1);
+					}
+				}
+			} else if (islower(clr[cIndex])) {
+				if ( toupper( ulr[urIndex] ) == toupper( clr[cIndex] ) ) {
+					if (substitute == currentCost) {
+						// Insert the right boundary of the corrected segment
+						if (endingCorrectedBase) {
+							refMaf = '-' + refMaf;
+							ulrMaf = 'X' + ulrMaf;
+							clrMaf = 'X' + clrMaf;
+						}
+						clrMaf = clr[cIndex] + clrMaf;	
+						ulrMaf = ulr[urIndex] + ulrMaf;
+						refMaf = ref[urIndex] + refMaf;
+						// Insert the right boundary of a corrected segment
+						if (beginningCorrectedBase) {
+							refMaf = '-' + refMaf;
+							ulrMaf = 'X' + ulrMaf;
+							clrMaf = 'X' + clrMaf;
+						}
+						rowIndex--;
+						columnIndex--;
+					} else {
+						std::cout << "ERROR CODE 3: No paths found. Terminating backtracking.\n";
+						std::exit(1);
+					}
+				} else if (ulr[urIndex] == '-') {
+					if (deletion == currentCost) {
+						clrMaf = '-' + clrMaf;
+						ulrMaf = ulr[urIndex] + ulrMaf;
+						refMaf = ref[urIndex] + refMaf;
+						columnIndex--;
+					} else {
+						std::cout << "ERROR CODE 4: No paths found. Terminating backtracking.\n";
+						std::exit(1);
+					}
+				} else {
+					std::cout << "ERROR CODE 5: No paths found. Terminating backtracking.\n";
+					std::cout << "cLR[i] = " << clr[cIndex] << std::endl;
+					std::cout << "uLR[j] = " << ulr[urIndex] << std::endl;
+					std::exit(1);	
+				}
+		// This condition is performed if the current corrected long read base is uppercase
+			} else {
 				if (deletion == currentCost) {
 					clrMaf = '-' + clrMaf;
 					ulrMaf = ulr[urIndex] + ulrMaf;
 					refMaf = ref[urIndex] + refMaf;
 					columnIndex--;
-				} else if (substitute == currentCost) {
-					// Insert the right boundary of a corrected segment
+				} else if (insert == currentCost) {
+					// Insert the right boundary of the corrected segment
 					if (endingCorrectedBase) {
 						refMaf = '-' + refMaf;
 						ulrMaf = 'X' + ulrMaf;
-						clrMaf = 'X' + clrMaf;	
+						clrMaf = 'X' + clrMaf;
+					}
+					clrMaf = clr[cIndex] + clrMaf;
+					ulrMaf = '-' + ulrMaf;
+					refMaf = '-' + refMaf;
+					// Insert the left boundary of the corrected segment
+					if (beginningCorrectedBase) {
+						refMaf = '-' + refMaf;
+						ulrMaf = 'X' + ulrMaf;
+						clrMaf = 'X' + clrMaf;
+					}
+					rowIndex--;
+				} else if (substitute == currentCost) {
+					// Insert the right boundary of the corrected segment
+					if (endingCorrectedBase) {
+						refMaf = '-' + refMaf;
+						ulrMaf = 'X' + ulrMaf;
+						clrMaf = 'X' + clrMaf;
 					}
 					clrMaf = clr[cIndex] + clrMaf;
 					ulrMaf = ulr[urIndex] + ulrMaf;
@@ -344,112 +432,16 @@ void UntrimmedAlignments::findAlignments()
 					if (beginningCorrectedBase) {
 						refMaf = '-' + refMaf;
 						ulrMaf = 'X' + ulrMaf;
-						clrMaf = 'X' + clrMaf;	
-					}
-					rowIndex--;
-					columnIndex--;
-				} else {
-					std::cout << "ERROR CODE 1: No paths found. Terminating backtracking.\n";
-					std::exit(1);
-				}
-			} else {
-				if (deletion == currentCost) {
-					clrMaf = '-' + clrMaf;
-					ulrMaf = ulr[urIndex] + ulrMaf;
-					refMaf = ref[urIndex] + refMaf;
-					columnIndex--;
-				} else {
-					std::cout << "ERROR CODE 2: No paths found. Terminating backtracking.\n";
-					std::exit(1);
-				}
-			}
-		} else if (islower(clr[cIndex])) {
-			if ( toupper( ulr[urIndex] ) == toupper( clr[cIndex] ) ) {
-				if (substitute == currentCost) {
-					// Insert the right boundary of the corrected segment
-					if (endingCorrectedBase) {
-						refMaf = '-' + refMaf;
-						ulrMaf = 'X' + ulrMaf;
-						clrMaf = 'X' + clrMaf;
-					}
-					clrMaf = clr[cIndex] + clrMaf;	
-					ulrMaf = ulr[urIndex] + ulrMaf;
-					refMaf = ref[urIndex] + refMaf;
-					// Insert the right boundary of a corrected segment
-					if (beginningCorrectedBase) {
-						refMaf = '-' + refMaf;
-						ulrMaf = 'X' + ulrMaf;
 						clrMaf = 'X' + clrMaf;
 					}
 					rowIndex--;
 					columnIndex--;
 				} else {
-					std::cout << "ERROR CODE 3: No paths found. Terminating backtracking.\n";
-					std::exit(1);
+					std::cout << "ERROR CODE 6: No paths found. Terminating backtracking.\n";
+					std::exit(1);	
 				}
-			} else if (ulr[urIndex] == '-') {
-				if (deletion == currentCost) {
-					clrMaf = '-' + clrMaf;
-					ulrMaf = ulr[urIndex] + ulrMaf;
-					refMaf = ref[urIndex] + refMaf;
-					columnIndex--;
-				} else {
-					std::cout << "ERROR CODE 4: No paths found. Terminating backtracking.\n";
-					std::exit(1);
-				}
-			} else {
-				std::cout << "ERROR CODE 5: No paths found. Terminating backtracking.\n";
-				std::cout << "cLR[i] = " << clr[cIndex] << std::endl;
-				std::cout << "uLR[j] = " << ulr[urIndex] << std::endl;
-				std::exit(1);	
-			}
-		// This condition is performed if the current corrected long read base is uppercase
-		} else {
-			if (deletion == currentCost) {
-				clrMaf = '-' + clrMaf;
-				ulrMaf = ulr[urIndex] + ulrMaf;
-				refMaf = ref[urIndex] + refMaf;
-				columnIndex--;
-			} else if (insert == currentCost) {
-				// Insert the right boundary of the corrected segment
-				if (endingCorrectedBase) {
-					refMaf = '-' + refMaf;
-					ulrMaf = 'X' + ulrMaf;
-					clrMaf = 'X' + clrMaf;
-				}
-				clrMaf = clr[cIndex] + clrMaf;
-				ulrMaf = '-' + ulrMaf;
-				refMaf = '-' + refMaf;
-				// Insert the left boundary of the corrected segment
-				if (beginningCorrectedBase) {
-					refMaf = '-' + refMaf;
-					ulrMaf = 'X' + ulrMaf;
-					clrMaf = 'X' + clrMaf;
-				}
-				rowIndex--;
-			} else if (substitute == currentCost) {
-				// Insert the right boundary of the corrected segment
-				if (endingCorrectedBase) {
-					refMaf = '-' + refMaf;
-					ulrMaf = 'X' + ulrMaf;
-					clrMaf = 'X' + clrMaf;
-				}
-				clrMaf = clr[cIndex] + clrMaf;
-				ulrMaf = ulr[urIndex] + ulrMaf;
-				refMaf = ref[urIndex] + refMaf;
-				// Insert the left boundary of the corrected segment
-				if (beginningCorrectedBase) {
-					refMaf = '-' + refMaf;
-					ulrMaf = 'X' + ulrMaf;
-					clrMaf = 'X' + clrMaf;
-				}
-				rowIndex--;
-				columnIndex--;
-			} else {
-				std::cout << "ERROR CODE 6: No paths found. Terminating backtracking.\n";
-				std::exit(1);	
-			}
-		} 		
+			} 		
+		}
 	}
 	// Store the alignments in the UntrimmedAlignment object
 	clrAlignment = clrMaf;
@@ -693,31 +685,20 @@ void ExtendedUntrimmedAlignments::operationCosts(int64_t rowIndex, int64_t colum
 	int64_t infinity = std::numeric_limits<int64_t>::max();
 	int64_t cIndex = rowIndex - 1;
 	int64_t urIndex = columnIndex - 1;
-	// Set the costs of the different operations, 
-	// also ensuring we don't go out of bounds of the matrix.
-	deletion = infinity;
-	insert = infinity;
-	substitute = infinity;
 
 	bool isEndingLC = checkIfEndingLowerCase(cIndex);
 
-	if (rowIndex > 0) {
-		if (columnIndex == columns - 1) {
-			insert = matrix[rowIndex-1][columnIndex];
-		} else {
-			insert = std::abs(matrix[rowIndex-1][columnIndex] + cost);
-		}
+	if (columnIndex == columns - 1) {
+		insert = matrix[rowIndex-1][columnIndex];
+	} else {
+		insert = std::abs(matrix[rowIndex-1][columnIndex] + cost);
 	}
-	if (columnIndex > 0) {
-		if (isEndingLC) {
-			deletion = std::abs(matrix[rowIndex][columnIndex-1] + delta(ref[urIndex], '-'));
-		} else {
-			deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost);
-		}
+	if (isEndingLC) {
+		deletion = std::abs(matrix[rowIndex][columnIndex-1] + delta(ref[urIndex], '-'));
+	} else {
+		deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost);
 	}
-	if (rowIndex > 0 and columnIndex > 0) {
-		substitute = std::abs(matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]));
-	}
+	substitute = std::abs(matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]));
 }
 
 ExtendedTrimmedAlignments::ExtendedTrimmedAlignments() : TrimmedAlignments() {}
