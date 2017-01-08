@@ -23,7 +23,7 @@ Alignments::Alignments()
 	clrAlignment = "";
 	matrix = NULL;
 	cost = 10;
-	fractionalCost = 1;
+	fractionalCost = 5;
 }
 
 Alignments::~Alignments()
@@ -55,7 +55,6 @@ void Alignments::preprocessReads()
 }
 
 void Alignments::createMatrix()
-/* Preconstruct the matrix */
 {
 	try {
 		matrix = new int64_t*[rows];
@@ -218,11 +217,11 @@ int64_t UntrimmedAlignments::editDistance(int64_t rowIndex, int64_t columnIndex)
 		// one from clr.
 		if ( toupper(ulr[urIndex]) == toupper(clr[cIndex]) ) {
 			int64_t keep = std::abs(matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]));
-			int64_t del = std::abs(matrix[rowIndex][columnIndex-1] + cost - delta(ref[urIndex], '-'));
+			int64_t del = std::abs(matrix[rowIndex][columnIndex-1] + delta(ref[urIndex], '-'));
 			return std::min(keep, del); 
 		} else {
 			// deletion
-			int64_t del = std::abs(matrix[rowIndex][columnIndex-1] + cost - delta(ref[urIndex], '-'));
+			int64_t del = std::abs(matrix[rowIndex][columnIndex-1] + delta(ref[urIndex], '-'));
 			return del;
 		}
 	} else if (islower(clr[cIndex])) {
@@ -259,7 +258,7 @@ void UntrimmedAlignments::operationCosts(int64_t rowIndex, int64_t columnIndex,
 	}
 	if (columnIndex > 0) {
 		if (isEndingLC) {
-			deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost - delta(ref[urIndex], '-'));
+			deletion = std::abs(matrix[rowIndex][columnIndex-1] + delta(ref[urIndex], '-'));
 		} else {
 			deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost);
 		}
@@ -400,6 +399,8 @@ void UntrimmedAlignments::findAlignments()
 				}
 			} else {
 				std::cout << "ERROR CODE 5: No paths found. Terminating backtracking.\n";
+				std::cout << "cLR[i] = " << clr[cIndex] << std::endl;
+				std::cout << "uLR[j] = " << ulr[urIndex] << std::endl;
 				std::exit(1);	
 			}
 		// This condition is performed if the current corrected long read base is uppercase
@@ -709,7 +710,7 @@ void ExtendedUntrimmedAlignments::operationCosts(int64_t rowIndex, int64_t colum
 	}
 	if (columnIndex > 0) {
 		if (isEndingLC) {
-			deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost - delta(ref[urIndex], '-'));
+			deletion = std::abs(matrix[rowIndex][columnIndex-1] + delta(ref[urIndex], '-'));
 		} else {
 			deletion = std::abs(matrix[rowIndex][columnIndex-1] + cost);
 		}
