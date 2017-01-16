@@ -395,8 +395,6 @@ void UntrimmedAlignments::findAlignments()
 						std::exit(1);
 					}
 				} else {
-					std::cout << "ERROR CODE 5: Failed to anchor uncorrected segments.\n";
-					std::cout << "Terminating backtracking.\n";
 					alignmentSuccessful = false;
 				}
 		// This condition is performed if the current corrected long read base is uppercase
