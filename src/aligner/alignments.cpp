@@ -390,30 +390,6 @@ void UntrimmedAlignments::findAlignments()
 					}
 				} else {
 					std::cout << "ERROR CODE 5: Terminating backtracking.\n";
-					/*
-					if (cIndex > 0) {
-						std::cout << "cLR[i-1] = " << clr[cIndex-1] << std::endl;
-					}
-					if (urIndex > 0) {
-						std::cout << "uLR[j-1] = " << ulr[urIndex-1] << std::endl;
-					}
-					std::cout << "cLR[i] = " << clr[cIndex] << std::endl;
-					std::cout << "uLR[j] = " << ulr[urIndex] << std::endl;
-					if (cIndex < clr.length() - 1) {
-						std::cout << "cLR[i+1] = " << clr[cIndex+1] << std::endl;
-					}
-					if (urIndex < ulr.length() - 1) {
-						std::cout << "uLR[i+1] = " << ulr[urIndex+1] << std::endl;
-					}
-					*/
-					std::cout << "cIndex = " << cIndex << std::endl;
-					std::cout << "urIndex = " << urIndex << std::endl;
-					std::cout << "clr = \n";
-					std::cout << clr << std::endl;
-					std::cout << "ulr = \n";
-					std::cout << ulr << std::endl;
-					std::cout << "ref = \n";
-					std::cout << ref << std::endl; 
 					std::exit(1);	
 				}
 		// This condition is performed if the current corrected long read base is uppercase
