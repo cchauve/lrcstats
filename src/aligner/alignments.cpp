@@ -35,6 +35,9 @@ Alignments::~Alignments()
 
 Read_t Alignments::align(std::string reference, std::string uRead, std::string cRead)
 {
+	refAlignment = "";
+	ulrAlignment = "";
+	clrAlignment = "";
 	ref = reference;
 	ulr = uRead;
 	clr = cRead;
@@ -42,6 +45,7 @@ Read_t Alignments::align(std::string reference, std::string uRead, std::string c
 	preprocessReads();
 	createMatrix();
 	findAlignments();
+
 	Read_t alignedReads;
 	alignedReads.ref = refAlignment;
 	alignedReads.ulr = ulrAlignment;
@@ -111,6 +115,11 @@ int64_t Alignments::columnBaseCase(int64_t columnIndex)
 
 int64_t Alignments::editDistance(int64_t rowIndex, int64_t columnIndex) {}
 
+void Alignments::placeDeletion(int64_t cIndex, int64_t urIndex) {}
+
+void Alignments::placeInsertion(int64_t cIndex, int64_t urIndex) {}
+
+void Alignments::placeSubstitution(int64_t cIndex, int64_t urIndex) {}
 
 void Alignments::findAlignments() {}
 
@@ -260,6 +269,54 @@ void UntrimmedAlignments::operationCosts(int64_t rowIndex, int64_t columnIndex,
 	substitute = std::abs(matrix[rowIndex-1][columnIndex-1] + delta(ref[urIndex], clr[cIndex]));
 }
 
+void UntrimmedAlignments::placeDeletion(int64_t cIndex, int64_t urIndex) 
+{
+	clrAlignment = '-' + clrAlignment;
+	ulrAlignment = ulr[urIndex] + ulrAlignment;
+	refAlignment = ref[urIndex] + refAlignment;
+}
+
+void UntrimmedAlignments::placeInsertion(int64_t cIndex, int64_t urIndex) 
+{
+	bool endingCorrectedBase = isEndingCorrectedIndex(cIndex);
+	bool beginningCorrectedBase = isBeginningCorrectedIndex(cIndex);
+	if (endingCorrectedBase) {
+		refAlignment = '-' + refAlignment;
+		ulrAlignment = 'X' + ulrAlignment;
+		clrAlignment = 'X' + clrAlignment;	
+	}
+	clrAlignment = clr[cIndex] + clrAlignment;
+	ulrAlignment = '-' + ulrAlignment;
+	refAlignment = '-' + refAlignment;
+	// Insert the left and right boundaries of the corrected segments
+	if (beginningCorrectedBase) {
+		refAlignment = '-' + refAlignment;
+		ulrAlignment = 'X' + ulrAlignment;
+		clrAlignment = 'X' + clrAlignment;	
+	}
+}
+
+void UntrimmedAlignments::placeSubstitution(int64_t cIndex, int64_t urIndex)
+{
+	bool endingCorrectedBase = isEndingCorrectedIndex(cIndex);
+	bool beginningCorrectedBase = isBeginningCorrectedIndex(cIndex);
+	// Insert the right boundary of a corrected segment
+	if (endingCorrectedBase) {
+		refAlignment = '-' + refAlignment;
+		ulrAlignment = 'X' + ulrAlignment;
+		clrAlignment = 'X' + clrAlignment;	
+	}
+	clrAlignment = clr[cIndex] + clrAlignment;
+	ulrAlignment = ulr[urIndex] + ulrAlignment;
+	refAlignment = ref[urIndex] + refAlignment;
+	// Insert the left boundary of the corrected segment
+	if (beginningCorrectedBase) {
+		refAlignment = '-' + refAlignment;
+		ulrAlignment = 'X' + ulrAlignment;
+		clrAlignment = 'X' + clrAlignment;	
+	}
+}
+
 void UntrimmedAlignments::findAlignments()
 /* Backtracks through the DP matrix to find the optimal alignments. 
  * Follows same schema as the DP algorithm for untrimmed corrected long reads. 
@@ -269,9 +326,7 @@ void UntrimmedAlignments::findAlignments()
 {
 	int64_t rowIndex = rows - 1;
 	int64_t columnIndex = columns - 1;
-	std::string clrMaf = "";
-	std::string ulrMaf = "";
-	std::string refMaf = "";
+
 	// Follow the best path from the bottom right to the top left of the matrix.
 	// This is equivalent to the optimal alignment between ulr and clr.
 	// The path we follow is restricted to the conditions set when computing the matrix,
@@ -281,30 +336,11 @@ void UntrimmedAlignments::findAlignments()
 		int64_t cIndex = rowIndex - 1;
 		int64_t currentCost = matrix[rowIndex][columnIndex];
 
-		bool endingCorrectedBase = isEndingCorrectedIndex(cIndex);
-		bool beginningCorrectedBase = isBeginningCorrectedIndex(cIndex);
-
 		if (rowIndex == 0) {
-			clrMaf = '-' + clrMaf;
-			ulrMaf = ulr[urIndex] + ulrMaf;
-			refMaf = ref[urIndex] + refMaf;
+			placeDeletion(cIndex,urIndex);
 			columnIndex--;
 		} else if (columnIndex == 0) {
-			// Insert the right boundary of the corrected segment
-			if (endingCorrectedBase) {
-				refMaf = '-' + refMaf;
-				ulrMaf = 'X' + ulrMaf;
-				clrMaf = 'X' + clrMaf;	
-			}
-			clrMaf = clr[cIndex] + clrMaf;
-			ulrMaf = '-' + ulrMaf;
-			refMaf = '-' + refMaf;
-			// Insert the left and right boundaries of the corrected segments
-			if (beginningCorrectedBase) {
-				refMaf = '-' + refMaf;
-				ulrMaf = 'X' + ulrMaf;
-				clrMaf = 'X' + clrMaf;	
-			}
+			placeInsertion(cIndex,urIndex);
 			rowIndex--;
 		} else {
 			// Set the costs of the different operations, 
@@ -319,26 +355,11 @@ void UntrimmedAlignments::findAlignments()
 			if (isEndingLC) {
 				if ( toupper( ulr[urIndex] ) == toupper( clr[cIndex] ) ) {
 					if (deletion == currentCost) {
-						clrMaf = '-' + clrMaf;
-						ulrMaf = ulr[urIndex] + ulrMaf;
-						refMaf = ref[urIndex] + refMaf;
+						placeDeletion(cIndex,urIndex);
 						columnIndex--;
 					} else if (substitute == currentCost) {
 						// Insert the right boundary of a corrected segment
-						if (endingCorrectedBase) {
-							refMaf = '-' + refMaf;
-							ulrMaf = 'X' + ulrMaf;
-							clrMaf = 'X' + clrMaf;	
-						}
-						clrMaf = clr[cIndex] + clrMaf;
-						ulrMaf = ulr[urIndex] + ulrMaf;
-						refMaf = ref[urIndex] + refMaf;
-						// Insert the left boundary of the corrected segment
-						if (beginningCorrectedBase) {
-							refMaf = '-' + refMaf;
-							ulrMaf = 'X' + ulrMaf;
-							clrMaf = 'X' + clrMaf;	
-						}
+						placeSubstitution(cIndex,urIndex);
 						rowIndex--;
 						columnIndex--;
 					} else {
@@ -347,9 +368,7 @@ void UntrimmedAlignments::findAlignments()
 					}
 				} else {
 					if (deletion == currentCost) {
-						clrMaf = '-' + clrMaf;
-						ulrMaf = ulr[urIndex] + ulrMaf;
-						refMaf = ref[urIndex] + refMaf;
+						placeDeletion(cIndex,urIndex);
 						columnIndex--;
 					} else {
 						std::cout << "ERROR CODE 2: Terminating backtracking.\n";
@@ -360,20 +379,7 @@ void UntrimmedAlignments::findAlignments()
 				if ( toupper( ulr[urIndex] ) == toupper( clr[cIndex] ) ) {
 					if (substitute == currentCost) {
 						// Insert the right boundary of the corrected segment
-						if (endingCorrectedBase) {
-							refMaf = '-' + refMaf;
-							ulrMaf = 'X' + ulrMaf;
-							clrMaf = 'X' + clrMaf;
-						}
-						clrMaf = clr[cIndex] + clrMaf;	
-						ulrMaf = ulr[urIndex] + ulrMaf;
-						refMaf = ref[urIndex] + refMaf;
-						// Insert the right boundary of a corrected segment
-						if (beginningCorrectedBase) {
-							refMaf = '-' + refMaf;
-							ulrMaf = 'X' + ulrMaf;
-							clrMaf = 'X' + clrMaf;
-						}
+						placeSubstitution(cIndex,urIndex);
 						rowIndex--;
 						columnIndex--;
 					} else {
@@ -382,9 +388,7 @@ void UntrimmedAlignments::findAlignments()
 					}
 				} else if (ulr[urIndex] == '-') {
 					if (deletion == currentCost) {
-						clrMaf = '-' + clrMaf;
-						ulrMaf = ulr[urIndex] + ulrMaf;
-						refMaf = ref[urIndex] + refMaf;
+						placeDeletion(cIndex,urIndex);
 						columnIndex--;
 					} else {
 						std::cout << "ERROR CODE 4: Terminating backtracking.\n";
@@ -398,43 +402,14 @@ void UntrimmedAlignments::findAlignments()
 		// This condition is performed if the current corrected long read base is uppercase
 			} else {
 				if (deletion == currentCost) {
-					clrMaf = '-' + clrMaf;
-					ulrMaf = ulr[urIndex] + ulrMaf;
-					refMaf = ref[urIndex] + refMaf;
+					placeDeletion(cIndex,urIndex);
 					columnIndex--;
 				} else if (insert == currentCost) {
 					// Insert the right boundary of the corrected segment
-					if (endingCorrectedBase) {
-						refMaf = '-' + refMaf;
-						ulrMaf = 'X' + ulrMaf;
-						clrMaf = 'X' + clrMaf;
-					}
-					clrMaf = clr[cIndex] + clrMaf;
-					ulrMaf = '-' + ulrMaf;
-					refMaf = '-' + refMaf;
-					// Insert the left boundary of the corrected segment
-					if (beginningCorrectedBase) {
-						refMaf = '-' + refMaf;
-						ulrMaf = 'X' + ulrMaf;
-						clrMaf = 'X' + clrMaf;
-					}
+					placeInsertion(cIndex,urIndex);
 					rowIndex--;
 				} else if (substitute == currentCost) {
-					// Insert the right boundary of the corrected segment
-					if (endingCorrectedBase) {
-						refMaf = '-' + refMaf;
-						ulrMaf = 'X' + ulrMaf;
-						clrMaf = 'X' + clrMaf;
-					}
-					clrMaf = clr[cIndex] + clrMaf;
-					ulrMaf = ulr[urIndex] + ulrMaf;
-					refMaf = ref[urIndex] + refMaf;
-					// Insert the left boundary of the corrected segment
-					if (beginningCorrectedBase) {
-						refMaf = '-' + refMaf;
-						ulrMaf = 'X' + ulrMaf;
-						clrMaf = 'X' + clrMaf;
-					}
+					placeSubstitution(cIndex,urIndex);
 					rowIndex--;
 					columnIndex--;
 				} else {
@@ -444,10 +419,6 @@ void UntrimmedAlignments::findAlignments()
 			} 		
 		}
 	}
-	// Store the alignments in the UntrimmedAlignment object
-	clrAlignment = clrMaf;
-	ulrAlignment = ulrMaf;
-	refAlignment = refMaf;
 }
 
 /* --------------------------------------------------------------------------------------------- */
@@ -486,13 +457,19 @@ bool TrimmedAlignments::isFirstBase(int64_t cIndex)
 
 void TrimmedAlignments::preprocessReads()
 {
-	// Split the clr into its corrected parts
-	std::vector< std::string > trimmedClrs = split(clr);
+	// Make sure the vector is empty
+	lastBaseIndices.clear();
 
-	// Record the indices of the first bases of all the reads
+	// Split the clr into its corrected parts
+	std::vector< std::string > trimmedClrVector = split(clr);
+	std::string trimmedClr;
+
+	// Record the indices of the last bases of all the reads
 	int64_t lastBaseIndex = -1;
-	for (int64_t index = 0; index < trimmedClrs.size(); index++) {
-		lastBaseIndex = lastBaseIndex + trimmedClrs.at(index).length();
+
+	for (int64_t index = 0; index < trimmedClrVector.size(); index++) {
+		trimmedClr = trimmedClrVector.at(index);
+		lastBaseIndex = lastBaseIndex + trimmedClr.length();
 		lastBaseIndices.push_back(lastBaseIndex);	
 	}
 
@@ -553,6 +530,58 @@ void TrimmedAlignments::operationCosts(int64_t rowIndex, int64_t columnIndex, in
 	}
 }
 
+void TrimmedAlignments::placeDeletion(int64_t cIndex, int64_t urIndex) 
+{
+	refAlignment = ref[urIndex] + refAlignment;
+	ulrAlignment = ulr[urIndex] + ulrAlignment;
+	clrAlignment = '-' + clrAlignment;
+}
+
+void TrimmedAlignments::placeInsertion(int64_t cIndex, int64_t urIndex) 
+{
+	bool lastBase = isLastBase(cIndex);
+	bool firstBase = isFirstBase(cIndex);
+	// Mark the end of a trimmed long read
+	if (lastBase) {
+		refAlignment = '-' + refAlignment;
+		ulrAlignment = 'X' + ulrAlignment;
+		clrAlignment = 'X' + clrAlignment;
+	}	
+
+	refAlignment = '-' + refAlignment;
+	ulrAlignment = '-' + ulrAlignment;
+	clrAlignment = clr[cIndex] + clrAlignment;
+
+	// Mark the beginning of a trimmed long read
+	if (firstBase) {
+		refAlignment = '-' + refAlignment;
+		ulrAlignment = 'X' + ulrAlignment;
+		clrAlignment = 'X' + clrAlignment;
+	}
+}
+
+void TrimmedAlignments::placeSubstitution(int64_t cIndex, int64_t urIndex) 
+{
+	bool lastBase = isLastBase(cIndex);
+	bool firstBase = isFirstBase(cIndex);
+	// Mark the end of a trimmed long read
+	if (lastBase) {
+		refAlignment = '-' + refAlignment;
+		ulrAlignment = 'X' + ulrAlignment;
+		clrAlignment = 'X' + clrAlignment;
+	}	
+
+	refAlignment = ref[urIndex] + refAlignment;
+	ulrAlignment = ulr[urIndex] + ulrAlignment;
+	clrAlignment = clr[cIndex] + clrAlignment;
+
+	if (firstBase) {
+		refAlignment = '-' + refAlignment;
+		ulrAlignment = 'X' + ulrAlignment;
+		clrAlignment = 'X' + clrAlignment;
+	}
+}
+
 void TrimmedAlignments::findAlignments()
 /* Construct the optimal alignments between the trimmed corrected long reads, 
  * uncorrected long read and reference sequence. These algorithm indicates the boundaries
@@ -560,12 +589,10 @@ void TrimmedAlignments::findAlignments()
  * of the trimmed long reads.
  */
 {
-	std::string clrMaf = "";
-	std::string ulrMaf = "";
-	std::string refMaf = "";
 	int64_t rowIndex = rows - 1;
 	int64_t columnIndex = columns - 1;
 	int64_t infinity = std::numeric_limits<int64_t>::max();
+
 	// Follow the best path from the bottom right to the top left of the matrix.
 	// This is equivalent to the optimal alignment between ulr and clr.
 	// The path we follow is restricted to the conditions set when computing the matrix,
@@ -575,62 +602,19 @@ void TrimmedAlignments::findAlignments()
 		int64_t cIndex = rowIndex - 1;
 		int64_t currentCost = matrix[rowIndex][columnIndex];
 
-		// Check if cIndex is the last base of a read, if it is then that means
-		// we're either at the beginning or the end of a read
-		bool lastBase = isLastBase(cIndex);
-		bool firstBase = isFirstBase(cIndex);
 		int64_t insert;
 		int64_t deletion;
 		int64_t substitute;
 		operationCosts(rowIndex,columnIndex,deletion,insert,substitute);
 
 		if (rowIndex == 0 or currentCost == deletion) {
-			refMaf = ref[urIndex] + refMaf;
-			ulrMaf = ulr[urIndex] + ulrMaf;
-			clrMaf = '-' + clrMaf;
-
+			placeDeletion(cIndex,urIndex);
 			columnIndex--;
 		} else if (columnIndex == 0 or currentCost == insert) {
-			// Mark the end of a trimmed long read
-			if (lastBase) {
-				refMaf = '-' + refMaf;
-				ulrMaf = 'X' + ulrMaf;
-				clrMaf = 'X' + clrMaf;
-			}	
-
-			refMaf = '-' + refMaf;
-			ulrMaf = '-' + ulrMaf;
-			clrMaf = clr[cIndex] + clrMaf;
-
-			// Mark the beginning of a trimmed long read
-			if (firstBase) {
-				refMaf = '-' + refMaf;
-				ulrMaf = 'X' + ulrMaf;
-				clrMaf = 'X' + clrMaf;
-			}
-
+			placeInsertion(cIndex,urIndex);
 			rowIndex--;
 		} else if (currentCost == substitute) {
-			// Mark the end of a trimmed long read
-			if (lastBase) {
-				refMaf = '-' + refMaf;
-				ulrMaf = 'X' + ulrMaf;
-				clrMaf = 'X' + clrMaf;
-			}	
-
-			refMaf = ref[urIndex] + refMaf;
-			ulrMaf = ulr[urIndex] + ulrMaf;
-			clrMaf = clr[cIndex] + clrMaf;
-
-			// Mark the beginning of a trimmed long read
-			// We only place this beginning boundary when we're
-			// at the very first base of a read
-			if (firstBase) {
-				refMaf = '-' + refMaf;
-				ulrMaf = 'X' + ulrMaf;
-				clrMaf = 'X' + clrMaf;
-			}
-
+			placeSubstitution(cIndex,urIndex);
 			rowIndex--;
 			columnIndex--;
 		} else {
@@ -640,11 +624,6 @@ void TrimmedAlignments::findAlignments()
 			std::exit(1);
 		}
 	}
-
-	// Store the alignments in the TrimmedAlignment object
-	clrAlignment = clrMaf;
-	ulrAlignment = ulrMaf;
-	refAlignment = refMaf;
 }
 
 ExtendedUntrimmedAlignments::ExtendedUntrimmedAlignments() : UntrimmedAlignments() {};

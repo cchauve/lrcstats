@@ -37,6 +37,11 @@ class Alignments
 		virtual int64_t rowBaseCase(int64_t rowIndex);
 		virtual int64_t columnBaseCase(int64_t columnIndex);
 		virtual int64_t editDistance(int64_t rowIndex, int64_t columnIndex);
+
+		virtual void placeDeletion(int64_t cIndex, int64_t urIndex);
+		virtual void placeInsertion(int64_t cIndex, int64_t urIndex);
+		virtual void placeSubstitution(int64_t cIndex, int64_t urIndex);
+
 		virtual void findAlignments();
 };
 
@@ -64,6 +69,9 @@ class UntrimmedAlignments : public Alignments
 		// Returns the operations costs for insertion, deletion and substitute by reference
 		virtual void operationCosts(int64_t rowIndex, int64_t columnIndex,
                                     int64_t& deletion, int64_t& insert, int64_t& substitute);
+		void placeDeletion(int64_t cIndex, int64_t urIndex) override;
+		void placeInsertion(int64_t cIndex, int64_t urIndex) override;
+		void placeSubstitution(int64_t cIndex, int64_t urIndex) override;
 		// Backtrack through the matrix to find the alignments
                 void findAlignments() override;
 };
@@ -83,6 +91,10 @@ class TrimmedAlignments: public Alignments
 		// Returns the operations costs for insertion, deletion and substitute by reference
 		virtual void operationCosts(int64_t rowIndex, int64_t columnIndex,
                                     int64_t& deletion, int64_t& insert, int64_t& substitute);
+		void placeDeletion(int64_t cIndex, int64_t urIndex) override;
+		void placeInsertion(int64_t cIndex, int64_t urIndex) override;
+		void placeSubstitution(int64_t cIndex, int64_t urIndex) override;
+		// Backtrack through the matrix to find the alignments
                 void findAlignments() override;
 };
 

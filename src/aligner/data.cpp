@@ -20,7 +20,6 @@ std::vector<std::string> split(const std::string &s)
             		elems.push_back(item);
         	}
     	}
-
 	return elems;
 }
 
