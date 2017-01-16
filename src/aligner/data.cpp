@@ -64,12 +64,12 @@ void MafFile::addReads(Read_t reads)
 	std::string ref = reads.ref;
 	std::string ulr = reads.ulr;
 	std::string clr = reads.clr;
-
 	ReadInfo readInfo = reads.readInfo;
+	bool alignmentSuccessful = reads.alignmentSuccessful;
 
-	std::string refName = "reference"; 
-	std::string uName = readInfo.name + ".uncorrected";
-	std::string cName = readInfo.name + ".corrected";
+	std::string refName = "ref"; 
+	std::string uName = readInfo.name + ".uLR";
+	std::string cName = readInfo.name + ".cLR";
 
 	// The position in the original genome from which the read originates.
 	// The start position in PacBio reads are 0 since the the read is considered
@@ -94,15 +94,18 @@ void MafFile::addReads(Read_t reads)
 
 	std::ofstream file (filename, std::ios::out | std::ios::app);
 
-	if (file.is_open()) {
+	if (file.is_open() and alignmentSuccessful) {
 		file << "a\n";
 		file << "s " << refName << " " << refStart << " " << refSize << " " << refOrient << " " 
 			<< refSrcSize << " " << ref << "\n";
 		file << "s " << uName << " " << uStart << " " << uSize << " " << readOrient << " " << uSrcSize << " " << ulr << "\n";
 		file << "s " << cName << " " << cStart << " " << cSize << " " << readOrient << " " << cSrcSize << " " << clr << "\n";
 		file << "\n";
-		file.close();
+	} else if ( not alignmentSuccessful ) {
+		std::cout << "Failed to align read " << readInfo.name << ".\n";
 	} else {
-		std::cerr << "Unable to add reads to MAF file\n";
+		std::cerr << "Failed to open MAF file.\n";
 	}
+
+	file.close();
 }

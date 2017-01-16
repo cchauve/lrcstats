@@ -30,6 +30,7 @@ struct Read_t
 	std::string ulr;
 	std::string clr;
 	ReadInfo readInfo;
+	bool alignmentSuccessful;
 };
 
 class MafFile

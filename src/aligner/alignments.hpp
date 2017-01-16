@@ -25,6 +25,8 @@ class Alignments
 		// Costs of mutations
 		int64_t cost;
 		int64_t fractionalCost;
+		bool alignmentSuccessful;
+
 		// Allocate and delete the dynamic programming matrix in the heap
 		void createMatrix();
 		void deleteMatrix();

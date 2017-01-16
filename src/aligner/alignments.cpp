@@ -24,6 +24,7 @@ Alignments::Alignments()
 	matrix = NULL;
 	cost = 10;
 	fractionalCost = 5;
+	alignmentSuccessful = true;
 }
 
 Alignments::~Alignments()
@@ -45,6 +46,7 @@ Read_t Alignments::align(std::string reference, std::string uRead, std::string c
 	alignedReads.ref = refAlignment;
 	alignedReads.ulr = ulrAlignment;
 	alignedReads.clr = clrAlignment;
+	alignedReads.alignmentSuccessful = alignmentSuccessful;
 	return alignedReads;
 }
 
@@ -274,7 +276,7 @@ void UntrimmedAlignments::findAlignments()
 	// This is equivalent to the optimal alignment between ulr and clr.
 	// The path we follow is restricted to the conditions set when computing the matrix,
 	// i.e. we can never follow a path that the edit distance equations do not allow.
-	while (rowIndex > 0 or columnIndex > 0) {
+	while ( (rowIndex > 0 or columnIndex > 0) and alignmentSuccessful) {
 		int64_t urIndex = columnIndex - 1;
 		int64_t cIndex = rowIndex - 1;
 		int64_t currentCost = matrix[rowIndex][columnIndex];
@@ -389,8 +391,9 @@ void UntrimmedAlignments::findAlignments()
 						std::exit(1);
 					}
 				} else {
-					std::cout << "ERROR CODE 5: Terminating backtracking.\n";
-					std::exit(1);	
+					std::cout << "ERROR CODE 5: Failed to anchor uncorrected segments.\n";
+					std::cout << "Terminating backtracking.\n";
+					alignmentSuccessful = false;
 				}
 		// This condition is performed if the current corrected long read base is uppercase
 			} else {
