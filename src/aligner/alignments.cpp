@@ -46,6 +46,11 @@ Read_t Alignments::align(std::string reference, std::string uRead, std::string c
 	createMatrix();
 	findAlignments();
 
+	int64_t maxValue = std::numeric_limits<int64_t>::max();
+	if (matrix[rows-1][columns-1] > maxValue - 100) {
+		alignmentSuccessful = false;	
+	}
+
 	Read_t alignedReads;
 	alignedReads.ref = refAlignment;
 	alignedReads.ulr = ulrAlignment;
