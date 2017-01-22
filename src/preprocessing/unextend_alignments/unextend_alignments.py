@@ -87,7 +87,7 @@ class Alignment(object):
 		'''
 		Returns the number of non-'-' characters in the corrected alignment
 		'''
-		return self.sizeOfSequence(self.uRead)
+		return self.sizeOfSequence(self.cRead)
 
 	def getRef(self):
 		'''
