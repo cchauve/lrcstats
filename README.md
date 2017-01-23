@@ -99,5 +99,13 @@ If `data` is the user-specified output directory and `experiment-name` is the na
 * `src` contains source code and Python scripts for LRCstats pipeline. Users may find scripts in here useful.
 * `tests` contains scripts for unit and integration tests of LRCstats.
 
+## Other Remarks ##
+
+### Failed Alignments ###
+In some cases, LRCstats may fail to align untrimmed corrected long reads back to the Ref-uLR alignment. This occurs when there exists an uncorrected segment in the corrected long read which is not completely identical to the corresponding segment in the uncorrected long read. Occurrences of these non-identical uncorrected segments in corrected long reads are the fault of the correction algorithm, so we do not include these faulty reads into the statistics calculations.
+
+### X delimiters in the MAF alignments ###
+We modified the multiple alignment format to include `X` delimiters that indicate the boundaries of corrected segments/subreads in both trimmed and untrimmed corrected long read alignments. Hence, our version of the multiple alignment format may not be compatible with programs which accept MAF files as input.
+
 ## Contact ##
 If you have any questions or comments, please submit a GitHub issue or send an email to Sean La at laseanl[at]sfu[dot]ca
