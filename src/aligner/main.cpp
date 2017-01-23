@@ -218,7 +218,7 @@ void generateMaf()
 			mafOutput.addReads( reads );
 		} 
 	}
-	std::cout << "Done.\n";
+	std::cout << "Three-way MAF file construction complete.\n";
 }
 
 std::vector<int64_t> untrimmedReadStats(std::string ref, std::string cRead, int64_t cSize, std::string uRead, int64_t uSize)
