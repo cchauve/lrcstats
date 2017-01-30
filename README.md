@@ -97,7 +97,7 @@ If `data` is the user-specified output directory and `experiment-name` is the na
 * `notebooks` contains notebooks describing experiments featured in the LRCstats paper and other past experiments.
 * `scripts` contains example scripts for the simulation of short and long reads and the correction of long reads.
 * `src` contains source code and Python scripts for LRCstats pipeline. Users may find scripts in here useful.
-* `tests` contains scripts for unit and integration tests of LRCstats.
+* `tests` contains scripts for unit tests for LRCstats.
 
 ## Other Remarks ##
 
