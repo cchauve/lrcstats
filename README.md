@@ -4,8 +4,8 @@
 
 |Branch   | Status |
 |:-------:|:-------------------------------------------------------------------------------------------:|
-| Master  | ![Master Build Status](https://travis-ci.org/thefantasticdron/lrcstats.svg?branch=master)   |
-| Develop | ![Develop Build Status](https://travis-ci.org/thefantasticdron/lrcstats.svg?branch=develop) |
+| Master  | ![Master Build Status](https://travis-ci.org/cchauve/lrcstats.svg?branch=master)   |
+| Develop | ![Develop Build Status](https://travis-ci.org/cchauve/lrcstats.svg?branch=develop) |
 
 ## Description ##
 LRCstats is an open-source pipeline for benchmarking DNA long read correction algorithms for long reads outputted by third generation sequencing technology such as machines produced by Pacific Biosciences. The reads produced by third generation sequencing technology, as the name suggests, are longer in length than reads produced by next generation sequencing technologies, such as those produced by Illumina. However, long reads are plagued by high error rates, which can cause issues in downstream analysis. Long read correction algorithms reduce the error rate of long reads either through self-correcting methods or using accurate, short reads outputted by next generation sequencing technologies to correct long reads.
