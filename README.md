@@ -19,7 +19,7 @@ Of course, some long read correction algorithms are better than others, and deve
 ## Installation ##
 Clone this repository with the command 
 ```
-git clone --recursive https://github.com/thefantasticdron/lrcstats.git
+git clone --recursive https://github.com/cchauve/lrcstats.git
 ```
 
 Compile the aligner with the command:
@@ -45,9 +45,18 @@ The paths to these files can be provided in either a configuration file or as co
 
 If the corrected long reads file is given as a FASTQ file instead, the LRCstats repo includes a python script `src/preprocessing/fastq2fasta/fastq2fasta.py` to convert FASTQ files into FASTA format. 
 
-Likewise, SimLoRD outputs the alignment between the uncorrected long reads and the reference sequence in SAM format. The python script `src/preprocessing/sam2maf/sam2maf.py` converts SAM files into the MAF format.
+The LRCstats pipeline internally identifies individual simulated long reads by the first contiguous sequence of integers in the header line of the FASTA file using a regular expression. For example, given the long read in FASTA format:
+```
+>Read_0001_simulated
+ATCG
+```
+LRCstats will identify this long read by the sequence of characters `0001`. SimLoRD outputs the headers of the long reads in this style, although other simulators may not (in particular, PBSim does not).
 
-Additionally, the directory `scripts` contains example scripts for simulating short and long reads using SimLoRD and correcting simulated long reads using simulated short reads with proovread, LoRDEC, Jabba and CoLoRMap.
+SimLoRD outputs the alignment between the uncorrected long reads and the reference sequence in SAM format. The python script `src/preprocessing/sam2maf/sam2maf.py` converts SAM files into the MAF format.
+
+The script `sam2maf.py` assumes that the alignments of the reads in the SAM file are in sorted order. That is, the first alignment is for the first corrected read, the second alignment is for the second corrected read, etc. 
+
+The directory `scripts` contains example scripts for simulating short and long reads using SimLoRD and correcting simulated long reads using simulated short reads with proovread, LoRDEC, Jabba and CoLoRMap.
 
 ## Configuration File ##
 LRCstats takes as input a configuration file specifying
