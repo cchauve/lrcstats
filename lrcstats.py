@@ -349,8 +349,10 @@ MAJOR_VERSION = 1
 MINOR_VERSION = 0
 
 parser = argparse.ArgumentParser(description='''
-	Long Read Correction Stats (LRCStats) Pipeline generator,
-	Version %d.%d
+	Long Read Correction Stats (LRCstats) Version %d.%d Copyright (C) 2017 Sean La
+	This program comes with ABSOLUTELY NO WARRANTY
+	This is free software, and you are welcome to redistribute it
+	under certain conditions
 	''' % (MAJOR_VERSION, MINOR_VERSION))
 
 parser.add_argument('-i', '--config', metavar='CONFIG_FILE', type=str, help=
@@ -458,6 +460,8 @@ if outputPath is None:
 	print("Error: please provide an output path.")
 
 if argsIncomplete:
+	print("\n")
+	parser.print_help()
 	sys.exit(1)
 	
 with open(outputPath,'w') as file:
@@ -466,4 +470,4 @@ with open(outputPath,'w') as file:
 	writePaths(file,paths)
 	writePipeline(file,experimentDetails)
 
-print("LRCStats pipeline shell script created at %s" % (outputPath))
+print("LRCstats pipeline shell script created at %s" % (outputPath))
