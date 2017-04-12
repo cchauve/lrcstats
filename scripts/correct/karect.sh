@@ -11,6 +11,6 @@ short2=
 threads=
 
 set -e
-mkdir -p ${karectDir}
+mkdir -p ${outputDir}
 # correct short reads
 ${karect} -correct -inputfile=${short1} -inputfile=${short2} -resultdir=${outputDir} -tempdir=${outputDir} -celltype=haploid -matchtype=hamming -threads=${threads}
