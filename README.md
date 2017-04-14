@@ -69,7 +69,7 @@ TTTT
 GGGG
 ```
 
-Notice that the first contiguous segment of integers in the header are identical over the three reads (i.e. `0001`). Furthermore, the corrected segments appear in the same order in the FASTA file as it appears in the uncorrected read.
+Notice that the first contiguous segment of integers in the header are identical over the three reads (i.e. `0001`). Furthermore, the corrected segments appear in the same order in the FASTA file as it appears in the uncorrected read. Jabba and proovread output their corrected reads in this format.
 
 SimLoRD outputs the alignment between the uncorrected long reads and the reference sequence in SAM format. The python script `src/preprocessing/sam2maf/sam2maf.py` converts SAM files into the MAF format.
 
@@ -122,7 +122,6 @@ If `data` is the user-specified output directory and `experiment-name` is the na
 
 ## Directory Structure ##
 
-* `notebooks` contains notebooks describing experiments featured in the LRCstats paper and other past experiments.
 * `scripts` contains example scripts for the simulation of short and long reads and the correction of long reads.
 * `src` contains source code and Python scripts for LRCstats pipeline. Users may find scripts in here useful.
 * `tests` contains scripts for unit tests for LRCstats.
