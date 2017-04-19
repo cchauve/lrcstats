@@ -2,6 +2,8 @@
 
 # path to LRCstats repo
 lrcstats=
+# path to art executable
+art=
 # output directory
 outputDir=
 # reference genome
