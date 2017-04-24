@@ -14,4 +14,4 @@ echo "Done."
 
 cd ../..
 
-echo "Installation complete. You may now use LRCStats."
+echo "Installation complete. You may now use LRCstats."
