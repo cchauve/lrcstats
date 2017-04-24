@@ -344,7 +344,6 @@ void createStats()
 		std::getline(mafFile, line);
 
 		std::string ref = split(line).at(seqIndex);
-		assert(ref != "");
 
 		// Read ulr line
 		std::getline(mafFile, line);
@@ -355,19 +354,15 @@ void createStats()
 		readId = stripReadIdSuffix(readId); 
 
 		std::string ulr = tokens.at(seqIndex);
-		assert(ulr != "");
 
 		int64_t ulrSize = atoi( split(line).at(sizeIndex).c_str() );
-		assert( ulrSize > 0 );
 
 		// Read clr line
 		std::getline(mafFile, line);
 
 		std::string clr = split(line).at(seqIndex);	
-		assert(clr != "");
 
 		int64_t clrSize = atoi( split(line).at(sizeIndex).c_str() );
-		assert( clrSize > 0 );
 
 		// Skip last line, which is empty 
 		std::getline(mafFile, line);
