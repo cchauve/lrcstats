@@ -1,4 +1,6 @@
-import sys, getopt
+import sys
+import getopt
+import re
 from operator import itemgetter
 
 def getReads(inputPath):
@@ -19,8 +21,7 @@ def getReads(inputPath):
 				if sequence != "":
 					reads.append( (readNum, sequence, header) )
 				header = line
-				line = line.split('_')
-				readNum = int(line[1])
+				readNum = int( re.findall('(\d+)', line)[readNumberIndex] )
 				sequence = ""
 			else:
 				sequence += line.rstrip('\n')
@@ -48,7 +49,7 @@ def writeFasta(outputPath, reads):
 helpMessage = "Sort FASTA files based on read number."
 usageMessage = "[-h help] [-i input FASTA file] [-o output prefix]"
 
-options = "hi:o:"
+options = "hn:i:o:"
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], options)
@@ -62,6 +63,7 @@ if len(sys.argv) == 1:
 
 inputPath = None
 outputPath = None
+readNumberIndex = 1
 
 for opt, arg in opts:
 	if opt == '-h':
@@ -72,6 +74,8 @@ for opt, arg in opts:
 		inputPath = arg
 	elif opt == '-o':
 		outputPath = arg
+	elif opt == '-n':
+		readNumberIndex = int(arg)
 
 optsIncomplete = False
 
