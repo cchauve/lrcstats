@@ -48,7 +48,7 @@ sequence_k = "SEQUENCE"
 header_k = "HEADER"
 
 helpMessage = "Process Jabba or Proovread FASTA long reads files so that trimmed portions of the same read are concatenated (but separated by spaces) into one single sequence."
-usageMessage = "Usage: %s [-h help and usage] [-i Jabba or Proovread input path] [-o output path] [-p PBSim data]" % (sys.argv[0])
+usageMessage = "Usage: %s [-h help and usage] [-i Jabba or Proovread input path] [-o output path] [-n read number index]" % (sys.argv[0])
 options = "hi:o:p"
 
 try:
@@ -63,7 +63,7 @@ if (len(sys.argv) == 1):
 
 inputPath = None
 outputPath = None
-isPbsim = False	
+readNumberIndex = 0
 
 for opt, arg in opts:
 	# Help message
@@ -75,8 +75,8 @@ for opt, arg in opts:
 		inputPath = arg
 	elif opt == '-o':
 		outputPath = arg
-	elif opt == '-p':
-		isPbsim = True	
+	elif opt == '-n':
+		readNumberIndex = int(arg)	
 
 optsIncomplete = False
 
@@ -89,13 +89,6 @@ if outputPath is None or outputPath is '':
 if optsIncomplete:
 	print usageMessage
 	sys.exit(2)
-
-# the second group of integers in PBSim reads is the read number
-if isPbsim:
-	readNumberIndex = 1
-# The first group of integers in SimLoRD reads is the read number
-else:
-	readNumberIndex = 0
 
 reads = getReads(inputPath)
 writeFile(reads, outputPath)

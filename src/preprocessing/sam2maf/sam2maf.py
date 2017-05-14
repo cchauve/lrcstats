@@ -276,7 +276,7 @@ def unitTest():
 
 helpMessage = ("Converts SAM file to Multiple Alignment Format.\n"
 		+ "Behavior only defined for CIGAR ops 'D', '=', 'I', 'M', or 'X'")
-usageMessage = "[-h help and usage] [-r <path to the reference FASTA file>] [-s <path to the SAM file>] [-o <MAF output path>]"
+usageMessage = "[-h help and usage] [-n read number index] [-r <path to the reference FASTA file>] [-s <path to the SAM file>] [-o <MAF output path>]"
 
 options = "hr:s:o:tn:"
 
