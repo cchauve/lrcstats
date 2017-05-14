@@ -1,5 +1,6 @@
 import sys
 import getopt
+import re
 
 def getDelimitedCigar(cigar):
 	'''
@@ -164,12 +165,16 @@ def getGaplessLength(seq):
 			length += 1
 	return length
 
+def extractReadNumber(queryName):
+	readNumber = int( re.findall('(\d+)', queryName)[readNumberIndex] )
+	return readNumber
+
+
 def convert(ref, samPath, mafPath):
 	'''
 	Converts the SAM file into a MAF file.
 	'''
 	srcSize = len( ref )
-	readNumber = 0
 
 	with open(samPath, 'r') as sam:
 		with open(mafPath, 'w') as maf:
@@ -180,6 +185,8 @@ def convert(ref, samPath, mafPath):
 					# Get relevant info from the SAM file for that particular read
 					flag = int( line[1] )
 					if flag != 4:
+						queryName = line[0]
+						readNumber = extractReadNumber(queryName)
 						start = int( line[3] ) - 1
 						cigar = line[5]
 						read = line[9]
@@ -196,7 +203,6 @@ def convert(ref, samPath, mafPath):
 
 						refAlignment = getRefAlignment(refSeq, cigarList, flag)
 						readAlignment = getReadAlignment(read, cigarList)
-						assert len(refAlignment) == len(readAlignment)
 
 						readSize = getGaplessLength(readAlignment)
 						refSize = getGaplessLength(refAlignment) 
@@ -213,7 +219,6 @@ def convert(ref, samPath, mafPath):
 						readLine = "s %d %s %s %s %s %s\n" % (readNumber, start, readSize, strand, srcSize, readAlignment)
 						maf.write(readLine)
 						maf.write("\n")
-						readNumber += 1
 
 def unitTest():
 	'''
@@ -273,7 +278,7 @@ helpMessage = ("Converts SAM file to Multiple Alignment Format.\n"
 		+ "Behavior only defined for CIGAR ops 'D', '=', 'I', 'M', or 'X'")
 usageMessage = "[-h help and usage] [-r <path to the reference FASTA file>] [-s <path to the SAM file>] [-o <MAF output path>]"
 
-options = "hr:s:o:t"
+options = "hr:s:o:tn:"
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], options)
@@ -288,6 +293,7 @@ if len(sys.argv) == 1:
 refPath = None
 samPath = None
 mafPrefix = None
+readNumberIndex = 0
 
 for opt, arg in opts:
 	if opt == '-h':
@@ -300,6 +306,8 @@ for opt, arg in opts:
 		samPath = arg
 	elif opt == '-o':
 		mafPrefix = arg
+	elif opt == '-n':
+		readNumberIndex = int(arg)
 	elif opt == '-t':
 		unitTest()
 		sys.exit()
