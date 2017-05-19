@@ -21,6 +21,7 @@ def createBlankConfig(configPath):
 		"# python style True or False\n" \
 		"trimmed = False\n" \
 		"extended = False\n" \
+		"experimental = False\n" \
 		"\n" \
 		"[Paths]\n" \
 		"# For each path, please don't include the ending / !\n" \
@@ -330,6 +331,7 @@ def writePipeline(file, experimentDetails):
 	trimmed = experimentDetails["trimmed"]
 	extended = experimentDetails["extended"]
 	threads = experimentDetails["threads"]
+	experimental = experimentDetails["experimental"]
 
 	line = "experiment_name=%s\n" % (experimentDetails["experiment_name"])
 	file.write(line)
@@ -338,8 +340,9 @@ def writePipeline(file, experimentDetails):
 	line = "set -e\n"
 	file.write(line)
 
-	writeSort(file)
-	writePrune(file)
+	if not experimental:
+		writeSort(file)
+		writePrune(file)
 	if trimmed:
 		writeConcatenate(file)
 	writeAlignment(file,trimmed,extended,threads)
