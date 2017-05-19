@@ -87,10 +87,10 @@ def writeStatisticsSummary(outputPath, trimmedStatistics, untrimmedStatistics, d
 		untrimmedUncorrectedErrorRate = untrimmedUncorrectedErrors/totalUntrimmedAlignmentBases
 
 	with open(outputPath, 'w') as file:
-		header = "            [Error Rate] [Throughput] [Deletions] [Insertions] [Substitutions]\n"
+		header = "	Error Rate	Throughput	Deletions	Insertions	Substitutions\n"
 		file.write(header)
 
-		correctedLine = "Corrected - trimmed   %f %d %d %d %d\n" \
+		correctedLine = "Corrected - trimmed	%f	%d	%d	%d	%d\n" \
 				% (trimmedCorrectedErrorRate,
                                    trimmedCorrectedThroughput,
                                    trimmedStatistics[correctedDeletions_k],
@@ -98,7 +98,7 @@ def writeStatisticsSummary(outputPath, trimmedStatistics, untrimmedStatistics, d
                                    trimmedStatistics[correctedSubstitutions_k])	
 		file.write(correctedLine)
 
-		uncorrectedLine = "Uncorrected - trimmed %f %d %d %d %d\n" \
+		uncorrectedLine = "Uncorrected - trimmed	%f	%d	%d	%d	%d\n" \
 				% (trimmedUncorrectedErrorRate,
                                    trimmedUncorrectedThroughput,
                                    trimmedStatistics[uncorrectedDeletions_k],
@@ -107,7 +107,7 @@ def writeStatisticsSummary(outputPath, trimmedStatistics, untrimmedStatistics, d
 		file.write(uncorrectedLine)
 
 		if doBoth:
-			correctedLine = "Corrected - untrimmed   %f %d %d %d %d\n" \
+			correctedLine = "Corrected - untrimmed	%f	%d	%d	%d	%d\n" \
 				% (untrimmedCorrectedErrorRate,
                                    untrimmedCorrectedThroughput,
                                    untrimmedStatistics[correctedDeletions_k], 
@@ -115,7 +115,7 @@ def writeStatisticsSummary(outputPath, trimmedStatistics, untrimmedStatistics, d
                                    untrimmedStatistics[correctedSubstitutions_k])	
 			file.write(correctedLine)
 
-			uncorrectedLine = "Uncorrected - untrimmed %f %d %d %d %d\n" \
+			uncorrectedLine = "Uncorrected - untrimmed	%f	%d	%d	%d	%d\n" \
 				% (untrimmedUncorrectedErrorRate, 
                                    untrimmedUncorrectedThroughput,
                                    untrimmedStatistics[uncorrectedDeletions_k], 
@@ -136,7 +136,7 @@ uncorrectedInsertions_k = "UNCORRECTED INSERTIONS"
 uncorrectedSubstitutions_k = "UNCORRECTED SUBSTITUTIONS"
 
 helpMessage = "Summarize global long read correction data statistics."
-usageMessage = "Usage: %s [-h help and usage] [-i stats file input path] [-b data is untrimmed] [-o output path]" % (sys.argv[0])
+usageMessage = "Usage: %s [-h help and usage] [-i stats file input path] [-b data is untrimmed] [-o output prefix]" % (sys.argv[0])
 options = "hi:o:tb"
 
 try:
@@ -150,7 +150,7 @@ if len(sys.argv) == 1:
 	sys.exit(2)
 
 inputPath = None
-outputPath = None
+outputPrefix = None
 testRun = False
 doBoth = False
 
@@ -162,7 +162,7 @@ for opt, arg in opts:
 	elif opt == '-i':
 		inputPath = arg
 	elif opt == '-o':
-		outputPath = arg
+		outputPrefix = arg
 	elif opt == '-b':
 		doBoth = True
 	elif opt == '-t':
@@ -180,6 +180,8 @@ if outputPath is None:
 if optsIncomplete:
 	print usageMessage
 	sys.exit(2)
+
+outputPath = "%s.tsv" % (outputPrefix)
 
 trimmedData, untrimmedData = data.retrieveRawData(inputPath)
 
