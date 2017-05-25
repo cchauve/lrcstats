@@ -344,7 +344,7 @@ def writePipeline(file, experimentDetails):
 	trimmed = experimentDetails["trimmed"]
 	extended = experimentDetails["extended"]
 	threads = experimentDetails["threads"]
-	id_pos = experimentalDetails["id_pos"]
+	id_pos = experimentDetails["id_pos"]
 
 	line = "experiment_name=%s\n" % (experimentDetails["experiment_name"])
 	file.write(line)
@@ -416,7 +416,7 @@ parser.add_argument('-r', '--ref', metavar='REF_PATH', type=str, help=
 	"""
 	path to the reference genome FASTA file
 	""")
-parser.add_argument('-n', '--id_pos', metavar='READ_ID_POS', type=str, help=
+parser.add_argument('-u', '--id_pos', metavar='READ_ID_POS', type=str, help=
 	"""
 	position in the read ID names that corresponds to the unique ID of the read
 	""")
@@ -489,7 +489,7 @@ if "ref" not in paths:
 if "threads" not in experimentDetails:
 	argsIncomplete = True
 	print("Error: please provide the number of threads you would like to use.")
-if "id_pos" not in experimentalDetails:
+if "id_pos" not in experimentDetails:
 	argsIncomplete = True
 	print("Error: please provide the position in the read name that corresponds to the unique read ID")
 if outputPath is None:
