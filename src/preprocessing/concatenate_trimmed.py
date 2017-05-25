@@ -15,7 +15,7 @@ def getReads(inputPath):
 				# The next line gets rid of the substr information if
 				# the reads are from proovread
 				header = line.split()[0]
-				number = int( re.findall('(\d+)', line)[readNumberIndex] )		
+				number = int( re.findall('(\d+)', line)[idPosition] )		
 			else:
 				sequence = line.rstrip()
 				if number in reads:
@@ -48,7 +48,7 @@ sequence_k = "SEQUENCE"
 header_k = "HEADER"
 
 helpMessage = "Process Jabba or Proovread FASTA long reads files so that trimmed portions of the same read are concatenated (but separated by spaces) into one single sequence."
-usageMessage = "Usage: %s [-h help and usage] [-i Jabba or Proovread input path] [-o output path] [-n read number index]" % (sys.argv[0])
+usageMessage = "Usage: %s [-h help and usage] [-i Jabba or Proovread input path] [-o output path] [-p read ID position]" % (sys.argv[0])
 options = "hi:o:p"
 
 try:
@@ -63,7 +63,7 @@ if (len(sys.argv) == 1):
 
 inputPath = None
 outputPath = None
-readNumberIndex = 0
+idPosition = 0
 
 for opt, arg in opts:
 	# Help message
@@ -76,7 +76,7 @@ for opt, arg in opts:
 	elif opt == '-o':
 		outputPath = arg
 	elif opt == '-n':
-		readNumberIndex = int(arg)	
+		idPosition = int(arg)	
 
 optsIncomplete = False
 

@@ -166,7 +166,7 @@ def getGaplessLength(seq):
 	return length
 
 def extractReadNumber(queryName):
-	readNumber = int( re.findall('(\d+)', queryName)[readNumberIndex] )
+	readNumber = int( re.findall('(\d+)', queryName)[idPosition] )
 	return readNumber
 
 
@@ -276,7 +276,7 @@ def unitTest():
 
 helpMessage = ("Converts SAM file to Multiple Alignment Format.\n"
 		+ "Behavior only defined for CIGAR ops 'D', '=', 'I', 'M', or 'X'")
-usageMessage = "[-h help and usage] [-n read number index] [-r <path to the reference FASTA file>] [-s <path to the SAM file>] [-o <MAF output path>]"
+usageMessage = "[-h help and usage] [-p read ID position] [-r <path to the reference FASTA file>] [-s <path to the SAM file>] [-o <MAF output path>]"
 
 options = "hr:s:o:tn:"
 
@@ -293,7 +293,7 @@ if len(sys.argv) == 1:
 refPath = None
 samPath = None
 mafPrefix = None
-readNumberIndex = 0
+idPosition = 0
 
 for opt, arg in opts:
 	if opt == '-h':
@@ -307,7 +307,7 @@ for opt, arg in opts:
 	elif opt == '-o':
 		mafPrefix = arg
 	elif opt == '-n':
-		readNumberIndex = int(arg)
+		idPosition = int(arg)
 	elif opt == '-t':
 		unitTest()
 		sys.exit()

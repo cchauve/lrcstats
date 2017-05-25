@@ -21,15 +21,17 @@ def createBlankConfig(configPath):
 		"# python style True or False\n" \
 		"trimmed = False\n" \
 		"extended = False\n" \
-		"experimental = False\n" \
+		"id_pos = 0\n" \
 		"\n" \
 		"[Paths]\n" \
 		"# For each path, please don't include the ending / !\n" \
 		"# Directory to store read data\n" \
 		"data = \n" \
 		"clr = example.fasta\n" \
-		"# Paths to MAF two-way alignment file\n" \
-		"maf = example.maf\n" \
+		"# Path to the ref-ulr SAM alignment file\n" \
+		"sam = example.sam\n" \
+		"# Path to the reference genome FASTA file\n" \
+		"ref = ref.fasta\n" \
 		"\n" \
 		"[Initialization Commands]\n" \
 		"# List shell commands you would like to perform before alignment\n" \
@@ -181,7 +183,19 @@ def writePaths(file, paths):
 		line = "%s=%s\n" % (key, paths[key])
 		file.write(line)
 
-def writeSort(file):
+def writeSam2Maf(file):
+	'''
+	Write the commands to convert the SAM file into a MAF file
+	'''
+	line = "########### Convert SAM to MAF ############\n" \
+		"echo 'Converting SAM to Ref-uLR two-way alignment MAF file...'\n" \
+		"maf=${data}/ref-ulr_alignment.maf\n" \
+		"sam2maf=${lrcstats}/src/preprocessing/sam2maf.py\n" \
+		"python ${sam2maf} -p ${id_pos} -r ${ref} -s ${sam} -o ${maf}\n" \
+		"\n"
+	file.write(line)
+
+def writeSortFasta(file):
         '''
         Write the commands to sort FASTA file
 	Input
@@ -189,32 +203,33 @@ def writeSort(file):
         '''
         line = "############### Sort cLR FASTA file ###########\n" \
                 "echo 'Sorting FASTA file...'\n" \
-                "\n" \
-                "sortfasta=${lrcstats}/src/preprocessing/sortfasta/sortfasta.py\n" \
+                "sortfasta=${lrcstats}/src/preprocessing/sortfasta.py\n" \
                 "sortedOutput=${data}/sorted.fasta\n" \
-                "\n" \
-                "python ${sortfasta} -i ${clr} -o ${sortedOutput}\n" \
-                "\n" \
+                "python ${sortfasta} -p ${id_pos} -i ${clr} -o ${sortedOutput}\n" \
                 "clr=${sortedOutput}\n" \
                 "\n" 
         file.write(line)        
 
-def writePrune(file):
-        '''
-        Write the commands to prune the MAF file
-	Input
-	- file: the file object to the outputted PBS script
-        '''
-        line = "############### Prune the maf file ###########\n" \
-                "echo 'Pruning MAF file...'\n" \
-                "\n" \
-                "prunemaf=${lrcstats}/src/preprocessing/prunemaf/prunemaf.py\n" \
-                "pruneOutput=${data}/pruned\n" \
-                "python ${prunemaf} -f ${clr} -m ${maf} -o ${pruneOutput}\n" \
-                "\n" \
-                "maf=${pruneOutput}.maf\n" \
-                "\n"
-        file.write(line)
+def writeSortSam(file):
+        line = "############### Sort SAM file ###########\n" \
+                "echo 'Sorting SAM file...'\n" \
+                "sortsam=${lrcstats}/src/preprocessing/sortsam.py\n" \
+                "sortedOutput=${data}/sorted.sam\n" \
+                "python ${sortsam} -p ${id_pos} -i ${sam} -o ${sortedOutput}\n" \
+                "sam=${sortedOutput}\n" \
+                "\n" 
+        file.write(line)        
+
+def writeIntersectSamFasta(file):
+	line = "############### Find the intersection between the SAM and cLR FASTA file ##############\n" \
+		"echo 'Intersecting SAM and FASTA files...'\n" \
+		"intersect=${lrcstats}/src/preprocessing/intersectSamFasta.py\n" \
+		"outputPrefix=${data}/intersected\n" \
+		"python ${intersect} -p ${id_pos} -f ${clr} -s ${sam} -o ${outputPrefix}\n" \
+		"clr=${data}/intersected.fasta\n" \
+		"sam=${data}/intersected.sam\n" \
+		"\n"
+	file.write(line)
 
 def writeConcatenate(file):
         '''
@@ -224,11 +239,9 @@ def writeConcatenate(file):
         '''
         line = "############### Concatenate Trimmed Reads ###########\n" \
                 "echo 'Concatenating trimmed reads...'\n" \
-                "concatenate=${lrcstats}/src/preprocessing/concatenate_trimmed/concatenate_trimmed.py\n" \
+                "concatenate=${lrcstats}/src/preprocessing/concatenate_trimmed.py\n" \
                 "concatenated_output=${data}/concatenated.fasta\n" \
-                "\n" \
-                "python ${concatenate} -i ${clr} -o ${concatenated_output}\n" \
-                "\n" \
+                "python ${concatenate} -p ${id_pos} -i ${clr} -o ${concatenated_output}\n" \
                 "clr=${concatenated_output}\n" \
                 "\n"
         file.write(line)
@@ -270,7 +283,7 @@ def writeRemoveExtensions(file):
 	'''
 	line = "############### Remove extended regions #############\n" \
                "echo 'Removing extended regions...'\n" \
-               "unextend=${lrcstats}/src/preprocessing/unextend_alignments/unextend_alignments.py\n" \
+               "unextend=${lrcstats}/src/preprocessing/unextend_alignments.py\n" \
                "unextendOutput=${data}/${experiment_name}_unextended.maf\n" \
                "python $unextend -i ${maf} -m ${unextendOutput}\n" \
                "maf=$unextendOutput\n" \
@@ -331,7 +344,7 @@ def writePipeline(file, experimentDetails):
 	trimmed = experimentDetails["trimmed"]
 	extended = experimentDetails["extended"]
 	threads = experimentDetails["threads"]
-	experimental = experimentDetails["experimental"]
+	id_pos = experimentalDetails["id_pos"]
 
 	line = "experiment_name=%s\n" % (experimentDetails["experiment_name"])
 	file.write(line)
@@ -339,10 +352,11 @@ def writePipeline(file, experimentDetails):
 	# ends script immediately if any error occurs
 	line = "set -e\n"
 	file.write(line)
-
-	if not experimental:
-		writeSort(file)
-		writePrune(file)
+	file.write( "id_pos=%s\n" % (id_pos) )
+	writeIntersectSamFasta(file)
+	writeSortFasta(file)
+	writeSortSam(file)
+	writeSam2Maf(file)
 	if trimmed:
 		writeConcatenate(file)
 	writeAlignment(file,trimmed,extended,threads)
@@ -394,16 +408,24 @@ parser.add_argument('-c', '--clr', metavar='CLR_PATH', type=str, help=
 	"""
 	path to the cLR FASTA file
 	""")
-parser.add_argument('-m', '--maf', metavar='MAF_PATH', type=str, help=
+parser.add_argument('-s', '--sam', metavar='SAM_PATH', type=str, help=
 	"""
-	path to the ref-uLR two-way alignment MAF file
+	path to the ref-uLR alignment SAM file
+	""")
+parser.add_argument('-r', '--ref', metavar='REF_PATH', type=str, help=
+	"""
+	path to the reference genome FASTA file
+	""")
+parser.add_argument('-n', '--id_pos', metavar='READ_ID_POS', type=str, help=
+	"""
+	position in the read ID names that corresponds to the unique ID of the read
 	""")
 
 args = parser.parse_args()
 
 if args.blank_config:
 	createBlankConfig(args.blank_config)
-	print("Created a new configuration file.")
+	print( "Created a new configuration file at %s" % (args.blank_config) )
 	sys.exit()
 
 experimentDetails = {}
@@ -429,14 +451,20 @@ if args.extended:
 if args.threads:
 	experimentDetails["threads"] = args.threads
 
+if args.id_pos:
+	experimentDetails["id_pos"] = args.id_pos
+
 if args.data:
 	paths["data"] = args.data
 
 if args.clr:
 	paths["clr"] = args.clr
 
-if args.maf:
-	paths["maf"] = args.maf
+if args.sam:
+	paths["sam"] = args.sam
+
+if args.ref:
+	paths["ref"] = args.ref
 
 if args.output:
 	outputPath = args.output
@@ -452,12 +480,18 @@ if "data" not in paths:
 if "clr" not in paths:
 	argsIncomplete = True
 	print("Error: please provide the path to the corrected long reads FASTA file.")
-if "maf" not in paths:
+if "sam" not in paths:
 	argsIncomplete = True
-	print("Error: please provide the path to the ref-uLR two-way alignment MAF file.")
+	print("Error: please provide the path to the ref-uLR alignment SAM file.")
+if "ref" not in paths:
+	argsIncomplete = True
+	print("Error: please provide the path to the reference genome FASTA file.")
 if "threads" not in experimentDetails:
 	argsIncomplete = True
 	print("Error: please provide the number of threads you would like to use.")
+if "id_pos" not in experimentalDetails:
+	argsIncomplete = True
+	print("Error: please provide the position in the read name that corresponds to the unique read ID")
 if outputPath is None:
 	argsIncomplete = True
 	print("Error: please provide an output path.")

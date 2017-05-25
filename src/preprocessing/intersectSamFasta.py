@@ -58,9 +58,9 @@ def writeOutput(fastaReads,samReads,keyIntersection,outputPrefix):
 			sam.write(entry)
 			sam.write('\n')
 
-helpMessage = ""
-usageMessage = "Usage: %s [-h help and usage] [-f cLR FASTA file path] [-s sam file path] [-o output prefix]" % (sys.argv[0])
-options = "hf:s:o:"
+helpMessage = "Given cLR FASTA and ref-uLR SAM files, outputs FASTA and SAM files containing the intersection of the set of reads contained in the original FASTA and SAM files"
+usageMessage = "Usage: %s [-h help and usage] [-f cLR FASTA file path] [-s sam file path] [-p read ID position] [-o output prefix]" % (sys.argv[0])
+options = "hf:s:o:p:"
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], options)
@@ -75,6 +75,7 @@ if len(sys.argv) == 1:
 fastaPath = None
 samPath = None
 outputPrefix = None
+idPosition = None
 
 for opt, arg in opts:
 	if opt == '-h':
@@ -87,6 +88,8 @@ for opt, arg in opts:
 		samPath = arg
 	elif opt == '-o':
 		outputPrefix = arg
+	elif opt == '-p':
+		idPosition = arg
 
 if fastaPath == None or samPath == None or outputPrefix == None:
 	print helpMessage

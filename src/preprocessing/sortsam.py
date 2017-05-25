@@ -13,22 +13,13 @@ def getReads(inputPath):
 	'''
 	with open(inputPath, 'r') as file:
 		reads = []
-		sequence = ""
-		readNum = -1
-		header = ""
 		for line in file:
-			if line[0] == '>':
-				if sequence != "":
-					reads.append( (readNum, sequence, header) )
-				header = line
-				readNum = int( re.findall('(\d+)', line)[readNumberIndex] )
-				sequence = ""
-			else:
-				sequence += line.rstrip('\n')
-		reads.append( (readNum, sequence, header) )
+			if len(line) > 0 and line[0] != '@':
+				readNum = int( re.findall('(\d+)', line)[idPosition] )
+				reads.append( (readNum, line) )
 	return reads
 
-def writeFasta(outputPath, reads):
+def writeSam(outputPath, reads):
 	'''
 	Inputs
 	- string outputPath: specifies the write path to the output
@@ -40,16 +31,13 @@ def writeFasta(outputPath, reads):
 	'''
 	with open(outputPath, 'w') as file:
 		for read in reads:
-			header = "%s" % (read[2])
-			file.write(header)	
-			sequence = "%s\n" % (read[1])
-			file.write(sequence)
-				 
+			line = "%s\n" % ( read[1].rstrip() )
+			file.write(line)	
 
-helpMessage = "Sort FASTA files based on read number."
-usageMessage = "[-h help] [-i input FASTA file] [-o output prefix]"
+helpMessage = "Sort SAM files based on query number."
+usageMessage = "[-h help] [-i input FASTA file] [-o output prefix] [-p Read ID position]"
 
-options = "hn:i:o:"
+options = "hp:i:o:"
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], options)
@@ -63,7 +51,7 @@ if len(sys.argv) == 1:
 
 inputPath = None
 outputPath = None
-readNumberIndex = 1
+idPosition = 0
 
 for opt, arg in opts:
 	if opt == '-h':
@@ -74,8 +62,8 @@ for opt, arg in opts:
 		inputPath = arg
 	elif opt == '-o':
 		outputPath = arg
-	elif opt == '-n':
-		readNumberIndex = int(arg)
+	elif opt == '-p':
+		idPosition = int(arg)
 
 optsIncomplete = False
 
@@ -93,4 +81,4 @@ if optsIncomplete:
 reads = getReads(inputPath)
 # Sort reads based on read number
 reads = sorted(reads, key=itemgetter(0))
-writeFasta(outputPath, reads)
+writeSam(outputPath, reads)
