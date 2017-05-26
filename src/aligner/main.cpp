@@ -39,8 +39,13 @@ std::vector< Read_t > getReadsFromMafAndFasta()
 	std::ifstream mafInput (g_mafInputName, std::ios::in);
 	std::ifstream clrInput (g_clrName, std::ios::in);
 
-	if (!mafInput.is_open() || !clrInput.is_open()) {
-		std::cerr << "Unable to open either maf input or corrected long reads file\n";
+	if (!mafInput.is_open()) {
+		std::cerr << "Unable to open either maf input file\n";
+		std::exit(1);
+	}	
+
+	if (!clrInput.is_open()) {
+		std::cerr << "Unable to open either corrected long reads file\n";
 		std::exit(1);
 	}	
 
