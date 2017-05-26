@@ -321,7 +321,7 @@ def writeStats(file, trimmed, extended):
 		"echo 'Summarizing statistics...'\n" \
 		"\n" \
 		"summarizeStats=${lrcstats}/src/statistics/summarize_stats.py\n" \
-		"statsOutput=${data}/${experiment_name}_results.txt\n" \
+		"statsOutput=${data}/${experiment_name}_results\n" \
                         "\n"
 	file.write(line)
 
