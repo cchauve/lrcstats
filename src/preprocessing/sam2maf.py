@@ -292,7 +292,7 @@ if len(sys.argv) == 1:
 
 refPath = None
 samPath = None
-mafPrefix = None
+mafPath = None
 idPosition = 0
 
 for opt, arg in opts:
@@ -305,19 +305,17 @@ for opt, arg in opts:
 	elif opt == '-s':
 		samPath = arg
 	elif opt == '-o':
-		mafPrefix = arg
+		mafPath = arg
 	elif opt == '-p':
 		idPosition = int(arg)
 	elif opt == '-t':
 		unitTest()
 		sys.exit()
 
-if refPath is None or samPath is None or mafPrefix is None:
+if refPath is None or samPath is None or mafPath is None:
 	print helpMessage
 	print usageMessage
 	sys.exit(2)
-
-mafPath = "%s.maf" % (mafPrefix)
 
 ref = getReference(refPath)
 convert(ref, samPath, mafPath)

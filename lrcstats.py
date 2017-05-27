@@ -189,7 +189,7 @@ def writeSam2Maf(file):
 	'''
 	line = "########### Convert SAM to MAF ############\n" \
 		"echo 'Converting SAM to Ref-uLR two-way alignment MAF file...'\n" \
-		"maf=${data}/ref-ulr_alignment\n" \
+		"maf=${data}/ref-ulr_alignment.maf\n" \
 		"sam2maf=${lrcstats}/src/preprocessing/sam2maf.py\n" \
 		"python ${sam2maf} -p ${id_pos} -r ${ref} -s ${sam} -o ${maf}\n" \
 		"\n"
