@@ -75,7 +75,7 @@ for opt, arg in opts:
 		inputPath = arg
 	elif opt == '-o':
 		outputPath = arg
-	elif opt == '-n':
+	elif opt == '-p':
 		idPosition = int(arg)	
 
 optsIncomplete = False
