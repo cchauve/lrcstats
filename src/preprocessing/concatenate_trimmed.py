@@ -49,7 +49,7 @@ header_k = "HEADER"
 
 helpMessage = "Process Jabba or Proovread FASTA long reads files so that trimmed portions of the same read are concatenated (but separated by spaces) into one single sequence."
 usageMessage = "Usage: %s [-h help and usage] [-i Jabba or Proovread input path] [-o output path] [-p read ID position]" % (sys.argv[0])
-options = "hi:o:p"
+options = "hi:o:p:"
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], options)
