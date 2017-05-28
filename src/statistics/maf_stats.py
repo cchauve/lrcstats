@@ -56,7 +56,7 @@ def findAccuracy(alignments):
 	return identity/numBases
 
 helpMessage = ""
-usageMessage = "[-h help and usage] [-e <name of experiment> [-c <cLR MAF] [-u uLR MAF] [-o <output prefix>]" 
+usageMessage = "[-h help and usage] [-e <name of experiment> [-c <cLR MAF>] [-u <uLR MAF>] [-o <output prefix>]" 
 
 options = "hc:u:o:e:"
 
@@ -90,7 +90,7 @@ for opt, arg in opts:
 	elif opt == '-e':
 		experimentName = arg	
 
-if ulrPath == None or clrPath == None or outputPath == None or experimentName == None:
+if ulrPath == None or clrPath == None or outputPrefix == None or experimentName == None:
 	print(helpMessage)
 	print(usageMessage)
 	sys.exit(1)
