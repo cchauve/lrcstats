@@ -73,29 +73,19 @@ for opt, arg in opts:
 		sys.exit()
 	elif opt == '-i':
 		inputPath = arg
-	elif opt == '-o':
-		outputPrefix = arg
-	elif opt == '-n':
-		datasetName = arg
 
 optsIncomplete = False
 
 if inputPath is None:
 	optsIncomplete = True
 	print("Please provide the path to the MAF file.")
-if outputPrefix is None:
-	optsIncomplete = True
-	print("Please provide the path to the output file.")
-if datasetName is None:
-	optsIncomplete = True
-	print("Please indicate the name of the dataset.")
 
 if optsIncomplete:
 	print usageMessage
 	sys.exit(2)
 
 alignedReads = 0
-totalAlignedBases = 0
+totalLength = 0
 totalIdentity = 0
 
 accuracyRates = []
@@ -118,6 +108,8 @@ with open(inputPath,'r') as input:
 
 				alignedReads += 1	
 
+				totalLength += len(read)
+
 				length = getAlignedBases(read)
 				totalAlignedBases += length
 				lengths.append(length)
@@ -127,7 +119,7 @@ with open(inputPath,'r') as input:
 				accuracyRate = identity/length
 				accuracyRates.append(accuracyRate)
 
-makeLengthIdentityScatterPlot(accuracyRates, lengths, datasetName, outputPrefix) 
+#makeLengthIdentityScatterPlot(accuracyRates, lengths, datasetName, outputPrefix) 
 
-meanIdentity = totalIdentity/alignedReads 
-print( "Mean Identity = %d\n" % (meanIdentity) )
+errorRate = (totalIdentity-totalLength)/totalLength
+print( "Error Rate = %d\n" % (errorRate) )

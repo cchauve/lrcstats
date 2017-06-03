@@ -11,9 +11,9 @@ def getAlignments(mafPath):
 			tokens = line.split()
 			if len(tokens) > 0 and tokens[0] == 's':
 				if tokens[1] == 'ref':
-					reference = tokens[5]
+					reference = tokens[6]
 				else:
-					read = tokens[5]
+					read = tokens[6]
 					size = tokens[3]
 					alignment = (reference,read,size)
 					alignments.append(alignment)
@@ -99,7 +99,6 @@ outputPath = "%s.tsv" % (outputPrefix)
 
 clrs = getAlignments(clrPath)
 ulrs = getAlignments(ulrPath)
-
 gain = findGain(ulrs,clrs)
 clrAccuracy = findAccuracy(clrs)
 ulrAccuracy = findAccuracy(ulrs)
