@@ -22,15 +22,15 @@ def getAlignments(mafPath):
 def findNumberOfBases(alignments):
 	numBases = 0
 	for alignment in alignments:
-		read = alignments[1]
-		numBases += len(read)
+		size = len(alignment[0])
+		numBases += size
 	return numBases
 
 def findTotalIdentity(alignments):
 	totalIdentity = 0
 	for alignment in alignments:
-		reference = alignments[0]		
-		read = alignments[1]
+		reference = alignment[0]		
+		read = alignment[1]
 		for i in range(len(read)):
 			refBase = reference[i]
 			readBase = read[i]
@@ -98,10 +98,10 @@ if ulrPath == None or clrPath == None or outputPrefix == None or experimentName 
 outputPath = "%s.tsv" % (outputPrefix)
 
 clrs = getAlignments(clrPath)
-ulrs = getAlignments(ulrPath)
-gain = findGain(ulrs,clrs)
 clrAccuracy = findAccuracy(clrs)
+ulrs = getAlignments(ulrPath)
 ulrAccuracy = findAccuracy(ulrs)
+gain = findGain(ulrs,clrs)
 
 with open(outputPath,'w') as output:
 	output.write( "Statistics for mapping-based evaluation for experiment %s\n" % (experimentName) )
