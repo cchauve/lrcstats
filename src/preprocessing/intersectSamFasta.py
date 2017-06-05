@@ -3,7 +3,6 @@ import getopt
 import sys
 
 def getFastaReads(inputPath):
-	readNumberIndex = 1
 	with open(inputPath, 'r') as file:
                 reads = {} 
                 sequence = ""
@@ -14,7 +13,7 @@ def getFastaReads(inputPath):
                                 if sequence != "":
 					reads[readNum] = (header,sequence)
                                 header = line.rstrip('\n')
-                                readNum = int( re.findall('(\d+)', line)[readNumberIndex] )
+                                readNum = int( re.findall('(\d+)', line)[idPosition] )
                                 sequence = ""
                         else:
                                 sequence += line.rstrip('\n')
@@ -30,7 +29,7 @@ def getSamReads(inputPath):
 				flag = int( tokens[1] )
 				if flag != 4:
 					queryName = tokens[0]
-					readNumber = int(re.findall('(\d+)',queryName)[1])
+					readNumber = int(re.findall('(\d+)',queryName)[idPosition])
 					reads[readNumber] = read.rstrip('\n')
 	return reads
 
@@ -89,7 +88,7 @@ for opt, arg in opts:
 	elif opt == '-o':
 		outputPrefix = arg
 	elif opt == '-p':
-		idPosition = arg
+		idPosition = int(arg)
 
 if fastaPath == None or samPath == None or outputPrefix == None:
 	print helpMessage
