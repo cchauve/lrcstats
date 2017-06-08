@@ -354,7 +354,8 @@ def writePipeline(file, experimentDetails):
 	file.write(line)
 	file.write( "id_pos=%s\n" % (id_pos) )
 	writeIntersectSamFasta(file)
-	writeSortFasta(file)
+	if not trimmed:
+		writeSortFasta(file)
 	writeSortSam(file)
 	writeSam2Maf(file)
 	if trimmed:
