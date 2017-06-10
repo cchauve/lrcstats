@@ -353,9 +353,8 @@ def writePipeline(file, experimentDetails):
 	line = "set -e\n"
 	file.write(line)
 	file.write( "id_pos=%s\n" % (id_pos) )
-	writeIntersectSamFasta(file)
-	writeSortFasta(file)
 	writeSortSam(file)
+	writeIntersectSamFasta(file)
 	writeSam2Maf(file)
 	if trimmed:
 		writeConcatenate(file)

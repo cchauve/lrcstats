@@ -1,25 +1,29 @@
 import re
 import getopt
 import sys
+import collections # for OrderedDict
 
 def getFastaReads(inputPath):
-	readNumberIndex = 1
 	with open(inputPath, 'r') as file:
-                reads = {} 
-                sequence = ""
-                readNum = -1
-                header = ""
-                for line in file:
-                        if line[0] == '>':
-                                if sequence != "":
-					reads[readNum] = (header,sequence)
-                                header = line.rstrip('\n')
-                                readNum = int( re.findall('(\d+)', line)[readNumberIndex] )
-                                sequence = ""
-                        else:
-                                sequence += line.rstrip('\n')
-		reads[readNum] = (header,sequence)
-        return reads
+		reads = collections.OrderedDict() 
+		sequence = ""
+		readNum = -1
+		header = ""
+		for line in file:
+			if line[0] == '>':
+				if sequence != "" and readNum != -1:
+					if readNum not in reads:
+						reads[readNum] = []
+					reads[readNum].append( (header,sequence) )
+				header = line.rstrip('\n')
+				readNum = int( re.findall('(\d+)', line)[idPosition] )
+				sequence = ""
+			else:
+				sequence += line.rstrip('\n')
+		if readNum not in reads:
+			reads[readNum] = []
+		reads[readNum].append( (header,sequence) )
+	return reads
 
 def getSamReads(inputPath):
 	with open(inputPath) as sam:
@@ -30,33 +34,27 @@ def getSamReads(inputPath):
 				flag = int( tokens[1] )
 				if flag != 4:
 					queryName = tokens[0]
-					readNumber = int(re.findall('(\d+)',queryName)[1])
+					readNumber = int(re.findall('(\d+)',queryName)[idPosition])
 					reads[readNumber] = read.rstrip('\n')
 	return reads
 
-def findIntersection(fastaReads,samReads):
-	fastaKeys = fastaReads.keys()
-	samKeys = samReads.keys()
-	keyIntersection = list( set(fastaKeys) & set(samKeys) )	
-	return keyIntersection
-
-def writeOutput(fastaReads,samReads,keyIntersection,outputPrefix):
+def writeOutput(fastaReads,samReads,outputPrefix):
 	fastaOutput = "%s.fasta" % (outputPrefix)
 	samOutput = "%s.sam" % (outputPrefix)
-	with open(fastaOutput,'w') as fasta:
-		for key in keyIntersection:
-			read = fastaReads[key]
-			header = read[0]
-			sequence = read[1]
-			fasta.write(header)
-			fasta.write('\n')
-			fasta.write(sequence)
-			fasta.write('\n')
-	with open(samOutput,'w') as sam:
-		for key in keyIntersection:
-			entry = samReads[key]
-			sam.write(entry)
-			sam.write('\n')
+	with open(fastaOutput,'w') as fasta, open(samOutput,'w') as sam:
+		for key in samReads:
+			if key in fastaReads:
+				reads = fastaReads[key]
+				for subread in reads:
+					header = subread[0]
+					sequence = subread[1]
+					fasta.write(header)
+					fasta.write('\n')
+					fasta.write(sequence)
+					fasta.write('\n')
+				alignment = samReads[key]
+				sam.write(alignment)
+				sam.write('\n')
 
 helpMessage = "Given cLR FASTA and ref-uLR SAM files, outputs FASTA and SAM files containing the intersection of the set of reads contained in the original FASTA and SAM files"
 usageMessage = "Usage: %s [-h help and usage] [-f cLR FASTA file path] [-s sam file path] [-p read ID position] [-o output prefix]" % (sys.argv[0])
@@ -75,7 +73,7 @@ if len(sys.argv) == 1:
 fastaPath = None
 samPath = None
 outputPrefix = None
-idPosition = None
+idPosition = 0
 
 for opt, arg in opts:
 	if opt == '-h':
@@ -89,7 +87,7 @@ for opt, arg in opts:
 	elif opt == '-o':
 		outputPrefix = arg
 	elif opt == '-p':
-		idPosition = arg
+		idPosition = int(arg)
 
 if fastaPath == None or samPath == None or outputPrefix == None:
 	print helpMessage
@@ -98,5 +96,4 @@ if fastaPath == None or samPath == None or outputPrefix == None:
 
 fastaReads = getFastaReads(fastaPath)
 samReads = getSamReads(samPath)
-keyIntersection = findIntersection(fastaReads,samReads)
-writeOutput(fastaReads,samReads,keyIntersection,outputPrefix)
+writeOutput(fastaReads,samReads,outputPrefix)
