@@ -11,9 +11,9 @@ def getAlignments(mafPath):
 			tokens = line.split()
 			if len(tokens) > 0 and tokens[0] == 's':
 				if tokens[1] == 'ref':
-					reference = tokens[5]
+					reference = tokens[6]
 				else:
-					read = tokens[5]
+					read = tokens[6]
 					size = tokens[3]
 					alignment = (reference,read,size)
 					alignments.append(alignment)
@@ -22,15 +22,15 @@ def getAlignments(mafPath):
 def findNumberOfBases(alignments):
 	numBases = 0
 	for alignment in alignments:
-		read = alignments[1]
-		numBases += len(read)
+		size = len(alignment[0])
+		numBases += size
 	return numBases
 
 def findTotalIdentity(alignments):
 	totalIdentity = 0
 	for alignment in alignments:
-		reference = alignments[0]		
-		read = alignments[1]
+		reference = alignment[0]		
+		read = alignment[1]
 		for i in range(len(read)):
 			refBase = reference[i]
 			readBase = read[i]
@@ -56,7 +56,7 @@ def findAccuracy(alignments):
 	return identity/numBases
 
 helpMessage = ""
-usageMessage = "[-h help and usage] [-e <name of experiment> [-c <cLR MAF] [-u uLR MAF] [-o <output prefix>]" 
+usageMessage = "[-h help and usage] [-e <name of experiment> [-c <cLR MAF>] [-u <uLR MAF>] [-o <output prefix>]" 
 
 options = "hc:u:o:e:"
 
@@ -90,7 +90,7 @@ for opt, arg in opts:
 	elif opt == '-e':
 		experimentName = arg	
 
-if ulrPath == None or clrPath == None or outputPath == None or experimentName == None:
+if ulrPath == None or clrPath == None or outputPrefix == None or experimentName == None:
 	print(helpMessage)
 	print(usageMessage)
 	sys.exit(1)
@@ -98,11 +98,10 @@ if ulrPath == None or clrPath == None or outputPath == None or experimentName ==
 outputPath = "%s.tsv" % (outputPrefix)
 
 clrs = getAlignments(clrPath)
-ulrs = getAlignments(ulrPath)
-
-gain = findGain(ulrs,clrs)
 clrAccuracy = findAccuracy(clrs)
+ulrs = getAlignments(ulrPath)
 ulrAccuracy = findAccuracy(ulrs)
+gain = findGain(ulrs,clrs)
 
 with open(outputPath,'w') as output:
 	output.write( "Statistics for mapping-based evaluation for experiment %s\n" % (experimentName) )

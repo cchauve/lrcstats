@@ -171,10 +171,10 @@ for opt, arg in opts:
 optsIncomplete = False
 
 if inputPath is None and not testRun:
-	print "Please specify the input path."
+	print("Please specify the input path.")
 	optsIncomplete = True
-if outputPath is None:
-	print "Please specify the output path."
+if outputPrefix is None:
+	print("Please specify the output path.")
 	optsIncomplete = True
 
 if optsIncomplete:

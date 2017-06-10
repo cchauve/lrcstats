@@ -278,7 +278,7 @@ helpMessage = ("Converts SAM file to Multiple Alignment Format.\n"
 		+ "Behavior only defined for CIGAR ops 'D', '=', 'I', 'M', or 'X'")
 usageMessage = "[-h help and usage] [-p read ID position] [-r <path to the reference FASTA file>] [-s <path to the SAM file>] [-o <MAF output path>]"
 
-options = "hr:s:o:tn:"
+options = "hr:s:o:tp:"
 
 try:
 	opts, args = getopt.getopt(sys.argv[1:], options)
@@ -292,7 +292,7 @@ if len(sys.argv) == 1:
 
 refPath = None
 samPath = None
-mafPrefix = None
+mafPath = None
 idPosition = 0
 
 for opt, arg in opts:
@@ -305,19 +305,17 @@ for opt, arg in opts:
 	elif opt == '-s':
 		samPath = arg
 	elif opt == '-o':
-		mafPrefix = arg
-	elif opt == '-n':
+		mafPath = arg
+	elif opt == '-p':
 		idPosition = int(arg)
 	elif opt == '-t':
 		unitTest()
 		sys.exit()
 
-if refPath is None or samPath is None or mafPrefix is None:
+if refPath is None or samPath is None or mafPath is None:
 	print helpMessage
 	print usageMessage
 	sys.exit(2)
-
-mafPath = "%s.maf" % (mafPrefix)
 
 ref = getReference(refPath)
 convert(ref, samPath, mafPath)
