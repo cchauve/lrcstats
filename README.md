@@ -115,7 +115,7 @@ The user may specify the PBS parameters that will appear in the header of the sc
 3. Constructs the three-way alignments between the corrected long reads, uncorrected long reads and the reference sequences
 4. Produces statistics on the three-way alignments
 
-If `data` is the user-specified output directory and `experiment-name` is the name of the experiment, the correction statistics can be found at `data/experiment-name_results.txt`.
+If `data` is the user-specified output directory and `experiment-name` is the name of the experiment, the correction statistics can be found at `data/experiment-name_results.tsv`.
 
 ## Directory Structure ##
 
@@ -130,9 +130,6 @@ In some cases, LRCstats may fail to align untrimmed corrected long reads back to
 
 ### X delimiters in the MAF alignments ###
 We modified the multiple alignment format to include `X` delimiters that indicate the boundaries of corrected segments in both trimmed and untrimmed corrected long read alignments. Hence, our version of the multiple alignment format may not be compatible with programs which accept MAF files as input.
-
-### Usage with experimental long reads ###
-We recommend using LRCstats solely with simulated long reads - however, if you'd like to use experimental long reads with LRCstats, you'll need to preprocess the uncorrected experimental long read FASTQ file by prefixing each read's sequence identifier line with a unique identification number so that LRCstats can sort the corrected long reads file.
 
 ## Contact ##
 If you have any questions or comments, please submit a GitHub issue or send an email to Sean La at laseanl[at]sfu[dot]ca
