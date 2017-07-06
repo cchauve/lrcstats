@@ -1,3 +1,4 @@
+#!/usr/bin/env python 
 import sys
 import getopt
 import re
@@ -66,7 +67,7 @@ def getBaseComplement(base):
 	'''
 	Returns the complement of the nucleotide base.
 	'''
-	complement = { 'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G' }
+	complement = { 'A':'T', 'T':'A', 'G':'C', 'C':'G', 'a':'t', 'c':'g', 'g':'c', 't':'a' }
 	return complement[base]
 
 def getSeqComplement(seq):
@@ -214,7 +215,7 @@ def convert(ref, samPath, mafPath):
 						else:
 							strand = "+"
 						maf.write("a\n")
-						refLine = "s ref %s %s %s %s %s\n" % (start, refSize, strand, srcSize, refAlignment)
+						refLine = "s %d.ref %s %s %s %s %s\n" % (readNumber, start, refSize, strand, srcSize, refAlignment)
 						maf.write(refLine)
 						readLine = "s %d %s %s %s %s %s\n" % (readNumber, start, readSize, strand, srcSize, readAlignment)
 						maf.write(readLine)

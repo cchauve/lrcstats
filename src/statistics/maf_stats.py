@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from __future__ import division
 import sys
 import getopt
@@ -10,20 +11,26 @@ def getAlignments(mafPath):
 		for line in maf:
 			tokens = line.split()
 			if len(tokens) > 0 and tokens[0] == 's':
-				if tokens[1] == 'ref':
-					reference = tokens[6]
-				else:
+				if 'ref' in tokens[1]:
 					read = tokens[6]
-					size = tokens[3]
-					alignment = (reference,read,size)
+				else:
+					reference = tokens[6]
+					alignment = (reference,read)
 					alignments.append(alignment)
 	return alignments
 								
 def findNumberOfBases(alignments):
 	numBases = 0
 	for alignment in alignments:
-		size = len(alignment[0])
-		numBases += size
+		read = alignment[1]
+		in_corr_seg = False
+		for i in range( len(read) ):
+			if read[i].isupper():
+				in_corr_seg = True
+			elif read[i].islower():
+				in_corr_seg = False
+			if in_corr_seg:
+				numBases += 1	 
 	return numBases
 
 def findTotalIdentity(alignments):
@@ -38,25 +45,13 @@ def findTotalIdentity(alignments):
 				totalIdentity += 1
 	return totalIdentity
 
-def findGain(ulrs,clrs):
-	numCorr = findNumberOfBases(clrs)
-	numUncorr = findNumberOfBases(ulrs)
-	corrIdentity = findTotalIdentity(clrs)
-	uncorrIdentity = findTotalIdentity(ulrs)
-	corrError = numCorr - corrIdentity
-	uncorrError = numUncorr - uncorrIdentity
-	uncorrErrorRate = uncorrError / numUncorr
-	corrErrorRate = corrError / numCorr
-	gain = abs( uncorrErrorRate - corrErrorRate )/uncorrErrorRate
-	return gain
-
 def findAccuracy(alignments):
 	identity = findTotalIdentity(alignments)
 	numBases = findNumberOfBases(alignments)
 	return identity/numBases
 
 helpMessage = ""
-usageMessage = "[-h help and usage] [-e <name of experiment> [-c <cLR MAF>] [-u <uLR MAF>] [-o <output prefix>]" 
+usageMessage = "[-h help and usage] [-e <name of experiment>] [-c <cLR MAF>] [-o <output prefix>]" 
 
 options = "hc:u:o:e:"
 
@@ -90,7 +85,7 @@ for opt, arg in opts:
 	elif opt == '-e':
 		experimentName = arg	
 
-if ulrPath == None or clrPath == None or outputPrefix == None or experimentName == None:
+if clrPath == None or outputPrefix == None or experimentName == None:
 	print(helpMessage)
 	print(usageMessage)
 	sys.exit(1)
@@ -99,11 +94,13 @@ outputPath = "%s.tsv" % (outputPrefix)
 
 clrs = getAlignments(clrPath)
 clrAccuracy = findAccuracy(clrs)
+'''
 ulrs = getAlignments(ulrPath)
 ulrAccuracy = findAccuracy(ulrs)
 gain = findGain(ulrs,clrs)
+'''
 
 with open(outputPath,'w') as output:
 	output.write( "Statistics for mapping-based evaluation for experiment %s\n" % (experimentName) )
-	output.write( "uLR Accuracy	cLR Accuracy	Gain\n" )
-	output.write( "%f	%f	%f" % (ulrAccuracy,clrAccuracy,gain) ) 
+	output.write( "cLR Accuracy\n" )
+	output.write( "%f\n" % (clrAccuracy) ) 
