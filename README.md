@@ -132,7 +132,9 @@ In some cases, LRCstats may fail to align untrimmed corrected long reads back to
 We modified the multiple alignment format to include `X` delimiters that indicate the boundaries of corrected segments in both trimmed and untrimmed corrected long read alignments. Hence, our version of the multiple alignment format may not be compatible with programs which accept MAF files as input.
 
 ## Citation
-Please cite: Sean La, Ehsan Haghshenas, Cedric Chauve; LRCstats, a tool for evaluating long reads correction methods, Bioinformatics, Volume 33, Issue 22, 15 November 2017, Pages 3652–3654, https://doi.org/10.1093/bioinformatics/btx489
+Please cite: 
+
+Sean La, Ehsan Haghshenas, Cedric Chauve; LRCstats, a tool for evaluating long reads correction methods, Bioinformatics, Volume 33, Issue 22, 15 November 2017, Pages 3652–3654, https://doi.org/10.1093/bioinformatics/btx489
 
 
 ## Contact ##
