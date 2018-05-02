@@ -1,5 +1,12 @@
 # LRCstats: Long Read Correction Statistics #
 
+## NOTICE ##
+1 May 2018.
+We have noticed that the latest version of SimLoRD, which LRCstats has as a dependency, outputs the long read SAM alignment files incorrectly, in that the start positions of the read alignments indicated in the SAM files are incorrect.
+This will cause LRCstats to output incorrect correction statistics.
+Earlier versions of SimLoRD should not have this issue, such as version 1.0.0 from 2016-07-03, though we have not yet confirmed this for ourselves.
+We will provide updates on this page as they arise.
+
 ## Description ##
 LRCstats is an open-source pipeline for benchmarking DNA long read correction algorithms for long reads outputted by third generation sequencing technology such as machines produced by Pacific Biosciences. The reads produced by third generation sequencing technology, as the name suggests, are longer in length than reads produced by next generation sequencing technologies, such as those produced by Illumina. However, long reads are plagued by high error rates, which can cause issues in downstream analysis. Long read correction algorithms reduce the error rate of long reads either through self-correcting methods or using accurate, short reads outputted by next generation sequencing technologies to correct long reads.
 
@@ -8,6 +15,7 @@ Of course, some long read correction algorithms are better than others, and deve
 ## Dependencies ##
 * Python 2.7.2
 * Any version of g++ with c++11 support
+* [SimLoRD](https://bitbucket.org/genomeinformatics/simlord/src)
 
 ## Installation ##
 Clone this repository with the command 
