@@ -38,7 +38,7 @@ The three main files that LRCstats takes as input are:
 
 Please make sure your reference genome contains exactly one sequence. 
 If your reference genome contains multiple chromosomes, we recommend you concatenate the chromosomes into a single super-sequence.
-If the reference genome contains multiple sequences, the current version of SimLoRD will output incorrect SAM alignment files, and the native SAM to MAF conversion script in the LRCstats pipeline assumes the reference genome contains only a single chromosome.
+The native SAM to MAF conversion script in the LRCstats pipeline assumes the reference genome contains only a single chromosome.
 
 The paths to these files can be provided in either a configuration file or as command line arguments.
 
