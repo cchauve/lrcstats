@@ -1,5 +1,11 @@
 # LRCstats: Long Read Correction Statistics #
 
+## Updates ##
+
+**Version 1.1 (2018-05-02)**
+_New Features_
+* Updated LRCstats to be compatible with reference genomes with multiple chromosomes.
+
 ## Description ##
 LRCstats is an open-source pipeline for benchmarking DNA long read correction algorithms for long reads outputted by third generation sequencing technology such as machines produced by Pacific Biosciences. The reads produced by third generation sequencing technology, as the name suggests, are longer in length than reads produced by next generation sequencing technologies, such as those produced by Illumina. However, long reads are plagued by high error rates, which can cause issues in downstream analysis. Long read correction algorithms reduce the error rate of long reads either through self-correcting methods or using accurate, short reads outputted by next generation sequencing technologies to correct long reads.
 
@@ -35,10 +41,6 @@ The three main files that LRCstats takes as input are:
 1. a corrected simulated long reads file in FASTA format
 2. a Ref-uLR two-way alignment file in SAM format
 3. the reference genome from which the simulated long reads were generated from. 
-
-Please make sure your reference genome contains exactly one sequence. 
-If your reference genome contains multiple chromosomes, we recommend you concatenate the chromosomes into a single super-sequence.
-The native SAM to MAF conversion script in the LRCstats pipeline assumes the reference genome contains only a single chromosome.
 
 The paths to these files can be provided in either a configuration file or as command line arguments.
 

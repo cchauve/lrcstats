@@ -1,7 +1,8 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 import sys
 import getopt
 import re
+from collections import OrderedDict
 
 def getDelimitedCigar(cigar):
 	'''
@@ -143,18 +144,24 @@ def getReadAlignment(read, cigarList):
 
 	return readAlignment
 
-def getReference(refPath):
+def getReferences(refPath):
 	'''
 	Retrieve the reference genome from refPath
 	'''
-	reference = ""
+	references = OrderedDict()
+	ref_name = None
 	with open(refPath, 'r') as file:
 		for line in file:
+			line = line.strip('\n')
+			if len(line) > 0 and line[0] == ">":
+				ref_name = line[1:]
+				ref_name = list(ref_name)
+				ref_name = ["_" if char == " " else char for char in ref_name]
+				ref_name = "".join(ref_name)
+				references[ref_name] = ""
 			if len(line) > 0 and line[0] != ">":
-				reference += line.strip('\n')		
-	assert '\n' not in reference
-	assert '>' not in reference
-	return reference
+				references[ref_name] += line
+	return references
 
 def getGaplessLength(seq):
 	'''
@@ -171,11 +178,10 @@ def extractReadNumber(queryName):
 	return readNumber
 
 
-def convert(ref, samPath, mafPath):
+def convert(refs, samPath, mafPath):
 	'''
 	Converts the SAM file into a MAF file.
 	'''
-	srcSize = len( ref )
 
 	with open(samPath, 'r') as sam:
 		with open(mafPath, 'w') as maf:
@@ -191,6 +197,9 @@ def convert(ref, samPath, mafPath):
 						start = int( line[3] ) - 1
 						cigar = line[5]
 						read = line[9]
+						ref_name = line[2]
+						ref = refs[ref_name]
+						srcSize = len( ref )
 
 						if flag in [16, 272]:
 							read = getSeqComplement(read)
@@ -225,7 +234,7 @@ def unitTest():
 	'''
 	Unit test for this script.
 	'''
-	print "Testing module..."
+	print("Testing module...")
 
 	# Test delimitCigar module
 	cigar = "10I1=1M2X3D"				
@@ -273,7 +282,7 @@ def unitTest():
 
 	assert complement == realComplement
 
-	print "All tests passed!"
+	print("All tests passed!")
 
 helpMessage = ("Converts SAM file to Multiple Alignment Format.\n"
 		+ "Behavior only defined for CIGAR ops 'D', '=', 'I', 'M', or 'X'")
@@ -284,11 +293,11 @@ options = "hr:s:o:tp:"
 try:
 	opts, args = getopt.getopt(sys.argv[1:], options)
 except getopt.GetoptError:
-	print "Error: unable to read command line arguments."
+	print( "Error: unable to read command line arguments.")
 	sys.exit(2)
 
 if len(sys.argv) == 1:
-	print usageMessage
+	print(usageMessage)
 	sys.exit()
 
 refPath = None
@@ -298,8 +307,8 @@ idPosition = 0
 
 for opt, arg in opts:
 	if opt == '-h':
-		print helpMessage
-		print usageMessage
+		print(helpMessage)
+		print(usageMessage)
 		sys.exit()
 	elif opt == '-r':
 		refPath = arg
@@ -314,9 +323,9 @@ for opt, arg in opts:
 		sys.exit()
 
 if refPath is None or samPath is None or mafPath is None:
-	print helpMessage
-	print usageMessage
+	print(helpMessage)
+	print(usageMessage)
 	sys.exit(2)
 
-ref = getReference(refPath)
-convert(ref, samPath, mafPath)
+refs = getReferences(refPath)
+convert(refs, samPath, mafPath)

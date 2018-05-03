@@ -362,10 +362,10 @@ def writePipeline(file, experimentDetails):
 	writeStats(file,trimmed,extended)
 		
 MAJOR_VERSION = 1
-MINOR_VERSION = 0
+MINOR_VERSION = 1
 
 parser = argparse.ArgumentParser(description='''
-	Long Read Correction Stats (LRCstats) Version %d.%d Copyright (C) 2017 Sean La
+	Long Read Correction Stats (LRCstats) Version %d.%d Copyright (C) 2017 Cedric Chauve, Sean La
 	This program comes with ABSOLUTELY NO WARRANTY
 	This is free software, and you are welcome to redistribute it
 	under certain conditions
