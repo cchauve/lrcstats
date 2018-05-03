@@ -3,6 +3,7 @@
 ## Updates ##
 
 **Version 1.1 (2018-05-02)**
+
 _New Features_
 * Updated LRCstats to be compatible with reference genomes with multiple chromosomes.
 
